@@ -73,7 +73,7 @@ const drawMatrix = () => {
     const char = matrixChars[Math.floor(Math.random() * matrixChars.length)]
     const x = index * props.fontSize
 
-    if (char && ctx) {
+    if (char && ctx && canvasRef.value) {
       ctx.fillText(char, x, y * props.fontSize)
     }
 

@@ -27,7 +27,7 @@
           <el-tag
             v-for="category in categories"
             :key="category.id"
-            :type="selectedCategory === category.id ? 'primary' : ''"
+            :type="selectedCategory === category.id ? 'primary' : undefined"
             :effect="selectedCategory === category.id ? 'dark' : 'plain'"
             class="projects__filter-tag"
             @click="handleCategoryFilter(category.id)"

@@ -20,17 +20,22 @@ export function useTheme() {
   // 应用主题
   const applyTheme = (newTheme: 'light' | 'dark') => {
     actualTheme.value = newTheme
-    document.documentElement.setAttribute('data-theme', newTheme)
 
-    // 应用CSS变量
-    applyThemeVariables(newTheme)
+    // 立即应用主题到document
+    const root = document.documentElement
+
+    // 设置data-theme属性
+    root.setAttribute('data-theme', newTheme)
 
     // 更新Element Plus主题 - 添加或移除dark类
     if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark')
+      root.classList.add('dark')
     } else {
-      document.documentElement.classList.remove('dark')
+      root.classList.remove('dark')
     }
+
+    // 应用CSS变量
+    applyThemeVariables(newTheme)
 
     // 更新Element Plus CSS变量
     updateElementPlusTheme(newTheme)
@@ -40,6 +45,20 @@ export function useTheme() {
     if (metaThemeColor) {
       metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0a0a' : '#ffffff')
     }
+
+    // 强制重绘以确保主题立即生效
+    requestAnimationFrame(() => {
+      root.style.display = 'none'
+      root.offsetHeight // 触发重排
+      root.style.display = ''
+
+      // 触发全局主题更新事件
+      window.dispatchEvent(
+        new CustomEvent('theme-changed', {
+          detail: { theme: newTheme },
+        }),
+      )
+    })
   }
 
   // 更新Element Plus主题
