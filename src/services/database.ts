@@ -418,7 +418,7 @@ export class SystemSettingsService extends DatabaseService {
           value,
           description: description || key,
           type: 'string',
-          user_id: 'system', // 系统设置使用固定用户ID
+          // 移除user_id字段，因为系统设置不需要用户ID
         })
         .select()
         .single()

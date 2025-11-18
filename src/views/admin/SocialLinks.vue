@@ -47,10 +47,7 @@
             <el-card class="social-link-card" shadow="hover">
               <div class="social-link-card__content">
                 <div class="social-link-card__header">
-                  <div
-                    class="social-link-card__icon"
-                    :style="{ backgroundColor: link.color || '#409EFF' }"
-                  >
+                  <div class="social-link-card__icon" :style="{ backgroundColor: '#409EFF' }">
                     <el-icon :size="24">
                       <component :is="getLinkIcon(link.icon || 'Link')" />
                     </el-icon>
@@ -127,30 +124,21 @@
           <el-input v-model="formData.url" placeholder="https://example.com" />
         </el-form-item>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="链接图标" prop="icon">
-              <el-select v-model="formData.icon" placeholder="请选择图标">
-                <el-option
-                  v-for="icon in iconOptions"
-                  :key="icon.value"
-                  :label="icon.label"
-                  :value="icon.value"
-                >
-                  <div style="display: flex; align-items: center; gap: 8px">
-                    <el-icon><component :is="icon.component" /></el-icon>
-                    <span>{{ icon.label }}</span>
-                  </div>
-                </el-option>
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="链接颜色" prop="color">
-              <el-color-picker v-model="formData.color" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-form-item label="链接图标" prop="icon">
+          <el-select v-model="formData.icon" placeholder="请选择图标">
+            <el-option
+              v-for="icon in iconOptions"
+              :key="icon.value"
+              :label="icon.label"
+              :value="icon.value"
+            >
+              <div style="display: flex; align-items: center; gap: 8px">
+                <el-icon><component :is="icon.component" /></el-icon>
+                <span>{{ icon.label }}</span>
+              </div>
+            </el-option>
+          </el-select>
+        </el-form-item>
 
         <el-form-item label="排序" prop="sort_order">
           <el-input-number v-model="formData.sort_order" :min="0" :max="999" placeholder="排序值" />
@@ -212,7 +200,6 @@ const formData = reactive({
   name: '',
   url: '',
   icon: '',
-  color: '#409EFF',
   sort_order: 0,
 })
 
@@ -227,7 +214,6 @@ const formRules: FormRules = {
     { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' },
   ],
   icon: [{ required: true, message: '请选择链接图标', trigger: 'change' }],
-  color: [{ required: true, message: '请选择链接颜色', trigger: 'change' }],
 }
 
 // 图标选项
@@ -276,13 +262,12 @@ const handleLinkAction = async ({ action, link }) => {
   }
 }
 
-const editLink = (link) => {
+const editLink = (link: any) => {
   editingLink.value = link
   Object.assign(formData, {
     name: link.name,
     url: link.url,
     icon: link.icon,
-    color: link.color,
     sort_order: link.sort_order,
   })
   showCreateDialog.value = true
@@ -329,7 +314,6 @@ const resetForm = () => {
     name: '',
     url: '',
     icon: '',
-    color: '#409EFF',
     sort_order: 0,
   })
   formRef.value?.clearValidate()
@@ -353,7 +337,7 @@ const handleSubmit = async () => {
     }
 
     handleDialogClose()
-  } catch (error: any) {
+  } catch {
     ElMessage.error(editingLink.value ? '更新社交链接失败' : '创建社交链接失败')
   } finally {
     submitting.value = false
