@@ -251,7 +251,7 @@ const getLinkIcon = (iconName: string) => {
   return icon ? icon.component : markRaw(Link)
 }
 
-const handleLinkAction = async ({ action, link }) => {
+const handleLinkAction = async ({ action, link }: { action: string; link: any }) => {
   switch (action) {
     case 'edit':
       editLink(link)

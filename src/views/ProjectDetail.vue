@@ -9,7 +9,7 @@
     </div>
 
     <div v-if="loading" class="loading-container">
-      <loading-spinner overlay="false" text="正在加载项目详情..." size="large" />
+      <loading-spinner :overlay="false" text="正在加载项目详情..." size="large" />
     </div>
 
     <div v-else-if="project" class="project-content">
@@ -38,7 +38,7 @@
             <label>项目分类:</label>
             <div class="tech-tags">
               <el-tag
-                v-for="category in project.categories"
+                v-for="category in getProjectCategories(project)"
                 :key="category.id"
                 :color="category.color"
                 size="small"
@@ -52,7 +52,7 @@
             <label>项目标签:</label>
             <div class="tech-tags">
               <el-tag
-                v-for="tag in project.tags"
+                v-for="tag in getProjectTags(project)"
                 :key="tag.id"
                 :color="tag.color"
                 size="small"
@@ -199,6 +199,15 @@ const formatFileSize = (size: number) => {
   const index = Math.floor(Math.log(size) / Math.log(1024))
   const formattedSize = size / Math.pow(1024, index)
   return `${formattedSize.toFixed(2)} ${units[index]}`
+}
+
+// 辅助方法
+const getProjectCategories = (project: any) => {
+  return (project as any).categories || []
+}
+
+const getProjectTags = (project: any) => {
+  return (project as any).tags || []
 }
 
 // 操作方法

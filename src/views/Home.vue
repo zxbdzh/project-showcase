@@ -157,7 +157,7 @@
             <el-icon :size="24">
               <component :is="link.icon" />
             </el-icon>
-            <span>{{ link.platform }}</span>
+            <span>{{ link.name }}</span>
           </a>
         </div>
       </section>

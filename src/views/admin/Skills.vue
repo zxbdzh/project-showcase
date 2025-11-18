@@ -71,9 +71,12 @@
           <el-col v-for="skill in filteredSkills" :key="skill.id" :xs="24" :sm="12" :md="8" :lg="6">
             <el-card class="skill-card" shadow="hover">
               <div class="skill-card__header">
-                <div class="skill-card__icon" :style="{ backgroundColor: skill.color }">
+                <div
+                  class="skill-card__icon"
+                  :style="{ backgroundColor: skill.color || '#409EFF' }"
+                >
                   <el-icon :size="24">
-                    <component :is="getSkillIcon(skill.icon)" />
+                    <component :is="getSkillIcon(skill.icon || 'Tools')" />
                   </el-icon>
                 </div>
                 <div class="skill-card__actions">
@@ -112,7 +115,7 @@
                       class="level-progress"
                       :style="{
                         width: `${getLevelPercentage(skill.level)}%`,
-                        backgroundColor: skill.color,
+                        backgroundColor: skill.color || '#409EFF',
                       }"
                     ></div>
                   </div>
@@ -132,7 +135,8 @@
 
                 <div class="skill-card__footer">
                   <el-input-number
-                    v-model="skill.sort_order"
+                    :model-value="getSkillSortOrder(skill)"
+                    @update:model-value="(value: number) => setSkillSortOrder(skill, value)"
                     :min="0"
                     :max="999"
                     size="small"
@@ -272,9 +276,9 @@ const { skills, loading, loadSkills, createSkill, updateSkill, deleteSkill } = u
 // 响应式数据
 const searchQuery = ref('')
 const categoryFilter = ref('')
-const levelFilter = ref('')
+const levelFilter = ref<number | ''>('')
 const showCreateDialog = ref(false)
-const editingSkill = ref(null)
+const editingSkill = ref<any>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 
@@ -356,7 +360,7 @@ const getSkillIcon = (iconName: string) => {
 }
 
 const getCategoryText = (category: string) => {
-  const categoryMap = {
+  const categoryMap: Record<string, string> = {
     frontend: '前端开发',
     backend: '后端开发',
     database: '数据库',
@@ -385,6 +389,14 @@ const getLevelPercentage = (level: number) => {
     4: 100,
   }
   return levelMap[level] || 0
+}
+
+const getSkillSortOrder = (skill: any) => {
+  return (skill as any).sort_order || 0
+}
+
+const setSkillSortOrder = (skill: any, value: number) => {
+  ;(skill as any).sort_order = value
 }
 
 const handleSkillAction = async ({ action, skill }: { action: string; skill: any }) => {
@@ -431,7 +443,7 @@ const deleteSkillItem = async (skill: any) => {
 
 const handleSortOrderChange = async (skill: any) => {
   try {
-    await updateSkill(skill.id, { sort_order: skill.sort_order })
+    await updateSkill(skill.id, { sort_order: skill.sort_order } as any)
     ElMessage.success('排序更新成功')
   } catch (error: any) {
     ElMessage.error('更新排序失败')

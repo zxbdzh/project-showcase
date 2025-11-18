@@ -79,7 +79,7 @@
                 </div>
                 <div class="project-info__content">
                   <h3 class="project-info__title">{{ row.title }}</h3>
-                  <p class="project-info__description">{{ row.description }}</p>
+                  <p class="project-info__description">{{ row.description || '' }}</p>
                   <div class="project-info__tags" v-if="row.tags && row.tags.length">
                     <el-tag
                       v-for="tag in row.tags.slice(0, 3)"
@@ -217,9 +217,9 @@ const statusFilter = ref('')
 const featuredFilter = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
-const selectedProjects = ref([])
+const selectedProjects = ref<any[]>([])
 const showCreateDialog = ref(false)
-const editingProject = ref(null)
+const editingProject = ref<any>(null)
 
 // 计算属性
 const filteredProjects = computed(() => {
@@ -231,7 +231,7 @@ const filteredProjects = computed(() => {
     result = result.filter(
       (project) =>
         project.title.toLowerCase().includes(query) ||
-        project.description.toLowerCase().includes(query),
+        (project.description || '').toLowerCase().includes(query),
     )
   }
 
@@ -264,7 +264,7 @@ const handleFilter = () => {
   currentPage.value = 1
 }
 
-const handleSelectionChange = (selection) => {
+const handleSelectionChange = (selection: any[]) => {
   selectedProjects.value = selection
 }
 
@@ -307,16 +307,16 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('zh-CN')
 }
 
-const viewProject = (project) => {
+const viewProject = (project: any) => {
   router.push(`/project/${project.id}`)
 }
 
-const editProject = (project) => {
+const editProject = (project: any) => {
   editingProject.value = { ...project }
   showCreateDialog.value = true
 }
 
-const deleteProject = async (project) => {
+const deleteProject = async (project: any) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除项目 "${project.title}" 吗？此操作不可恢复。`,
@@ -338,7 +338,7 @@ const deleteProject = async (project) => {
   }
 }
 
-const handleFeaturedChange = async (project) => {
+const handleFeaturedChange = async (project: any) => {
   try {
     await updateProject(project.id, { featured: project.featured })
     ElMessage.success(project.featured ? '设为精选成功' : '取消精选成功')
@@ -349,7 +349,7 @@ const handleFeaturedChange = async (project) => {
   }
 }
 
-const handleSortOrderChange = async (project) => {
+const handleSortOrderChange = async (project: any) => {
   try {
     await updateProject(project.id, { sort_order: project.sort_order })
     ElMessage.success('排序更新成功')
@@ -363,7 +363,7 @@ const handleDialogClose = () => {
   editingProject.value = null
 }
 
-const handleProjectSubmit = async (data) => {
+const handleProjectSubmit = async (data: any) => {
   try {
     const { project, categories, tags } = data
 
@@ -415,7 +415,9 @@ const batchDelete = async () => {
       },
     )
 
-    const deletePromises = selectedProjects.value.map((project) => deleteProjectData(project.id))
+    const deletePromises = selectedProjects.value.map((project: any) =>
+      deleteProjectData(project.id),
+    )
     await Promise.all(deletePromises)
 
     ElMessage.success('批量删除成功')
@@ -430,7 +432,7 @@ const batchDelete = async () => {
 
 const batchSetFeatured = async (featured: boolean) => {
   try {
-    const updatePromises = selectedProjects.value.map((project) =>
+    const updatePromises = selectedProjects.value.map((project: any) =>
       updateProject(project.id, { featured }),
     )
     await Promise.all(updatePromises)

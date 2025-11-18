@@ -147,7 +147,7 @@ const filteredProjects = computed(() => {
   // 按分类筛选
   if (selectedCategory.value && selectedCategory.value !== 'all') {
     filtered = filtered.filter((project) => {
-      const categoryIds = project.categories?.map((cat: any) => cat.id) || []
+      const categoryIds = (project as any).categories?.map((cat: any) => cat.id) || []
       return categoryIds.includes(selectedCategory.value)
     })
   }
@@ -159,7 +159,7 @@ const filteredProjects = computed(() => {
       (project) =>
         project.title.toLowerCase().includes(query) ||
         (project.description && project.description.toLowerCase().includes(query)) ||
-        project.tags?.some((tag: any) => tag.name.toLowerCase().includes(query)),
+        (project as any).tags?.some((tag: any) => tag.name.toLowerCase().includes(query)),
     )
   }
 

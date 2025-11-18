@@ -53,9 +53,12 @@
           >
             <el-card class="category-card" shadow="hover">
               <div class="category-card__header">
-                <div class="category-card__icon" :style="{ backgroundColor: category.color }">
+                <div
+                  class="category-card__icon"
+                  :style="{ backgroundColor: category.color || '#409EFF' }"
+                >
                   <el-icon :size="24">
-                    <component :is="getCategoryIcon(category.icon)" />
+                    <component :is="getCategoryIcon(category.icon || 'Folder')" />
                   </el-icon>
                 </div>
                 <div class="category-card__actions">
@@ -81,12 +84,12 @@
 
               <div class="category-card__content">
                 <h3 class="category-card__title">{{ category.name }}</h3>
-                <p class="category-card__description">{{ category.description }}</p>
+                <p class="category-card__description">{{ category.description || '' }}</p>
 
                 <div class="category-card__stats">
                   <div class="stat-item">
                     <span class="stat-label">项目数量</span>
-                    <span class="stat-value">{{ category.project_count || 0 }}</span>
+                    <span class="stat-value">0</span>
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">排序</span>
@@ -251,7 +254,7 @@ const filteredCategories = computed(() => {
   return categories.value.filter(
     (category) =>
       category.name.toLowerCase().includes(query) ||
-      category.description.toLowerCase().includes(query),
+      (category.description || '').toLowerCase().includes(query),
   )
 })
 

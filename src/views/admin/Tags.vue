@@ -93,7 +93,7 @@
                 <div class="tag-card__stats">
                   <div class="stat-item">
                     <span class="stat-label">使用次数</span>
-                    <span class="stat-value">{{ tag.project_count || 0 }}</span>
+                    <span class="stat-value">{{ getProjectCount(tag) }}</span>
                   </div>
                 </div>
 
@@ -213,6 +213,10 @@ const handleSearch = () => {
 
 const handleFilter = () => {
   // 筛选逻辑已在计算属性中处理
+}
+
+const getProjectCount = (tag: any) => {
+  return (tag as any).project_count || 0
 }
 
 const handleTagAction = async ({ action, tag }: { action: string; tag: any }) => {
