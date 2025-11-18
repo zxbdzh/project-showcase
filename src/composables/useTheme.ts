@@ -8,7 +8,6 @@ export function useTheme() {
   const theme = ref<ThemeMode>('system')
   const systemTheme = ref<'light' | 'dark'>('light')
   const actualTheme = ref<'light' | 'dark'>('light')
-  const isTransitioning = ref(false)
 
   // 检测系统主题
   const detectSystemTheme = (): 'light' | 'dark' => {
@@ -18,25 +17,22 @@ export function useTheme() {
     return 'light'
   }
 
-  // 应用主题到DOM
+  // 应用主题到DOM - 按照Element Plus官方方式
   const applyThemeToDOM = (themeValue: 'light' | 'dark') => {
     const root = document.documentElement
 
-    // 设置data-theme属性
-    root.setAttribute('data-theme', themeValue)
-
-    // 更新Element Plus主题类
+    // Element Plus暗色模式只需要在html上添加dark类
     if (themeValue === 'dark') {
       root.classList.add('dark')
     } else {
       root.classList.remove('dark')
     }
 
-    // 应用CSS变量
-    applyThemeVariables(themeValue)
+    // 设置data-theme属性用于自定义样式
+    root.setAttribute('data-theme', themeValue)
 
-    // 更新Element Plus变量
-    updateElementPlusTheme(themeValue)
+    // 应用自定义CSS变量
+    applyThemeVariables(themeValue)
 
     // 更新meta标签
     const metaThemeColor = document.querySelector('meta[name="theme-color"]')
@@ -57,7 +53,6 @@ export function useTheme() {
     // 检查是否支持View Transitions API
     if (document.startViewTransition) {
       // 使用View Transitions API
-      isTransitioning.value = true
       const transition = document.startViewTransition(() => {
         actualTheme.value = newTheme
         applyThemeToDOM(newTheme)
@@ -67,15 +62,12 @@ export function useTheme() {
       transition.finished
         .then(() => {
           console.log('Theme transition completed')
-          isTransitioning.value = false
         })
         .catch((err) => {
           console.warn('Theme transition failed:', err)
-          isTransitioning.value = false
         })
     } else {
       // 降级到简单的CSS过渡
-      isTransitioning.value = true
       document.documentElement.classList.add('theme-transitioning')
       actualTheme.value = newTheme
       applyThemeToDOM(newTheme)
@@ -83,7 +75,6 @@ export function useTheme() {
       // 移除过渡类
       setTimeout(() => {
         document.documentElement.classList.remove('theme-transitioning')
-        isTransitioning.value = false
       }, 300)
     }
   }
@@ -218,7 +209,6 @@ export function useTheme() {
     theme: readonly(theme),
     systemTheme: readonly(systemTheme),
     actualTheme: readonly(actualTheme),
-    isTransitioning: readonly(isTransitioning),
 
     // 计算属性
     currentThemeIcon,
@@ -284,92 +274,6 @@ export const applyThemeVariables = (theme: 'light' | 'dark') => {
   const root = document.documentElement
   const variables = themeVariables[theme]
 
-  Object.entries(variables).forEach(([key, value]) => {
-    root.style.setProperty(key, value)
-  })
-}
-
-// 更新Element Plus主题
-export const updateElementPlusTheme = (theme: 'light' | 'dark') => {
-  const root = document.documentElement
-
-  // Element Plus CSS变量
-  const elVariables = {
-    light: {
-      '--el-bg-color': '#ffffff',
-      '--el-bg-color-page': '#f2f3f5',
-      '--el-bg-color-overlay': '#ffffff',
-      '--el-text-color-primary': '#303133',
-      '--el-text-color-regular': '#606266',
-      '--el-text-color-secondary': '#909399',
-      '--el-text-color-placeholder': '#a8abb2',
-      '--el-text-color-disabled': '#c0c4cc',
-      '--el-border-color': '#dcdfe6',
-      '--el-border-color-light': '#e4e7ed',
-      '--el-border-color-lighter': '#ebeef5',
-      '--el-border-color-extra-light': '#f2f6fc',
-      '--el-border-color-dark': '#dcdfe6',
-      '--el-border-color-darker': '#cdd0d6',
-      '--el-fill-color': '#f0f2f5',
-      '--el-fill-color-light': '#f5f7fa',
-      '--el-fill-color-lighter': '#fafafa',
-      '--el-fill-color-extra-light': '#fafcff',
-      '--el-fill-color-dark': '#ebedf0',
-      '--el-fill-color-darker': '#e6e8eb',
-      '--el-fill-color-blank': '#ffffff',
-      '--el-box-shadow': '0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08)',
-      '--el-box-shadow-light': '0px 0px 12px rgba(0, 0, 0, 0.12)',
-      '--el-box-shadow-lighter': '0px 0px 6px rgba(0, 0, 0, 0.04)',
-      '--el-box-shadow-dark':
-        '0px 16px 48px 16px rgba(0, 0, 0, 0.08), 0px 12px 32px rgba(0, 0, 0, 0.12), 0px 8px 16px -8px rgba(0, 0, 0, 0.16)',
-      '--el-disabled-bg-color': '#f5f7fa',
-      '--el-disabled-text-color': '#c0c4cc',
-      '--el-disabled-border-color': '#e4e7ed',
-      '--el-overlay-color': 'rgba(0, 0, 0, 0.8)',
-      '--el-overlay-color-light': 'rgba(0, 0, 0, 0.7)',
-      '--el-overlay-color-lighter': 'rgba(0, 0, 0, 0.5)',
-      '--el-mask-color': 'rgba(255, 255, 255, 0.9)',
-      '--el-mask-color-extra-light': 'rgba(255, 255, 255, 0.3)',
-    },
-    dark: {
-      '--el-bg-color': '#141414',
-      '--el-bg-color-page': '#0a0a0a',
-      '--el-bg-color-overlay': '#1d1e1f',
-      '--el-text-color-primary': '#e5eaf3',
-      '--el-text-color-regular': '#cfd3dc',
-      '--el-text-color-secondary': '#a3a6ad',
-      '--el-text-color-placeholder': '#8d9095',
-      '--el-text-color-disabled': '#6c6e72',
-      '--el-border-color': '#4c4d4f',
-      '--el-border-color-light': '#414243',
-      '--el-border-color-lighter': '#363637',
-      '--el-border-color-extra-light': '#2b2b2c',
-      '--el-border-color-dark': '#58585b',
-      '--el-border-color-darker': '#636466',
-      '--el-fill-color': '#2b2b2c',
-      '--el-fill-color-light': '#262727',
-      '--el-fill-color-lighter': '#1f1f1f',
-      '--el-fill-color-extra-light': '#191919',
-      '--el-fill-color-dark': '#303030',
-      '--el-fill-color-darker': '#363636',
-      '--el-fill-color-blank': '#141414',
-      '--el-box-shadow': '0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72)',
-      '--el-box-shadow-light': '0px 0px 12px rgba(0, 0, 0, 0.72)',
-      '--el-box-shadow-lighter': '0px 0px 6px rgba(0, 0, 0, 0.24)',
-      '--el-box-shadow-dark':
-        '0px 16px 48px 16px rgba(0, 0, 0, 0.72), 0px 12px 32px rgba(0, 0, 0, 0.84), 0px 8px 16px -8px rgba(0, 0, 0, 0.9)',
-      '--el-disabled-bg-color': '#262727',
-      '--el-disabled-text-color': '#6c6e72',
-      '--el-disabled-border-color': '#414243',
-      '--el-overlay-color': 'rgba(0, 0, 0, 0.8)',
-      '--el-overlay-color-light': 'rgba(0, 0, 0, 0.7)',
-      '--el-overlay-color-lighter': 'rgba(0, 0, 0, 0.5)',
-      '--el-mask-color': 'rgba(0, 0, 0, 0.8)',
-      '--el-mask-color-extra-light': 'rgba(0, 0, 0, 0.3)',
-    },
-  }
-
-  const variables = elVariables[theme]
   Object.entries(variables).forEach(([key, value]) => {
     root.style.setProperty(key, value)
   })
