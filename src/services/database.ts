@@ -162,20 +162,7 @@ export class ProjectService extends DatabaseService {
     }
 
     return this.fetch<Project>('projects', {
-      select: `
-        *,
-        categories (
-          id,
-          name,
-          color,
-          icon
-        ),
-        tags (
-          id,
-          name,
-          color
-        )
-      `,
+      select: '*',
       filter: Object.keys(filter).length > 0 ? filter : undefined,
       orderBy: options?.orderBy || { column: 'sort_order', ascending: true },
       limit: options?.limit,
@@ -184,26 +171,7 @@ export class ProjectService extends DatabaseService {
 
   async getProject(id: string): Promise<Project | null> {
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select(
-          `
-          *,
-          categories (
-            id,
-            name,
-            color,
-            icon
-          ),
-          tags (
-            id,
-            name,
-            color
-          )
-        `,
-        )
-        .eq('id', id)
-        .single()
+      const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()
 
       if (error) throw error
       return data

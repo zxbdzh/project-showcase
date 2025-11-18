@@ -32,9 +32,9 @@
         <el-col :span="12">
           <el-form-item label="项目状态" prop="status">
             <el-select v-model="formData.status" placeholder="请选择项目状态">
-              <el-option label="进行中" value="active" />
-              <el-option label="已完成" value="completed" />
-              <el-option label="暂停" value="paused" />
+              <el-option label="草稿" value="draft" />
+              <el-option label="已发布" value="published" />
+              <el-option label="已归档" value="archived" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -149,6 +149,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import FileUpload from '@/components/FileUpload.vue'
+import { useAuth } from '@/composables/useAuth'
 
 interface Props {
   project?: any
@@ -164,6 +165,7 @@ const emit = defineEmits<Emits>()
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
+const { user } = useAuth()
 
 // 表单数据
 const formData = reactive({
@@ -174,7 +176,7 @@ const formData = reactive({
   github_url: '',
   cover_image: '',
   featured: false,
-  status: 'active',
+  status: 'draft',
   sort_order: 0,
   categories: [],
   tags: [],
@@ -210,7 +212,7 @@ const resetForm = () => {
     github_url: '',
     cover_image: '',
     featured: false,
-    status: 'active',
+    status: 'draft',
     sort_order: 0,
     categories: [],
     tags: [],
@@ -274,10 +276,12 @@ const handleSubmit = async () => {
       ...formData,
       // 如果是编辑模式，包含ID
       ...(isEdit.value && { id: props.project.id }),
+      // 创建项目时需要user_id
+      ...(!isEdit.value && user.value && { user_id: user.value.id }),
     }
 
     emit('submit', submitData)
-  } catch (error) {
+  } catch {
     ElMessage.error('请检查表单输入')
   } finally {
     submitting.value = false
