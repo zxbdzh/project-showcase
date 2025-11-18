@@ -22,11 +22,112 @@ export function useTheme() {
     actualTheme.value = newTheme
     document.documentElement.setAttribute('data-theme', newTheme)
 
+    // 应用CSS变量
+    applyThemeVariables(newTheme)
+
+    // 更新Element Plus主题 - 添加或移除dark类
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+
+    // 更新Element Plus CSS变量
+    updateElementPlusTheme(newTheme)
+
     // 更新meta标签
     const metaThemeColor = document.querySelector('meta[name="theme-color"]')
     if (metaThemeColor) {
       metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0a0a' : '#ffffff')
     }
+  }
+
+  // 更新Element Plus主题
+  const updateElementPlusTheme = (theme: 'light' | 'dark') => {
+    const root = document.documentElement
+
+    // Element Plus CSS变量
+    const elVariables = {
+      light: {
+        '--el-bg-color': '#ffffff',
+        '--el-bg-color-page': '#f2f3f5',
+        '--el-bg-color-overlay': '#ffffff',
+        '--el-text-color-primary': '#303133',
+        '--el-text-color-regular': '#606266',
+        '--el-text-color-secondary': '#909399',
+        '--el-text-color-placeholder': '#a8abb2',
+        '--el-text-color-disabled': '#c0c4cc',
+        '--el-border-color': '#dcdfe6',
+        '--el-border-color-light': '#e4e7ed',
+        '--el-border-color-lighter': '#ebeef5',
+        '--el-border-color-extra-light': '#f2f6fc',
+        '--el-border-color-dark': '#dcdfe6',
+        '--el-border-color-darker': '#cdd0d6',
+        '--el-fill-color': '#f0f2f5',
+        '--el-fill-color-light': '#f5f7fa',
+        '--el-fill-color-lighter': '#fafafa',
+        '--el-fill-color-extra-light': '#fafcff',
+        '--el-fill-color-dark': '#ebedf0',
+        '--el-fill-color-darker': '#e6e8eb',
+        '--el-fill-color-blank': '#ffffff',
+        '--el-box-shadow':
+          '0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08)',
+        '--el-box-shadow-light': '0px 0px 12px rgba(0, 0, 0, 0.12)',
+        '--el-box-shadow-lighter': '0px 0px 6px rgba(0, 0, 0, 0.04)',
+        '--el-box-shadow-dark':
+          '0px 16px 48px 16px rgba(0, 0, 0, 0.08), 0px 12px 32px rgba(0, 0, 0, 0.12), 0px 8px 16px -8px rgba(0, 0, 0, 0.16)',
+        '--el-disabled-bg-color': '#f5f7fa',
+        '--el-disabled-text-color': '#c0c4cc',
+        '--el-disabled-border-color': '#e4e7ed',
+        '--el-overlay-color': 'rgba(0, 0, 0, 0.8)',
+        '--el-overlay-color-light': 'rgba(0, 0, 0, 0.7)',
+        '--el-overlay-color-lighter': 'rgba(0, 0, 0, 0.5)',
+        '--el-mask-color': 'rgba(255, 255, 255, 0.9)',
+        '--el-mask-color-extra-light': 'rgba(255, 255, 255, 0.3)',
+      },
+      dark: {
+        '--el-bg-color': '#141414',
+        '--el-bg-color-page': '#0a0a0a',
+        '--el-bg-color-overlay': '#1d1e1f',
+        '--el-text-color-primary': '#e5eaf3',
+        '--el-text-color-regular': '#cfd3dc',
+        '--el-text-color-secondary': '#a3a6ad',
+        '--el-text-color-placeholder': '#8d9095',
+        '--el-text-color-disabled': '#6c6e72',
+        '--el-border-color': '#4c4d4f',
+        '--el-border-color-light': '#414243',
+        '--el-border-color-lighter': '#363637',
+        '--el-border-color-extra-light': '#2b2b2c',
+        '--el-border-color-dark': '#58585b',
+        '--el-border-color-darker': '#636466',
+        '--el-fill-color': '#2b2b2c',
+        '--el-fill-color-light': '#262727',
+        '--el-fill-color-lighter': '#1f1f1f',
+        '--el-fill-color-extra-light': '#191919',
+        '--el-fill-color-dark': '#303030',
+        '--el-fill-color-darker': '#363636',
+        '--el-fill-color-blank': '#141414',
+        '--el-box-shadow':
+          '0px 12px 32px 4px rgba(0, 0, 0, 0.36), 0px 8px 20px rgba(0, 0, 0, 0.72)',
+        '--el-box-shadow-light': '0px 0px 12px rgba(0, 0, 0, 0.72)',
+        '--el-box-shadow-lighter': '0px 0px 6px rgba(0, 0, 0, 0.24)',
+        '--el-box-shadow-dark':
+          '0px 16px 48px 16px rgba(0, 0, 0, 0.72), 0px 12px 32px rgba(0, 0, 0, 0.84), 0px 8px 16px -8px rgba(0, 0, 0, 0.9)',
+        '--el-disabled-bg-color': '#262727',
+        '--el-disabled-text-color': '#6c6e72',
+        '--el-disabled-border-color': '#414243',
+        '--el-overlay-color': 'rgba(0, 0, 0, 0.8)',
+        '--el-overlay-color-light': 'rgba(0, 0, 0, 0.7)',
+        '--el-overlay-color-lighter': 'rgba(0, 0, 0, 0.5)',
+        '--el-mask-color': 'rgba(0, 0, 0, 0.8)',
+        '--el-mask-color-extra-light': 'rgba(0, 0, 0, 0.3)',
+      },
+    }
+
+    const variables = elVariables[theme]
+    Object.entries(variables).forEach(([key, value]) => {
+      root.style.setProperty(key, value)
+    })
   }
 
   // 切换主题
@@ -46,7 +147,7 @@ export function useTheme() {
     const themes: ThemeMode[] = ['light', 'dark', 'system']
     const currentIndex = themes.indexOf(theme.value)
     const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % themes.length : 0
-    setTheme(themes[nextIndex])
+    setTheme(themes[nextIndex]!)
   }
 
   // 监听系统主题变化

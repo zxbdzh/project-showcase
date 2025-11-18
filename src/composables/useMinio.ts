@@ -76,11 +76,11 @@ export function useMinio() {
 
     for (let i = 0; i < files.length; i++) {
       try {
-        const result = await uploadFile(files[i], options)
+        const result = await uploadFile(files[i]!, options)
         results.push(result)
       } catch (error) {
         // 继续上传其他文件，但记录错误
-        console.error(`文件 ${files[i].name} 上传失败:`, error)
+        console.error(`文件 ${files[i]?.name} 上传失败:`, error)
       }
     }
 

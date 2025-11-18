@@ -58,9 +58,9 @@ export class DatabaseService {
   }
 
   // 通用插入方法
-  protected async insert<T>(table: string, data: Partial<T>): Promise<T> {
+  protected async insert<T>(table: string, insertData: Partial<T>): Promise<T> {
     try {
-      const { data, error } = await supabase.from(table).insert(data).select().single()
+      const { data, error } = await supabase.from(table).insert(insertData).select().single()
 
       if (error) throw error
       return data as T
@@ -71,9 +71,14 @@ export class DatabaseService {
   }
 
   // 通用更新方法
-  protected async update<T>(table: string, id: string, data: Partial<T>): Promise<T> {
+  protected async update<T>(table: string, id: string, updateData: Partial<T>): Promise<T> {
     try {
-      const { data, error } = await supabase.from(table).update(data).eq('id', id).select().single()
+      const { data, error } = await supabase
+        .from(table)
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
 
       if (error) throw error
       return data as T
@@ -96,9 +101,9 @@ export class DatabaseService {
   }
 
   // 批量操作
-  protected async batchInsert<T>(table: string, data: Partial<T>[]): Promise<T[]> {
+  protected async batchInsert<T>(table: string, batchData: Partial<T>[]): Promise<T[]> {
     try {
-      const { data, error } = await supabase.from(table).insert(data).select()
+      const { data, error } = await supabase.from(table).insert(batchData).select()
 
       if (error) throw error
       return data as T[]

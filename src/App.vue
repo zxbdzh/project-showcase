@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :data-theme="theme">
+  <div id="app" :data-theme="actualTheme">
     <router-view />
   </div>
 </template>
@@ -10,7 +10,7 @@ import { useTheme } from '@/composables/useTheme'
 import { initializeData } from '@/composables/useData'
 
 // 初始化主题系统
-const { theme, initTheme } = useTheme()
+const { actualTheme, initTheme } = useTheme()
 
 // 组件挂载时初始化
 onMounted(() => {
@@ -45,6 +45,15 @@ body {
   color: var(--text-primary);
   background: var(--bg-primary);
   transition: all 0.3s ease;
+  min-height: 100vh;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
 #app {

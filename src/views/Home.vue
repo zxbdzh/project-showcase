@@ -1,36 +1,5 @@
 <template>
   <div class="home">
-    <!-- 矩阵雨背景 -->
-    <matrix-rain :is-active="isDark" />
-
-    <!-- 导航栏 -->
-    <header class="home__header">
-      <nav class="home__nav">
-        <div class="home__nav-brand">
-          <glitch-text text="GEEK" :color="isDark ? '#00ff41' : '#0066cc'" />
-        </div>
-
-        <div class="home__nav-actions">
-          <theme-toggle />
-          <el-button v-if="!isAuthenticated" type="primary" @click="showLoginModal = true">
-            登录
-          </el-button>
-          <el-dropdown v-else @command="handleUserAction">
-            <el-avatar :size="40" :src="profile?.avatar_url">
-              {{ userInitials }}
-            </el-avatar>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人档案</el-dropdown-item>
-                <el-dropdown-item command="dashboard">管理后台</el-dropdown-item>
-                <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-      </nav>
-    </header>
-
     <!-- 主要内容 -->
     <main class="home__main">
       <!-- 英雄区域 -->
@@ -162,23 +131,12 @@
         </div>
       </section>
     </main>
-
-    <!-- 页脚 -->
-    <footer class="home__footer">
-      <p>&copy; 2024 Geek Portfolio. Built with Vue 3 & Supabase.</p>
-    </footer>
-
-    <!-- 登录模态框 -->
-    <el-dialog v-model="showLoginModal" title="用户登录" width="400px" :show-close="false" center>
-      <login-form @success="handleLoginSuccess" @switch-mode="handleSwitchMode" />
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, markRaw } from 'vue'
+import { computed, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import {
   Link,
   Message,
@@ -186,44 +144,24 @@ import {
   TrendCharts,
   Monitor,
   Setting,
-  User,
-  CaretRight,
   View,
-  Star,
   ChatDotRound,
   Position,
-  TrophyBase,
-  Tools,
   Document,
-  Folder,
-  CollectionTag,
   DataLine,
-  Avatar,
-  ArrowRight,
-  Sunny,
-  Moon,
-  SwitchButton,
 } from '@element-plus/icons-vue'
 
-import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
 import { useProjects, useSkills, useSocialLinks } from '@/composables/useData'
-import MatrixRain from '@/components/MatrixRain.vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
 import GlitchText from '@/components/GlitchText.vue'
-import LoginForm from '@/components/Auth/LoginForm.vue'
 
 const router = useRouter()
-const { isAuthenticated, profile, userInitials, signOut } = useAuth()
 const { isDark } = useTheme()
 
 // 使用数据服务
-const { featuredProjects, loading: projectsLoading } = useProjects()
-const { skills, loading: skillsLoading } = useSkills()
-const { socialLinks, loading: socialLinksLoading } = useSocialLinks()
-
-// 模态框状态
-const showLoginModal = ref(false)
+const { featuredProjects } = useProjects()
+const { skills } = useSkills()
+const { socialLinks } = useSocialLinks()
 
 // 特色技能（从技能数据中提取）
 const featuredSkills = computed(() => skills.value.slice(0, 8).map((skill) => skill.name))
@@ -265,38 +203,6 @@ const socialLinksWithIcons = computed(() =>
   })),
 )
 
-// 处理用户操作
-const handleUserAction = async (command: string) => {
-  switch (command) {
-    case 'profile':
-      router.push('/profile')
-      break
-    case 'dashboard':
-      router.push('/admin')
-      break
-    case 'logout':
-      try {
-        await signOut()
-        ElMessage.success('已退出登录')
-      } catch {
-        ElMessage.error('退出登录失败')
-      }
-      break
-  }
-}
-
-// 处理登录成功
-const handleLoginSuccess = () => {
-  showLoginModal.value = false
-  ElMessage.success('欢迎回来！')
-}
-
-// 处理切换模式
-const handleSwitchMode = (mode: string) => {
-  // 这里可以切换到注册表单
-  console.log('Switch to mode:', mode)
-}
-
 // 滚动到项目区域
 const scrollToProjects = () => {
   document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' })
@@ -322,11 +228,6 @@ const openProject = (project: any) => {
 const viewAllProjects = () => {
   router.push('/projects')
 }
-
-// 组件挂载时初始化
-onMounted(() => {
-  // 这里可以加载真实数据
-})
 </script>
 
 <style scoped>

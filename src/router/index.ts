@@ -1,44 +1,45 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import Layout from '@/components/Layout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: () => import('../views/Home.vue'),
+      component: Layout,
+      children: [
+        {
+          path: '',
+          name: 'home',
+          component: () => import('../views/Home.vue'),
+        },
+        {
+          path: 'projects',
+          name: 'projects',
+          component: () => import('../views/Projects.vue'),
+        },
+        {
+          path: 'project/:id',
+          name: 'project-detail',
+          component: () => import('../views/ProjectDetail.vue'),
+          meta: { requiresAuth: false },
+        },
+        {
+          path: 'admin',
+          name: 'admin',
+          component: () => import('@/views/Admin.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        // 其他路由将在对应页面创建后启用
+        // {
+        //   path: 'profile',
+        //   name: 'profile',
+        //   component: () => import('../views/Profile.vue'),
+        //   meta: { requiresAuth: true },
+        // },
+      ],
     },
-    {
-      path: '/projects',
-      name: 'projects',
-      component: () => import('../views/Projects.vue'),
-    },
-    {
-      path: '/project/:id',
-      name: 'project-detail',
-      component: () => import('../views/ProjectDetail.vue'),
-      meta: { requiresAuth: false },
-    },
-    // 其他路由将在对应页面创建后启用
-    // {
-    //   path: '/profile',
-    //   name: 'profile',
-    //   component: () => import('../views/Profile.vue'),
-    //   meta: { requiresAuth: true },
-    // },
-    {
-      path: '/admin',
-      name: 'admin',
-      component: () => import('@/views/Admin.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    // {
-    //   path: '/profile',
-    //   name: 'profile',
-    //   component: () => import('../views/Profile.vue'),
-    //   meta: { requiresAuth: true },
-    // },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',

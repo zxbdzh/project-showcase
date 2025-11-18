@@ -65,7 +65,7 @@ const drawMatrix = () => {
   ctx.fillRect(0, 0, canvasRef.value.width, canvasRef.value.height)
 
   // 设置文字样式
-  ctx.fillStyle = props.color
+  ctx.fillStyle = props.color || '#00ff41'
   ctx.font = `${props.fontSize}px monospace`
 
   // 绘制字符
@@ -73,15 +73,23 @@ const drawMatrix = () => {
     const char = matrixChars[Math.floor(Math.random() * matrixChars.length)]
     const x = index * props.fontSize
 
-    ctx.fillText(char, x, y * props.fontSize)
+    if (char && ctx) {
+      ctx.fillText(char, x, y * props.fontSize)
+    }
 
     // 随机重置列
-    if (y * props.fontSize > canvasRef.value.height && Math.random() > props.density) {
+    if (
+      canvasRef.value &&
+      y * props.fontSize > canvasRef.value.height &&
+      Math.random() > props.density
+    ) {
       columns[index] = 0
     }
 
     // 递增列位置
-    columns[index]++
+    if (columns[index] !== undefined) {
+      columns[index]++
+    }
   })
 }
 
@@ -121,6 +129,18 @@ watch(
       startAnimation()
     } else {
       stopAnimation()
+      clearCanvas()
+    }
+  },
+  { immediate: true },
+)
+
+// 监听主题变化，确保在浅色模式下也正确处理
+watch(
+  () => props.isActive,
+  (isActive) => {
+    if (!isActive) {
+      // 确保在非激活状态下清空画布
       clearCanvas()
     }
   },

@@ -54,7 +54,7 @@
           <div class="progress-info">
             <el-icon><document /></el-icon>
             <span class="file-name">{{ file.name }}</span>
-            <span class="file-size">{{ formatFileSize(file.size) }}</span>
+            <span class="file-size">{{ formatFileSize(file.size || 0) }}</span>
           </div>
           <el-progress
             :percentage="file.percentage || 0"
@@ -204,7 +204,7 @@ const beforeUpload = async (file: UploadUserFile) => {
   // 文件类型检查
   if (props.accept !== '*/*') {
     const acceptTypes = props.accept.split(',').map((type) => type.trim())
-    const fileType = file.type || ''
+    const fileType = (file as any).type || ''
     const isValidType = acceptTypes.some((type) => {
       if (type.startsWith('.')) {
         return file.name?.toLowerCase().endsWith(type.toLowerCase())
@@ -224,7 +224,7 @@ const beforeUpload = async (file: UploadUserFile) => {
     uid: typeof file.uid === 'number' ? file.uid : Date.now(),
     status: 'uploading',
     percentage: 0,
-    type: file.type || '',
+    type: (file as any).type || '',
   }
 
   uploadingFiles.value.push(newUploadFile)
@@ -238,12 +238,12 @@ const beforeUpload = async (file: UploadUserFile) => {
 
     // 使用 MinIO 上传文件
     const { uploadFile: minioUploadFile } = useMinio()
-    const result = await minioUploadFile(file.raw || file, {
+    const result = await minioUploadFile((file as any).raw || (file as File), {
       bucket: props.bucket,
       folder: props.folder,
       onProgress: (progress: { percent: number }) => {
         const index = uploadingFiles.value.findIndex((f) => f.uid === newUploadFile.uid)
-        if (index !== -1) {
+        if (index !== -1 && uploadingFiles.value[index]) {
           uploadingFiles.value[index].percentage = Math.round(progress.percent * 100)
         }
       },
@@ -259,7 +259,7 @@ const beforeUpload = async (file: UploadUserFile) => {
     }
 
     const index = uploadingFiles.value.findIndex((f) => f.uid === newUploadFile.uid)
-    if (index !== -1) {
+    if (index !== -1 && uploadingFiles.value[index]) {
       uploadingFiles.value[index] = successFile
     }
 
@@ -278,7 +278,7 @@ const beforeUpload = async (file: UploadUserFile) => {
     }
 
     const index = uploadingFiles.value.findIndex((f) => f.uid === newUploadFile.uid)
-    if (index !== -1) {
+    if (index !== -1 && uploadingFiles.value[index]) {
       uploadingFiles.value[index] = failFile
     }
 
@@ -304,7 +304,7 @@ const beforeUpload = async (file: UploadUserFile) => {
 // 上传进度
 const onProgress = (event: any, file: UploadUserFile) => {
   const index = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
-  if (index !== -1) {
+  if (index !== -1 && uploadingFiles.value[index]) {
     uploadingFiles.value[index].percentage = Math.round(event.percent)
   }
 }
@@ -312,7 +312,7 @@ const onProgress = (event: any, file: UploadUserFile) => {
 // 上传成功
 const onSuccess = (response: any, file: UploadUserFile) => {
   const index = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
-  if (index !== -1) {
+  if (index !== -1 && uploadingFiles.value[index]) {
     uploadingFiles.value[index].status = 'success'
     uploadingFiles.value[index].percentage = 100
   }
@@ -323,7 +323,7 @@ const onSuccess = (response: any, file: UploadUserFile) => {
 // 上传失败
 const onError = (error: Error, file: UploadUserFile) => {
   const index = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
-  if (index !== -1) {
+  if (index !== -1 && uploadingFiles.value[index]) {
     uploadingFiles.value[index].status = 'fail'
     uploadingFiles.value[index].errorMessage = error.message
   }
