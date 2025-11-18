@@ -9,62 +9,33 @@ const router = createRouter({
       name: 'home',
       component: () => import('../views/Home.vue'),
     },
-    {
-      path: '/projects',
-      name: 'projects',
-      component: () => import('../views/Projects.vue'),
-    },
-    {
-      path: '/project/:id',
-      name: 'project-detail',
-      component: () => import('../views/ProjectDetail.vue'),
-    },
-    {
-      path: '/profile',
-      name: 'profile',
-      component: () => import('../views/Profile.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/admin',
-      name: 'admin',
-      component: () => import('../views/Admin.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
-      path: '/admin/projects',
-      name: 'admin-projects',
-      component: () => import('../views/admin/Projects.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
-      path: '/admin/categories',
-      name: 'admin-categories',
-      component: () => import('../views/admin/Categories.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
-      path: '/admin/tags',
-      name: 'admin-tags',
-      component: () => import('../views/admin/Tags.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
-      path: '/admin/skills',
-      name: 'admin-skills',
-      component: () => import('../views/admin/Skills.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
-      path: '/admin/social-links',
-      name: 'admin-social-links',
-      component: () => import('../views/admin/SocialLinks.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
+    // 其他路由将在对应页面创建后启用
+    // {
+    //   path: '/projects',
+    //   name: 'projects',
+    //   component: () => import('../views/Projects.vue'),
+    // },
+    // {
+    //   path: '/project/:id',
+    //   name: 'project-detail',
+    //   component: () => import('../views/ProjectDetail.vue'),
+    // },
+    // {
+    //   path: '/profile',
+    //   name: 'profile',
+    //   component: () => import('../views/Profile.vue'),
+    //   meta: { requiresAuth: true },
+    // },
+    // {
+    //   path: '/admin',
+    //   name: 'admin',
+    //   component: () => import('../views/Admin.vue'),
+    //   meta: { requiresAuth: true, requiresAdmin: true },
+    // },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('../views/NotFound.vue'),
+      redirect: '/',
     },
   ],
 })
