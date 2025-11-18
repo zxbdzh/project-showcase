@@ -94,13 +94,12 @@
             </div>
             <h4 class="home__skill-name">{{ skill.name }}</h4>
             <div class="home__skill-level">
-              <el-progress
+              <cool-progress-bar
                 :percentage="skill.level"
-                :stroke-width="8"
-                :show-text="false"
                 :color="isDark ? '#00ff41' : '#0066cc'"
+                :height="8"
+                :animated="true"
               />
-              <span class="home__skill-percentage">{{ skill.level }}%</span>
             </div>
           </div>
         </div>
@@ -154,6 +153,8 @@ import {
 import { useTheme } from '@/composables/useTheme'
 import { useProjects, useSkills, useSocialLinks } from '@/composables/useData'
 import GlitchText from '@/components/GlitchText.vue'
+import CoolProgressBar from '@/components/CoolProgressBar.vue'
+import type { Project } from '@/utils/supabase'
 
 const router = useRouter()
 const { isDark } = useTheme()
@@ -247,7 +248,7 @@ const scrollToContact = () => {
 }
 
 // 打开项目
-const openProject = (project: any) => {
+const openProject = (project: Project) => {
   const url = project.demo_url || project.github_url || '#'
   if (url !== '#') {
     window.open(url, '_blank')
