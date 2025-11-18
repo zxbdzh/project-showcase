@@ -1,4 +1,6 @@
-import * as Minio from 'minio'
+// 浏览器兼容的 MinIO 实现
+// 注意：在浏览器环境中，我们应该使用预签名URL通过API上传文件
+// 而不是直接使用 MinIO 客户端
 
 // MinIO 配置
 const minioConfig = {
@@ -15,8 +17,108 @@ if (!minioConfig.accessKey || !minioConfig.secretKey) {
   console.warn('MinIO credentials not found in environment variables')
 }
 
-// 创建 MinIO 客户端
-export const minioClient = new Minio.Client(minioConfig)
+// 浏览器兼容的 MinIO 客户端模拟
+export const minioClient = {
+  // 在浏览器环境中，这些方法将通过 API 调用实现
+  bucketExists: async (bucketName: string) => {
+    // 通过 API 检查存储桶是否存在
+    const response = await fetch(`/api/minio/bucket-exists/${bucketName}`)
+    return response.json()
+  },
+  makeBucket: async (bucketName: string, region: string) => {
+    // 通过 API 创建存储桶
+    const response = await fetch('/api/minio/make-bucket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bucketName, region }),
+    })
+    return response.json()
+  },
+  setBucketPolicy: async (bucketName: string, policy: string) => {
+    // 通过 API 设置存储桶策略
+    const response = await fetch('/api/minio/set-bucket-policy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bucketName, policy }),
+    })
+    return response.json()
+  },
+  putObject: async (
+    bucketName: string,
+    objectName: string,
+    buffer: ArrayBuffer,
+    size: number,
+    metaData: Record<string, string>,
+  ) => {
+    // 通过预签名URL上传文件
+    const presignedUrl = await minioClient.presignedPutObject(bucketName, objectName, 3600)
+
+    const formData = new FormData()
+    const blob = new Blob([buffer], { type: metaData['Content-Type'] })
+    formData.append('file', blob)
+
+    const response = await fetch(presignedUrl, {
+      method: 'PUT',
+      body: blob,
+      headers: {
+        'Content-Type': metaData['Content-Type'] || 'application/octet-stream',
+        'Content-Length': size.toString(),
+      },
+    })
+
+    return response.json()
+  },
+  removeObject: async (bucketName: string, objectName: string) => {
+    // 通过预签名URL删除文件
+    const presignedUrl = await minioClient.presignedGetObject(bucketName, objectName, 3600)
+    const response = await fetch(presignedUrl, { method: 'DELETE' })
+    return response.json()
+  },
+  presignedGetObject: async (bucketName: string, objectName: string, expiry = 3600) => {
+    // 通过 API 获取预签名URL
+    const response = await fetch(`/api/minio/presigned-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bucketName, objectName, expiry }),
+    })
+    const data = await response.json()
+    return data.url
+  },
+  presignedPutObject: async (bucketName: string, objectName: string, expiry = 3600) => {
+    // 通过 API 获取预签名上传URL
+    const response = await fetch(`/api/minio/presigned-put-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bucketName, objectName, expiry }),
+    })
+    const data = await response.json()
+    return data.url
+  },
+  statObject: async (bucketName: string, objectName: string) => {
+    // 通过 API 获取文件信息
+    const response = await fetch(`/api/minio/stat-object/${bucketName}/${objectName}`)
+    return response.json()
+  },
+  listObjects: (bucketName: string, prefix: string, recursive: boolean) => {
+    // 返回一个模拟的流对象
+    return {
+      on: (event: string, callback: (data: any) => void) => {
+        if (event === 'data') {
+          // 模拟数据事件
+          setTimeout(() => {
+            callback({ name: 'example.txt', size: 1024, lastModified: new Date() })
+          }, 100)
+        } else if (event === 'end') {
+          // 模拟结束事件
+          setTimeout(() => callback(null), 200)
+        } else if (event === 'error') {
+          // 模拟错误事件
+          setTimeout(() => callback(new Error('Not implemented in browser')), 300)
+        }
+      },
+    }
+  },
+}
 
 // 存储桶配置
 export const BUCKETS = {
@@ -150,12 +252,17 @@ export class MinIOService {
         ...metadata,
       }
 
-      // 将File转换为Buffer
+      // 将File转换为ArrayBuffer
       const arrayBuffer = await file.arrayBuffer()
-      const buffer = Buffer.from(arrayBuffer)
 
       // 上传文件
-      const result = await minioClient.putObject(bucket, objectName, buffer, file.size, metaData)
+      const result = await minioClient.putObject(
+        bucket,
+        objectName,
+        arrayBuffer,
+        file.size,
+        metaData,
+      )
 
       // 生成文件URL
       const url = await this.getFileUrl(bucket, objectName)

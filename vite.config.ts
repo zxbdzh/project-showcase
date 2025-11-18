@@ -19,4 +19,14 @@ export default defineConfig({
   optimizeDeps: {
     include: ['util', 'buffer', 'process'],
   },
+  build: {
+    rollupOptions: {
+      external: ['stream', 'timers', 'events', 'buffer', 'util', 'path'],
+    },
+  },
+  server: {
+    fs: {
+      allow: ['..'],
+    },
+  },
 })
