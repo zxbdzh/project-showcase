@@ -40,54 +40,74 @@
 
     <!-- 项目列表 -->
     <main class="projects__main">
-      <div class="projects__grid">
-        <div
-          v-for="project in filteredProjects"
-          :key="project.id"
-          class="projects__card"
-          @click="openProject(project)"
-        >
-          <div class="projects__card-image">
-            <img src="/placeholder-project.svg" :alt="project.title" loading="lazy" />
-            <div class="projects__card-overlay">
-              <el-button type="primary" size="small"> 查看详情 </el-button>
-            </div>
-          </div>
+      <!-- 加载状态 -->
+      <div v-if="isLoading" class="projects__grid">
+        <skeleton-loader v-for="i in 6" :key="i" type="project-card" />
+      </div>
 
-          <div class="projects__card-content">
-            <h3 class="projects__card-title">{{ project.title }}</h3>
-            <p class="projects__card-description">{{ project.description }}</p>
+      <!-- 错误状态 -->
+      <div v-else-if="loadingError" class="projects__error">
+        <el-alert
+          title="加载失败"
+          :description="loadingError"
+          type="error"
+          show-icon
+          :closable="false"
+        />
+        <el-button @click="loadData" type="primary" style="margin-top: 1rem"> 重新加载 </el-button>
+      </div>
 
-            <div class="projects__card-meta">
-              <div class="projects__card-tags">
-                <el-tag
-                  v-for="tag in project.tags?.slice(0, 3)"
-                  :key="tag.id"
-                  size="small"
-                  effect="plain"
-                >
-                  {{ tag.name }}
-                </el-tag>
+      <!-- 正常内容 -->
+      <div v-else>
+        <div class="projects__grid">
+          <div
+            v-for="project in filteredProjects"
+            :key="project.id"
+            class="projects__card"
+            @click="openProject(project)"
+          >
+            <div class="projects__card-image">
+              <img src="/placeholder-project.svg" :alt="project.title" loading="lazy" />
+              <div class="projects__card-overlay">
+                <el-button type="primary" size="small"> 查看详情 </el-button>
               </div>
+            </div>
 
-              <div class="projects__card-stats">
-                <span class="projects__card-date">
-                  {{ formatDate(project.created_at) }}
-                </span>
+            <div class="projects__card-content">
+              <h3 class="projects__card-title">{{ project.title }}</h3>
+              <p class="projects__card-description">{{ project.description }}</p>
+
+              <div class="projects__card-meta">
+                <div class="projects__card-tags">
+                  <el-tag
+                    v-for="tag in ['Vue.js', 'TypeScript', 'Node.js']"
+                    :key="tag"
+                    size="small"
+                    effect="plain"
+                  >
+                    {{ tag }}
+                  </el-tag>
+                </div>
+
+                <div class="projects__card-stats">
+                  <span class="projects__card-date">
+                    {{ formatDate(project.created_at) }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 空状态 -->
-      <div v-if="filteredProjects.length === 0" class="projects__empty">
-        <el-empty description="暂无项目" />
-      </div>
+        <!-- 空状态 -->
+        <div v-if="filteredProjects.length === 0" class="projects__empty">
+          <el-empty description="暂无项目" />
+        </div>
 
-      <!-- 加载更多 -->
-      <div v-if="hasMore" class="projects__load-more">
-        <el-button @click="loadMore" :loading="loading"> 加载更多 </el-button>
+        <!-- 加载更多 -->
+        <div v-if="hasMore" class="projects__load-more">
+          <el-button @click="loadMore" :loading="loading"> 加载更多 </el-button>
+        </div>
       </div>
     </main>
   </div>
@@ -99,6 +119,7 @@ import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 
 import GlitchText from '@/components/GlitchText.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { useProjects, useCategories } from '@/composables/useData'
 import type { Project, Category } from '@/utils/supabase'
 
@@ -113,6 +134,8 @@ const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
 const loading = ref(false)
 const hasMore = ref(true)
+const isLoading = ref(true)
+const loadingError = ref<string | null>(null)
 
 // 计算属性 - 添加"全部"分类选项
 const categoriesWithAll = computed(() => [{ id: 'all', name: '全部' }, ...categories.value])
@@ -187,10 +210,16 @@ const loadMore = async () => {
 
 // 加载数据
 const loadData = async () => {
+  isLoading.value = true
+  loadingError.value = null
+
   try {
     await Promise.all([loadProjects({ status: 'published' }), loadCategories()])
   } catch (error) {
     console.error('Failed to load data:', error)
+    loadingError.value = '加载数据失败，请稍后重试'
+  } finally {
+    isLoading.value = false
   }
 }
 

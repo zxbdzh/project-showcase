@@ -9,7 +9,7 @@
     </div>
 
     <div v-if="loading" class="loading-container">
-      <el-skeleton :rows="5" animated />
+      <loading-spinner overlay="false" text="正在加载项目详情..." size="large" />
     </div>
 
     <div v-else-if="project" class="project-content">
@@ -128,6 +128,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Edit } from '@element-plus/icons-vue'
 import { useAuth } from '@/composables/useAuth'
 import { useProjects } from '@/composables/useData'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import type { Project } from '@/utils/supabase'
 
 // 路由相关

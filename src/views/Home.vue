@@ -39,7 +39,27 @@
           <p class="home__section-subtitle">精选项目作品</p>
         </div>
 
-        <div class="home__projects-grid">
+        <!-- 加载状态 -->
+        <div v-if="isLoading" class="home__projects-grid">
+          <skeleton-loader v-for="i in 3" :key="i" type="project-card" />
+        </div>
+
+        <!-- 错误状态 -->
+        <div v-else-if="loadingError" class="home__error">
+          <el-alert
+            title="加载失败"
+            :description="loadingError"
+            type="error"
+            show-icon
+            :closable="false"
+          />
+          <el-button @click="loadData" type="primary" style="margin-top: 1rem">
+            重新加载
+          </el-button>
+        </div>
+
+        <!-- 正常内容 -->
+        <div v-else class="home__projects-grid">
           <div
             v-for="project in featuredProjects"
             :key="project.id"
@@ -85,7 +105,13 @@
           <p class="home__section-subtitle">技术栈和专业技能</p>
         </div>
 
-        <div class="home__skills-grid">
+        <!-- 加载状态 -->
+        <div v-if="isLoading" class="home__skills-grid">
+          <skeleton-loader v-for="i in 6" :key="i" type="skill-card" />
+        </div>
+
+        <!-- 正常内容 -->
+        <div v-else class="home__skills-grid">
           <div v-for="skill in skillsWithIcons" :key="skill.id" class="home__skill-card">
             <div class="home__skill-icon">
               <el-icon :size="32">
@@ -114,7 +140,13 @@
           <p class="home__section-subtitle">联系方式</p>
         </div>
 
-        <div class="home__contact-grid">
+        <!-- 加载状态 -->
+        <div v-if="isLoading" class="home__contact-grid">
+          <skeleton-loader v-for="i in 4" :key="i" type="contact-item" />
+        </div>
+
+        <!-- 正常内容 -->
+        <div v-else class="home__contact-grid">
           <a
             v-for="link in socialLinksWithIcons"
             :key="link.id"
@@ -134,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, onMounted, type Component } from 'vue'
+import { computed, markRaw, onMounted, ref, type Component } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Link,
@@ -154,10 +186,16 @@ import { useTheme } from '@/composables/useTheme'
 import { useProjects, useSkills, useSocialLinks } from '@/composables/useData'
 import GlitchText from '@/components/GlitchText.vue'
 import CoolProgressBar from '@/components/CoolProgressBar.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import type { Project } from '@/utils/supabase'
 
 const router = useRouter()
 const { isDark } = useTheme()
+
+// 加载状态
+const isLoading = ref(true)
+const loadingError = ref<string | null>(null)
 
 // 使用数据服务
 const { projects, loadProjects } = useProjects()
@@ -220,6 +258,9 @@ const featuredProjects = computed(() => {
 
 // 加载数据
 const loadData = async () => {
+  isLoading.value = true
+  loadingError.value = null
+
   try {
     await Promise.all([
       loadProjects({ status: 'published', featured: true }),
@@ -228,6 +269,9 @@ const loadData = async () => {
     ])
   } catch (error) {
     console.error('Failed to load data:', error)
+    loadingError.value = '加载数据失败，请稍后重试'
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -569,12 +613,34 @@ const viewAllProjects = () => {
   font-size: 1.3rem;
   margin-bottom: 0.5rem;
   color: var(--text-primary);
+  /* 确保文字可见的备用样式 */
+  color: #333 !important;
 }
 
 .home__project-description {
   color: var(--text-secondary);
   margin-bottom: 1rem;
   line-height: 1.6;
+  /* 确保文字可见的备用样式 */
+  color: #666 !important;
+}
+
+/* 深色模式下的项目文字颜色 */
+[data-theme='dark'] .home__project-title {
+  color: #ffffff !important;
+}
+
+[data-theme='dark'] .home__project-description {
+  color: #cccccc !important;
+}
+
+/* 浅色模式下的项目文字颜色 */
+[data-theme='light'] .home__project-title {
+  color: #333333 !important;
+}
+
+[data-theme='light'] .home__project-description {
+  color: #666666 !important;
 }
 
 .home__project-tags {
@@ -624,6 +690,18 @@ const viewAllProjects = () => {
   font-size: 1.2rem;
   margin-bottom: 1rem;
   color: var(--text-primary);
+  /* 确保文字可见的备用样式 */
+  color: #333 !important;
+}
+
+/* 深色模式下的技能名称颜色 */
+[data-theme='dark'] .home__skill-name {
+  color: #ffffff !important;
+}
+
+/* 浅色模式下的技能名称颜色 */
+[data-theme='light'] .home__skill-name {
+  color: #333333 !important;
 }
 
 .home__skill-level {
@@ -661,6 +739,18 @@ const viewAllProjects = () => {
   text-decoration: none;
   color: var(--text-primary);
   transition: all 0.3s ease;
+  /* 确保文字可见的备用样式 */
+  color: #333 !important;
+}
+
+/* 深色模式下的文字颜色 */
+[data-theme='dark'] .home__contact-item {
+  color: #ffffff !important;
+}
+
+/* 浅色模式下的文字颜色 */
+[data-theme='light'] .home__contact-item {
+  color: #333333 !important;
 }
 
 .home__contact-item:hover {
