@@ -180,10 +180,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Link, Message, Phone, TrendCharts, Monitor, Setting } from '@element-plus/icons-vue'
+import {
+  Link,
+  Message,
+  Phone,
+  TrendCharts,
+  Monitor,
+  Setting,
+  User,
+  CaretRight,
+  View,
+  Star,
+  ChatDotRound,
+  Position,
+  TrophyBase,
+  Tools,
+  Document,
+  Folder,
+  CollectionTag,
+  DataLine,
+  Avatar,
+  ArrowRight,
+  Sunny,
+  Moon,
+  SwitchButton,
+} from '@element-plus/icons-vue'
 
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
@@ -241,20 +265,20 @@ const featuredProjects = ref([
 
 // 技能数据（模拟数据）
 const skills = ref([
-  { id: 1, name: 'Java', level: 90, icon: Setting },
-  { id: 2, name: 'Spring Boot', level: 85, icon: Setting },
-  { id: 3, name: 'Vue.js', level: 88, icon: Monitor },
-  { id: 4, name: 'TypeScript', level: 82, icon: Setting },
-  { id: 5, name: 'Docker', level: 78, icon: Setting },
-  { id: 6, name: 'Redis', level: 75, icon: TrendCharts },
+  { id: 1, name: 'Java', level: 90, icon: markRaw(Setting) },
+  { id: 2, name: 'Spring Boot', level: 85, icon: markRaw(Setting) },
+  { id: 3, name: 'Vue.js', level: 88, icon: markRaw(Monitor) },
+  { id: 4, name: 'TypeScript', level: 82, icon: markRaw(Setting) },
+  { id: 5, name: 'Docker', level: 78, icon: markRaw(Setting) },
+  { id: 6, name: 'Redis', level: 75, icon: markRaw(TrendCharts) },
 ])
 
 // 社交链接（模拟数据）
 const socialLinks = ref([
-  { id: 1, name: 'GitHub', url: 'https://github.com', icon: Link },
-  { id: 2, name: 'Twitter', url: 'https://twitter.com', icon: Link },
-  { id: 3, name: 'Email', url: 'mailto:example@email.com', icon: Message },
-  { id: 4, name: 'Phone', url: 'tel:+8613800138000', icon: Phone },
+  { id: 1, name: 'GitHub', url: 'https://github.com', icon: markRaw(Link) },
+  { id: 2, name: 'Twitter', url: 'https://twitter.com', icon: markRaw(Link) },
+  { id: 3, name: 'Email', url: 'mailto:example@email.com', icon: markRaw(Message) },
+  { id: 4, name: 'Phone', url: 'tel:+8613800138000', icon: markRaw(Phone) },
 ])
 
 // 处理用户操作

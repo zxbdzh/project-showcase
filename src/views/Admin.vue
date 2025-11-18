@@ -188,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, markRaw } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Document,
@@ -260,13 +260,13 @@ const systemStatus = ref({
 const getActivityIcon = (type: string) => {
   switch (type) {
     case 'create':
-      return Plus
+      return markRaw(Plus)
     case 'update':
-      return Edit
+      return markRaw(Edit)
     case 'delete':
-      return Delete
+      return markRaw(Delete)
     default:
-      return Document
+      return markRaw(Document)
   }
 }
 
