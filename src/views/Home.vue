@@ -121,7 +121,7 @@
         </div>
 
         <div class="home__skills-grid">
-          <div v-for="skill in skills" :key="skill.id" class="home__skill-card">
+          <div v-for="skill in skillsWithIcons" :key="skill.id" class="home__skill-card">
             <div class="home__skill-icon">
               <el-icon :size="32">
                 <component :is="skill.icon" />
@@ -152,7 +152,7 @@
 
         <div class="home__contact-grid">
           <a
-            v-for="link in socialLinks"
+            v-for="link in socialLinksWithIcons"
             :key="link.id"
             :href="link.url"
             target="_blank"
@@ -211,6 +211,7 @@ import {
 
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { useProjects, useSkills, useSocialLinks } from '@/composables/useData'
 import MatrixRain from '@/components/MatrixRain.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import GlitchText from '@/components/GlitchText.vue'
@@ -220,66 +221,53 @@ const router = useRouter()
 const { isAuthenticated, profile, userInitials, signOut } = useAuth()
 const { isDark } = useTheme()
 
+// 使用数据服务
+const { featuredProjects, loading: projectsLoading } = useProjects()
+const { skills, loading: skillsLoading } = useSkills()
+const { socialLinks, loading: socialLinksLoading } = useSocialLinks()
+
 // 模态框状态
 const showLoginModal = ref(false)
 
-// 特色技能
-const featuredSkills = [
-  'Java',
-  'Spring Boot',
-  'Vue.js',
-  'TypeScript',
-  'Docker',
-  'Redis',
-  'MongoDB',
-  'Nginx',
-]
+// 特色技能（从技能数据中提取）
+const featuredSkills = computed(() => skills.value.slice(0, 8).map((skill) => skill.name))
 
-// 精选项目（模拟数据）
-const featuredProjects = ref([
-  {
-    id: 1,
-    title: 'Vue 3 项目展示系统',
-    description: '基于 Vue 3 + Supabase 的现代化个人主页展示系统',
-    cover_image: '/project-1.jpg',
-    tags: ['Vue.js', 'TypeScript', 'Supabase'],
-    url: 'https://github.com/example/project1',
-  },
-  {
-    id: 2,
-    title: 'Spring Boot 微服务架构',
-    description: '基于 Spring Boot 的微服务架构项目，包含完整的 CI/CD 流程',
-    cover_image: '/project-2.jpg',
-    tags: ['Java', 'Spring Boot', 'Docker'],
-    url: 'https://github.com/example/project2',
-  },
-  {
-    id: 3,
-    title: '实时数据监控平台',
-    description: '基于 WebSocket 的实时数据监控和可视化平台',
-    cover_image: '/project-3.jpg',
-    tags: ['WebSocket', 'ECharts', 'Node.js'],
-    url: 'https://github.com/example/project3',
-  },
-])
+// 处理图标映射
+const getIconComponent = (iconName: string) => {
+  const iconMap: Record<string, any> = {
+    Java: markRaw(Setting),
+    'Spring Boot': markRaw(Setting),
+    'Vue.js': markRaw(Monitor),
+    TypeScript: markRaw(Setting),
+    Docker: markRaw(Setting),
+    Redis: markRaw(TrendCharts),
+    MongoDB: markRaw(DataLine),
+    Nginx: markRaw(Setting),
+    GitHub: markRaw(Link),
+    Twitter: markRaw(ChatDotRound),
+    Email: markRaw(Message),
+    Phone: markRaw(Phone),
+    LinkedIn: markRaw(Position),
+    Website: markRaw(View),
+  }
+  return iconMap[iconName] || markRaw(Document)
+}
 
-// 技能数据（模拟数据）
-const skills = ref([
-  { id: 1, name: 'Java', level: 90, icon: markRaw(Setting) },
-  { id: 2, name: 'Spring Boot', level: 85, icon: markRaw(Setting) },
-  { id: 3, name: 'Vue.js', level: 88, icon: markRaw(Monitor) },
-  { id: 4, name: 'TypeScript', level: 82, icon: markRaw(Setting) },
-  { id: 5, name: 'Docker', level: 78, icon: markRaw(Setting) },
-  { id: 6, name: 'Redis', level: 75, icon: markRaw(TrendCharts) },
-])
+// 处理技能图标
+const skillsWithIcons = computed(() =>
+  skills.value.map((skill) => ({
+    ...skill,
+    icon: getIconComponent(skill.name),
+  })),
+)
 
-// 社交链接（模拟数据）
-const socialLinks = ref([
-  { id: 1, name: 'GitHub', url: 'https://github.com', icon: markRaw(Link) },
-  { id: 2, name: 'Twitter', url: 'https://twitter.com', icon: markRaw(Link) },
-  { id: 3, name: 'Email', url: 'mailto:example@email.com', icon: markRaw(Message) },
-  { id: 4, name: 'Phone', url: 'tel:+8613800138000', icon: markRaw(Phone) },
-])
+// 处理社交链接图标
+const socialLinksWithIcons = computed(() =>
+  socialLinks.value.map((link) => ({
+    ...link,
+    icon: getIconComponent(link.name),
+  })),
+)
 
 // 处理用户操作
 const handleUserAction = async (command: string) => {

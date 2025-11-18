@@ -7,13 +7,16 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useTheme } from '@/composables/useTheme'
+import { initializeData } from '@/composables/useData'
 
 // 初始化主题系统
 const { theme, initTheme } = useTheme()
 
-// 组件挂载时初始化主题
+// 组件挂载时初始化
 onMounted(() => {
   initTheme()
+  // 初始化数据加载
+  initializeData()
 })
 </script>
 

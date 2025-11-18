@@ -1,0 +1,508 @@
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import {
+  projectService,
+  categoryService,
+  tagService,
+  skillService,
+  socialLinkService,
+  profileService,
+  type Project,
+  type Category,
+  type Tag,
+  type Skill,
+  type SocialLink,
+  type Profile,
+} from '@/services/database'
+
+// 全局数据状态
+const projects = ref<Project[]>([])
+const categories = ref<Category[]>([])
+const tags = ref<Tag[]>([])
+const skills = ref<Skill[]>([])
+const socialLinks = ref<SocialLink[]>([])
+const currentProfile = ref<Profile | null>(null)
+
+// 加载状态
+const loading = ref({
+  projects: false,
+  categories: false,
+  tags: false,
+  skills: false,
+  socialLinks: false,
+  profile: false,
+})
+
+// 错误状态
+const error = ref<string | null>(null)
+
+// 计算属性
+const featuredProjects = computed(() =>
+  projects.value.filter((project) => project.featured && project.status === 'published'),
+)
+
+const publishedProjects = computed(() =>
+  projects.value.filter((project) => project.status === 'published'),
+)
+
+const draftProjects = computed(() => projects.value.filter((project) => project.status === 'draft'))
+
+const isLoading = computed(() => Object.values(loading.value).some((isLoading) => isLoading))
+
+// 项目相关操作
+export function useProjects() {
+  const loadProjects = async (options?: {
+    featured?: boolean
+    status?: 'draft' | 'published' | 'archived'
+    limit?: number
+  }) => {
+    loading.value.projects = true
+    error.value = null
+
+    try {
+      const data = await projectService.getProjects(options)
+      projects.value = data
+      return data
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('加载项目失败')
+      throw err
+    } finally {
+      loading.value.projects = false
+    }
+  }
+
+  const createProject = async (data: Partial<Project>) => {
+    try {
+      const newProject = await projectService.createProject(data)
+      projects.value.push(newProject)
+      ElMessage.success('项目创建成功')
+      return newProject
+    } catch (err: any) {
+      ElMessage.error('创建项目失败')
+      throw err
+    }
+  }
+
+  const updateProject = async (id: string, data: Partial<Project>) => {
+    try {
+      const updatedProject = await projectService.updateProject(id, data)
+      const index = projects.value.findIndex((p) => p.id === id)
+      if (index !== -1) {
+        projects.value[index] = updatedProject
+      }
+      ElMessage.success('项目更新成功')
+      return updatedProject
+    } catch (err: any) {
+      ElMessage.error('更新项目失败')
+      throw err
+    }
+  }
+
+  const deleteProject = async (id: string) => {
+    try {
+      await projectService.deleteProject(id)
+      projects.value = projects.value.filter((p) => p.id !== id)
+      ElMessage.success('项目删除成功')
+    } catch (err: any) {
+      ElMessage.error('删除项目失败')
+      throw err
+    }
+  }
+
+  const getProject = async (id: string) => {
+    try {
+      return await projectService.getProject(id)
+    } catch (err: any) {
+      ElMessage.error('获取项目详情失败')
+      throw err
+    }
+  }
+
+  return {
+    projects: computed(() => projects.value),
+    featuredProjects,
+    publishedProjects,
+    draftProjects,
+    loading: computed(() => loading.value.projects),
+    loadProjects,
+    createProject,
+    updateProject,
+    deleteProject,
+    getProject,
+  }
+}
+
+// 分类相关操作
+export function useCategories() {
+  const loadCategories = async () => {
+    loading.value.categories = true
+    error.value = null
+
+    try {
+      const data = await categoryService.getCategories()
+      categories.value = data
+      return data
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('加载分类失败')
+      throw err
+    } finally {
+      loading.value.categories = false
+    }
+  }
+
+  const createCategory = async (data: Partial<Category>) => {
+    try {
+      const newCategory = await categoryService.createCategory(data)
+      categories.value.push(newCategory)
+      ElMessage.success('分类创建成功')
+      return newCategory
+    } catch (err: any) {
+      ElMessage.error('创建分类失败')
+      throw err
+    }
+  }
+
+  const updateCategory = async (id: string, data: Partial<Category>) => {
+    try {
+      const updatedCategory = await categoryService.updateCategory(id, data)
+      const index = categories.value.findIndex((c) => c.id === id)
+      if (index !== -1) {
+        categories.value[index] = updatedCategory
+      }
+      ElMessage.success('分类更新成功')
+      return updatedCategory
+    } catch (err: any) {
+      ElMessage.error('更新分类失败')
+      throw err
+    }
+  }
+
+  const deleteCategory = async (id: string) => {
+    try {
+      await categoryService.deleteCategory(id)
+      categories.value = categories.value.filter((c) => c.id !== id)
+      ElMessage.success('分类删除成功')
+    } catch (err: any) {
+      ElMessage.error('删除分类失败')
+      throw err
+    }
+  }
+
+  return {
+    categories: computed(() => categories.value),
+    loading: computed(() => loading.value.categories),
+    loadCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+  }
+}
+
+// 标签相关操作
+export function useTags() {
+  const loadTags = async () => {
+    loading.value.tags = true
+    error.value = null
+
+    try {
+      const data = await tagService.getTags()
+      tags.value = data
+      return data
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('加载标签失败')
+      throw err
+    } finally {
+      loading.value.tags = false
+    }
+  }
+
+  const createTag = async (data: Partial<Tag>) => {
+    try {
+      const newTag = await tagService.createTag(data)
+      tags.value.push(newTag)
+      ElMessage.success('标签创建成功')
+      return newTag
+    } catch (err: any) {
+      ElMessage.error('创建标签失败')
+      throw err
+    }
+  }
+
+  const updateTag = async (id: string, data: Partial<Tag>) => {
+    try {
+      const updatedTag = await tagService.updateTag(id, data)
+      const index = tags.value.findIndex((t) => t.id === id)
+      if (index !== -1) {
+        tags.value[index] = updatedTag
+      }
+      ElMessage.success('标签更新成功')
+      return updatedTag
+    } catch (err: any) {
+      ElMessage.error('更新标签失败')
+      throw err
+    }
+  }
+
+  const deleteTag = async (id: string) => {
+    try {
+      await tagService.deleteTag(id)
+      tags.value = tags.value.filter((t) => t.id !== id)
+      ElMessage.success('标签删除成功')
+    } catch (err: any) {
+      ElMessage.error('删除标签失败')
+      throw err
+    }
+  }
+
+  return {
+    tags: computed(() => tags.value),
+    loading: computed(() => loading.value.tags),
+    loadTags,
+    createTag,
+    updateTag,
+    deleteTag,
+  }
+}
+
+// 技能相关操作
+export function useSkills() {
+  const loadSkills = async () => {
+    loading.value.skills = true
+    error.value = null
+
+    try {
+      const data = await skillService.getSkills()
+      skills.value = data
+      return data
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('加载技能失败')
+      throw err
+    } finally {
+      loading.value.skills = false
+    }
+  }
+
+  const createSkill = async (data: Partial<Skill>) => {
+    try {
+      const newSkill = await skillService.createSkill(data)
+      skills.value.push(newSkill)
+      ElMessage.success('技能创建成功')
+      return newSkill
+    } catch (err: any) {
+      ElMessage.error('创建技能失败')
+      throw err
+    }
+  }
+
+  const updateSkill = async (id: string, data: Partial<Skill>) => {
+    try {
+      const updatedSkill = await skillService.updateSkill(id, data)
+      const index = skills.value.findIndex((s) => s.id === id)
+      if (index !== -1) {
+        skills.value[index] = updatedSkill
+      }
+      ElMessage.success('技能更新成功')
+      return updatedSkill
+    } catch (err: any) {
+      ElMessage.error('更新技能失败')
+      throw err
+    }
+  }
+
+  const deleteSkill = async (id: string) => {
+    try {
+      await skillService.deleteSkill(id)
+      skills.value = skills.value.filter((s) => s.id !== id)
+      ElMessage.success('技能删除成功')
+    } catch (err: any) {
+      ElMessage.error('删除技能失败')
+      throw err
+    }
+  }
+
+  return {
+    skills: computed(() => skills.value),
+    loading: computed(() => loading.value.skills),
+    loadSkills,
+    createSkill,
+    updateSkill,
+    deleteSkill,
+  }
+}
+
+// 社交链接相关操作
+export function useSocialLinks() {
+  const loadSocialLinks = async () => {
+    loading.value.socialLinks = true
+    error.value = null
+
+    try {
+      const data = await socialLinkService.getSocialLinks()
+      socialLinks.value = data
+      return data
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('加载社交链接失败')
+      throw err
+    } finally {
+      loading.value.socialLinks = false
+    }
+  }
+
+  const createSocialLink = async (data: Partial<SocialLink>) => {
+    try {
+      const newLink = await socialLinkService.createSocialLink(data)
+      socialLinks.value.push(newLink)
+      ElMessage.success('社交链接创建成功')
+      return newLink
+    } catch (err: any) {
+      ElMessage.error('创建社交链接失败')
+      throw err
+    }
+  }
+
+  const updateSocialLink = async (id: string, data: Partial<SocialLink>) => {
+    try {
+      const updatedLink = await socialLinkService.updateSocialLink(id, data)
+      const index = socialLinks.value.findIndex((l) => l.id === id)
+      if (index !== -1) {
+        socialLinks.value[index] = updatedLink
+      }
+      ElMessage.success('社交链接更新成功')
+      return updatedLink
+    } catch (err: any) {
+      ElMessage.error('更新社交链接失败')
+      throw err
+    }
+  }
+
+  const deleteSocialLink = async (id: string) => {
+    try {
+      await socialLinkService.deleteSocialLink(id)
+      socialLinks.value = socialLinks.value.filter((l) => l.id !== id)
+      ElMessage.success('社交链接删除成功')
+    } catch (err: any) {
+      ElMessage.error('删除社交链接失败')
+      throw err
+    }
+  }
+
+  return {
+    socialLinks: computed(() => socialLinks.value),
+    loading: computed(() => loading.value.socialLinks),
+    loadSocialLinks,
+    createSocialLink,
+    updateSocialLink,
+    deleteSocialLink,
+  }
+}
+
+// 用户档案相关操作
+export function useProfile() {
+  const loadProfile = async (userId: string) => {
+    loading.value.profile = true
+    error.value = null
+
+    try {
+      const data = await profileService.getProfile(userId)
+      currentProfile.value = data
+      return data
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('加载用户档案失败')
+      throw err
+    } finally {
+      loading.value.profile = false
+    }
+  }
+
+  const updateProfile = async (userId: string, data: Partial<Profile>) => {
+    try {
+      const updatedProfile = await profileService.updateProfile(userId, data)
+      currentProfile.value = updatedProfile
+      ElMessage.success('档案更新成功')
+      return updatedProfile
+    } catch (err: any) {
+      ElMessage.error('更新档案失败')
+      throw err
+    }
+  }
+
+  const createProfile = async (data: Partial<Profile>) => {
+    try {
+      const newProfile = await profileService.createProfile(data)
+      currentProfile.value = newProfile
+      ElMessage.success('档案创建成功')
+      return newProfile
+    } catch (err: any) {
+      ElMessage.error('创建档案失败')
+      throw err
+    }
+  }
+
+  return {
+    profile: computed(() => currentProfile.value),
+    loading: computed(() => loading.value.profile),
+    loadProfile,
+    updateProfile,
+    createProfile,
+  }
+}
+
+// 全局数据加载
+export function useData() {
+  const loadAllData = async () => {
+    try {
+      await Promise.all([
+        useProjects().loadProjects(),
+        useCategories().loadCategories(),
+        useTags().loadTags(),
+        useSkills().loadSkills(),
+        useSocialLinks().loadSocialLinks(),
+      ])
+      ElMessage.success('数据加载完成')
+    } catch (err: any) {
+      ElMessage.error('数据加载失败')
+      throw err
+    }
+  }
+
+  const refreshData = async () => {
+    await loadAllData()
+  }
+
+  return {
+    projects: computed(() => projects.value),
+    categories: computed(() => categories.value),
+    tags: computed(() => tags.value),
+    skills: computed(() => skills.value),
+    socialLinks: computed(() => socialLinks.value),
+    profile: computed(() => currentProfile.value),
+    loading: isLoading,
+    error: computed(() => error.value),
+    loadAllData,
+    refreshData,
+  }
+}
+
+// 初始化数据
+export function initializeData() {
+  onMounted(async () => {
+    try {
+      // 只加载公开数据，用户档案需要登录后加载
+      await Promise.all([
+        useProjects().loadProjects({ status: 'published', featured: true }),
+        useCategories().loadCategories(),
+        useTags().loadTags(),
+        useSkills().loadSkills(),
+        useSocialLinks().loadSocialLinks(),
+      ])
+    } catch (error) {
+      console.error('Failed to initialize data:', error)
+    }
+  })
+}
