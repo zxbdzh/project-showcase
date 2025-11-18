@@ -9,6 +9,10 @@
         <p class="admin-skills__subtitle">管理个人技能</p>
       </div>
       <div class="admin-skills__actions">
+        <el-button size="large" @click="goBack">
+          <el-icon><ArrowLeft /></el-icon>
+          返回
+        </el-button>
         <el-button type="primary" size="large" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           新建技能
@@ -256,8 +260,12 @@ import {
   Document,
   Phone,
   Star,
+  ArrowLeft,
 } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+
+const router = useRouter()
 
 // 响应式数据
 const searchQuery = ref('')
@@ -377,6 +385,10 @@ const filteredSkills = computed(() => {
 })
 
 // 方法
+const goBack = () => {
+  router.back()
+}
+
 const handleSearch = () => {
   // 搜索逻辑已在计算属性中处理
 }

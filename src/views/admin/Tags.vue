@@ -9,6 +9,10 @@
         <p class="admin-tags__subtitle">管理项目标签</p>
       </div>
       <div class="admin-tags__actions">
+        <el-button size="large" @click="goBack">
+          <el-icon><ArrowLeft /></el-icon>
+          返回
+        </el-button>
         <el-button type="primary" size="large" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           新建标签
@@ -149,8 +153,11 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
-import { Plus, Search, Edit, Delete, MoreFilled } from '@element-plus/icons-vue'
+import { Plus, Search, Edit, Delete, MoreFilled, ArrowLeft } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+
+const router = useRouter()
 
 // 响应式数据
 const searchQuery = ref('')
@@ -247,6 +254,10 @@ const filteredTags = computed(() => {
 })
 
 // 方法
+const goBack = () => {
+  router.back()
+}
+
 const handleSearch = () => {
   // 搜索逻辑已在计算属性中处理
 }

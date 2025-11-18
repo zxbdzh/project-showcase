@@ -527,6 +527,7 @@ html.dark {
       var(--el-color-success-light-8)
     );
     border-left: 4px solid var(--el-color-success);
+    color: #54c680;
   }
 
   &.el-message--warning {
@@ -536,6 +537,7 @@ html.dark {
       var(--el-color-warning-light-8)
     );
     border-left: 4px solid var(--el-color-warning);
+    color: #b26500;
   }
 
   &.el-message--error {
@@ -545,11 +547,13 @@ html.dark {
       var(--el-color-danger-light-8)
     );
     border-left: 4px solid var(--el-color-danger);
+    color: #c45656;
   }
 
   &.el-message--info {
     background: linear-gradient(135deg, var(--el-color-info-light-9), var(--el-color-info-light-8));
     border-left: 4px solid var(--el-color-info);
+    color: #0a7a7a;
   }
 
   .el-message__content {
@@ -558,6 +562,15 @@ html.dark {
 
   .el-message__icon {
     color: inherit;
+  }
+
+  .el-message__closeBtn {
+    color: inherit;
+    opacity: 0.7;
+
+    &:hover {
+      opacity: 1;
+    }
   }
 }
 
@@ -570,7 +583,7 @@ html.dark {
 
     &.el-message--success {
       background: rgba(0, 255, 65, 0.15);
-      border-color: #00ff41;
+      border-color: #357946;
       color: #00ff41;
     }
 

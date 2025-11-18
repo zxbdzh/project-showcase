@@ -72,7 +72,7 @@
             type="primary"
             size="large"
             class="admin__action-btn"
-            @click="$router.push('/admin/projects')"
+            @click="router.push('/admin/projects')"
           >
             <el-icon><Document /></el-icon>
             项目管理
@@ -82,7 +82,7 @@
             type="success"
             size="large"
             class="admin__action-btn"
-            @click="$router.push('/admin/categories')"
+            @click="router.push('/admin/categories')"
           >
             <el-icon><Folder /></el-icon>
             分类管理
@@ -92,7 +92,7 @@
             type="warning"
             size="large"
             class="admin__action-btn"
-            @click="$router.push('/admin/tags')"
+            @click="router.push('/admin/tags')"
           >
             <el-icon><CollectionTag /></el-icon>
             标签管理
@@ -102,7 +102,7 @@
             type="info"
             size="large"
             class="admin__action-btn"
-            @click="$router.push('/admin/skills')"
+            @click="router.push('/admin/skills')"
           >
             <el-icon><TrendCharts /></el-icon>
             技能管理
@@ -112,7 +112,7 @@
             type="danger"
             size="large"
             class="admin__action-btn"
-            @click="$router.push('/admin/social-links')"
+            @click="router.push('/admin/social-links')"
           >
             <el-icon><Link /></el-icon>
             社交链接
@@ -190,6 +190,7 @@
 <script setup lang="ts">
 import { ref, onMounted, markRaw } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 import {
   Document,
   User,
@@ -205,6 +206,8 @@ import {
 } from '@element-plus/icons-vue'
 
 import GlitchText from '@/components/GlitchText.vue'
+
+const router = useRouter()
 
 // 统计数据
 const stats = ref({
