@@ -9,11 +9,16 @@ const router = createRouter({
       name: 'home',
       component: () => import('../views/Home.vue'),
     },
+    {
+      path: '/projects',
+      name: 'projects',
+      component: () => import('../views/Projects.vue'),
+    },
     // 其他路由将在对应页面创建后启用
     // {
-    //   path: '/projects',
-    //   name: 'projects',
-    //   component: () => import('../views/Projects.vue'),
+    //   path: '/project/:id',
+    //   name: 'project-detail',
+    //   component: () => import('../views/ProjectDetail.vue'),
     // },
     // {
     //   path: '/project/:id',
