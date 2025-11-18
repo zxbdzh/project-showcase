@@ -57,7 +57,7 @@
             <span class="file-size">{{ formatFileSize(file.size || 0) }}</span>
           </div>
           <el-progress
-            :percentage="file.percentage || 0"
+            :percentage="Number(file.percentage) || 0"
             :status="
               file.status === 'success' ? 'success' : file.status === 'fail' ? 'exception' : ''
             "
@@ -94,8 +94,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled, Upload, InfoFilled, Document } from '@element-plus/icons-vue'
-import type { UploadProps, UploadUserFile, UploadFiles } from 'element-plus'
-import { useMinio } from '@/composables/useMinio'
+import type { UploadUserFile } from 'element-plus'
 
 // 扩展UploadUserFile接口
 interface ExtendedUploadFile extends UploadUserFile {
@@ -144,8 +143,8 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-// MinIO 相关
-const { uploadFile, getPresignedUrl } = useMinio()
+// MinIO 相关 - 暂时禁用，等待后端API实现
+// const { uploadFile, getPresignedUrl } = useMinio()
 
 // 组件状态
 const uploadRef = ref()
@@ -218,91 +217,13 @@ const beforeUpload = async (file: UploadUserFile) => {
     }
   }
 
-  // 添加到上传列表
-  const newUploadFile: ExtendedUploadFile = {
-    ...file,
-    uid: typeof file.uid === 'number' ? file.uid : Date.now(),
-    status: 'uploading',
-    percentage: 0,
-    type: (file as any).type || '',
-  }
-
-  uploadingFiles.value.push(newUploadFile)
-
-  if (!progressVisible.value) {
-    progressVisible.value = true
-  }
-
-  try {
-    uploading.value = true
-
-    // 使用 MinIO 上传文件
-    const { uploadFile: minioUploadFile } = useMinio()
-    const result = await minioUploadFile((file as any).raw || (file as File), {
-      bucket: props.bucket,
-      folder: props.folder,
-      onProgress: (progress: { percent: number }) => {
-        const index = uploadingFiles.value.findIndex((f) => f.uid === newUploadFile.uid)
-        if (index !== -1 && uploadingFiles.value[index]) {
-          uploadingFiles.value[index].percentage = Math.round(progress.percent * 100)
-        }
-      },
-    })
-
-    // 上传成功
-    const successFile: ExtendedUploadFile = {
-      ...newUploadFile,
-      status: 'success',
-      percentage: 100,
-      url: result.url,
-      key: result.key,
-    }
-
-    const index = uploadingFiles.value.findIndex((f) => f.uid === newUploadFile.uid)
-    if (index !== -1 && uploadingFiles.value[index]) {
-      uploadingFiles.value[index] = successFile
-    }
-
-    fileList.value.push(successFile)
-    emit('success', result, file)
-    ElMessage.success(`${file.name} 上传成功`)
-
-    return true
-  } catch (error: any) {
-    // 上传失败
-    const failFile: ExtendedUploadFile = {
-      ...newUploadFile,
-      status: 'fail',
-      percentage: 0,
-      errorMessage: error.message || '上传失败',
-    }
-
-    const index = uploadingFiles.value.findIndex((f) => f.uid === newUploadFile.uid)
-    if (index !== -1 && uploadingFiles.value[index]) {
-      uploadingFiles.value[index] = failFile
-    }
-
-    emit('error', error, file)
-    ElMessage.error(`${file.name} 上传失败: ${error.message}`)
-
-    return false
-  } finally {
-    uploading.value = false
-
-    // 检查是否所有文件都上传完成
-    setTimeout(() => {
-      if (!hasUploading.value) {
-        setTimeout(() => {
-          progressVisible.value = false
-          uploadingFiles.value = []
-        }, 2000)
-      }
-    }, 1000)
-  }
+  // 暂时禁用上传功能，等待后端API实现
+  ElMessage.warning('文件上传功能暂时禁用，请等待后端API实现')
+  return false
 }
 
 // 上传进度
-const onProgress = (event: any, file: UploadUserFile) => {
+const onProgress = (event: { percent: number }, file: UploadUserFile) => {
   const index = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
   if (index !== -1 && uploadingFiles.value[index]) {
     uploadingFiles.value[index].percentage = Math.round(event.percent)
@@ -310,7 +231,7 @@ const onProgress = (event: any, file: UploadUserFile) => {
 }
 
 // 上传成功
-const onSuccess = (response: any, file: UploadUserFile) => {
+const onSuccess = (response: unknown, file: UploadUserFile) => {
   const index = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
   if (index !== -1 && uploadingFiles.value[index]) {
     uploadingFiles.value[index].status = 'success'

@@ -190,11 +190,11 @@ const formRules: FormRules = {
   ],
   description: [
     { required: true, message: '请输入项目描述', trigger: 'blur' },
-    { min: 10, max: 500, message: '描述长度在 10 到 500 个字符', trigger: 'blur' },
+    { min: 5, max: 500, message: '描述长度在 5 到 500 个字符', trigger: 'blur' },
   ],
   content: [
     { required: true, message: '请输入项目内容', trigger: 'blur' },
-    { min: 20, message: '内容至少需要 20 个字符', trigger: 'blur' },
+    { min: 10, message: '内容至少需要 10 个字符', trigger: 'blur' },
   ],
   status: [{ required: true, message: '请选择项目状态', trigger: 'change' }],
 }
