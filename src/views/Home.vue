@@ -135,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, onMounted } from 'vue'
+import { computed, markRaw, onMounted, type Component } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Link,
@@ -186,7 +186,7 @@ const featuredSkills = computed(() => skills.value.slice(0, 8).map((skill) => sk
 
 // 处理图标映射
 const getIconComponent = (iconName: string) => {
-  const iconMap: Record<string, any> = {
+  const iconMap: Record<string, Component> = {
     Java: markRaw(Setting),
     'Spring Boot': markRaw(Setting),
     'Vue.js': markRaw(Monitor),
@@ -205,11 +205,26 @@ const getIconComponent = (iconName: string) => {
   return iconMap[iconName] || markRaw(Document)
 }
 
+// 将技能级别字符串转换为数字
+const convertSkillLevelToNumber = (level: string | number): number => {
+  if (typeof level === 'number') return level
+
+  const levelMap: Record<string, number> = {
+    beginner: 25,
+    intermediate: 50,
+    advanced: 75,
+    expert: 90,
+  }
+
+  return levelMap[level.toLowerCase()] || 50
+}
+
 // 处理技能图标
 const skillsWithIcons = computed(() =>
   skills.value.map((skill) => ({
     ...skill,
     icon: getIconComponent(skill.name),
+    level: convertSkillLevelToNumber(skill.level),
   })),
 )
 
