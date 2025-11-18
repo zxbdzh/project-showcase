@@ -31,6 +31,36 @@ const router = createRouter({
           component: () => import('@/views/Admin.vue'),
           meta: { requiresAuth: true, requiresAdmin: true },
         },
+        {
+          path: 'admin/projects',
+          name: 'admin-projects',
+          component: () => import('@/views/admin/Projects.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        {
+          path: 'admin/categories',
+          name: 'admin-categories',
+          component: () => import('@/views/admin/Categories.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        {
+          path: 'admin/tags',
+          name: 'admin-tags',
+          component: () => import('@/views/admin/Tags.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        {
+          path: 'admin/skills',
+          name: 'admin-skills',
+          component: () => import('@/views/admin/Skills.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        {
+          path: 'admin/social-links',
+          name: 'admin-social-links',
+          component: () => import('@/views/admin/SocialLinks.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
         // 其他路由将在对应页面创建后启用
         // {
         //   path: 'profile',
