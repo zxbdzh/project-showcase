@@ -1,13 +1,15 @@
 <template>
   <div id="app" :data-theme="actualTheme">
+    <ThemeTransition />
     <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { useTheme } from '@/composables/useTheme'
-import { initializeData } from '@/composables/useData'
+import { useTheme } from './composables/useTheme'
+import { initializeData } from './composables/useData'
+import ThemeTransition from './components/ThemeTransition.vue'
 
 // 初始化主题系统
 const { actualTheme, initTheme } = useTheme()

@@ -8,6 +8,7 @@ export function useTheme() {
   const theme = ref<ThemeMode>('system')
   const systemTheme = ref<'light' | 'dark'>('light')
   const actualTheme = ref<'light' | 'dark'>('light')
+  const isTransitioning = ref(false)
 
   // 检测系统主题
   const detectSystemTheme = (): 'light' | 'dark' => {
@@ -18,47 +19,80 @@ export function useTheme() {
   }
 
   // 应用主题
-  const applyTheme = (newTheme: 'light' | 'dark') => {
-    actualTheme.value = newTheme
+  const applyTheme = (newTheme: 'light' | 'dark', showTransition = false) => {
+    if (showTransition) {
+      isTransitioning.value = true
 
-    // 立即应用主题到document
-    const root = document.documentElement
+      // 设置过渡状态
+      const root = document.documentElement
+      root.classList.add('theme-transitioning')
 
-    // 设置data-theme属性
-    root.setAttribute('data-theme', newTheme)
+      // 延迟应用主题，让过渡动画先开始
+      setTimeout(() => {
+        actualTheme.value = newTheme
 
-    // 更新Element Plus主题 - 添加或移除dark类
-    if (newTheme === 'dark') {
-      root.classList.add('dark')
+        // 设置data-theme属性
+        root.setAttribute('data-theme', newTheme)
+
+        // 更新Element Plus主题 - 添加或移除dark类
+        if (newTheme === 'dark') {
+          root.classList.add('dark')
+        } else {
+          root.classList.remove('dark')
+        }
+
+        // 应用CSS变量
+        applyThemeVariables(newTheme)
+
+        // 更新Element Plus CSS变量
+        updateElementPlusTheme(newTheme)
+
+        // 更新meta标签
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0a0a' : '#ffffff')
+        }
+
+        // 触发全局主题更新事件
+        window.dispatchEvent(
+          new CustomEvent('theme-changed', {
+            detail: { theme: newTheme },
+          }),
+        )
+
+        // 过渡结束后移除过渡状态
+        setTimeout(() => {
+          root.classList.remove('theme-transitioning')
+          isTransitioning.value = false
+        }, 300) // 与CSS过渡时间匹配
+      }, 50)
     } else {
-      root.classList.remove('dark')
-    }
+      // 直接应用主题，不显示过渡动画
+      actualTheme.value = newTheme
 
-    // 应用CSS变量
-    applyThemeVariables(newTheme)
+      const root = document.documentElement
+      root.setAttribute('data-theme', newTheme)
 
-    // 更新Element Plus CSS变量
-    updateElementPlusTheme(newTheme)
+      if (newTheme === 'dark') {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
 
-    // 更新meta标签
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0a0a' : '#ffffff')
-    }
+      applyThemeVariables(newTheme)
+      updateElementPlusTheme(newTheme)
 
-    // 强制重绘以确保主题立即生效
-    requestAnimationFrame(() => {
-      root.style.display = 'none'
-      root.offsetHeight // 触发重排
-      root.style.display = ''
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0a0a' : '#ffffff')
+      }
 
-      // 触发全局主题更新事件
       window.dispatchEvent(
         new CustomEvent('theme-changed', {
           detail: { theme: newTheme },
         }),
       )
-    })
+    }
   }
 
   // 更新Element Plus主题
@@ -150,14 +184,14 @@ export function useTheme() {
   }
 
   // 切换主题
-  const setTheme = (newTheme: ThemeMode) => {
+  const setTheme = (newTheme: ThemeMode, showTransition = true) => {
     theme.value = newTheme
     localStorage.setItem(THEME_STORAGE_KEY, newTheme)
 
     if (newTheme === 'system') {
-      applyTheme(systemTheme.value)
+      applyTheme(systemTheme.value, showTransition)
     } else {
-      applyTheme(newTheme)
+      applyTheme(newTheme, showTransition)
     }
   }
 
@@ -166,7 +200,7 @@ export function useTheme() {
     const themes: ThemeMode[] = ['light', 'dark', 'system']
     const currentIndex = themes.indexOf(theme.value)
     const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % themes.length : 0
-    setTheme(themes[nextIndex]!)
+    setTheme(themes[nextIndex]!, true) // 手动切换时显示过渡动画
   }
 
   // 监听系统主题变化
@@ -250,16 +284,16 @@ export function useTheme() {
   // 监听主题变化
   watch(theme, (newTheme) => {
     if (newTheme === 'system') {
-      applyTheme(systemTheme.value)
+      applyTheme(systemTheme.value, false) // 系统主题变化不显示过渡
     } else {
-      applyTheme(newTheme)
+      applyTheme(newTheme, false) // watch触发的变化不显示过渡
     }
   })
 
   // 监听系统主题变化
   watch(systemTheme, (newSystemTheme) => {
     if (theme.value === 'system') {
-      applyTheme(newSystemTheme)
+      applyTheme(newSystemTheme, false) // 系统主题变化不显示过渡
     }
   })
 
@@ -279,6 +313,7 @@ export function useTheme() {
     theme: readonly(theme),
     systemTheme: readonly(systemTheme),
     actualTheme: readonly(actualTheme),
+    isTransitioning: readonly(isTransitioning),
 
     // 计算属性
     currentThemeIcon,
