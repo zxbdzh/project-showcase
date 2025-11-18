@@ -78,11 +78,7 @@
             @click="openProject(project)"
           >
             <div class="home__project-image">
-              <img
-                :src="project.cover_image || '/placeholder-project.jpg'"
-                :alt="project.title"
-                loading="lazy"
-              />
+              <img :src="'/placeholder-project.jpg'" :alt="project.title" loading="lazy" />
               <div class="home__project-overlay">
                 <el-button type="primary" size="small"> 查看详情 </el-button>
               </div>
@@ -94,7 +90,7 @@
 
               <div class="home__project-tags">
                 <el-tag
-                  v-for="tag in project.tags?.slice(0, 3)"
+                  v-for="tag in ['Vue.js', 'TypeScript', 'Supabase']"
                   :key="tag"
                   size="small"
                   effect="plain"
@@ -312,8 +308,14 @@ const scrollToContact = () => {
 }
 
 // 打开项目
-const openProject = (project: { url: string }) => {
-  window.open(project.url, '_blank')
+const openProject = (project: any) => {
+  const url = project.demo_url || project.github_url || '#'
+  if (url !== '#') {
+    window.open(url, '_blank')
+  } else {
+    // 如果没有外部链接，跳转到项目详情页
+    router.push(`/project/${project.id}`)
+  }
 }
 
 // 查看所有项目

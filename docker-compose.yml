@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # MinIO 对象存储服务
+  minio:
+    image: minio/minio:latest
+    container_name: project-showcase-minio
+    restart: unless-stopped
+    ports:
+      - '9000:9000' # MinIO API端口
+      - '9001:9001' # MinIO Console端口
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_DOMAIN: localhost
+      MINIO_SERVER_URL: http://localhost:9000
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+    volumes:
+      - minio_data:/data
+      - minio_config:/root/.minio
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 40s
+
+  # MinIO 客户端工具 (可选)
+  mc:
+    image: minio/mc:latest
+    container_name: project-showcase-mc
+    restart: 'no'
+    depends_on:
+      - minio
+    entrypoint: >

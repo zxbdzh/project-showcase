@@ -14,17 +14,13 @@ const router = createRouter({
       name: 'projects',
       component: () => import('../views/Projects.vue'),
     },
+    {
+      path: '/project/:id',
+      name: 'project-detail',
+      component: () => import('../views/ProjectDetail.vue'),
+      meta: { requiresAuth: false },
+    },
     // 其他路由将在对应页面创建后启用
-    // {
-    //   path: '/project/:id',
-    //   name: 'project-detail',
-    //   component: () => import('../views/ProjectDetail.vue'),
-    // },
-    // {
-    //   path: '/project/:id',
-    //   name: 'project-detail',
-    //   component: () => import('../views/ProjectDetail.vue'),
-    // },
     // {
     //   path: '/profile',
     //   name: 'profile',
@@ -34,7 +30,7 @@ const router = createRouter({
     {
       path: '/admin',
       name: 'admin',
-      component: () => import('../views/Admin.vue'),
+      component: () => import('@/views/Admin.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     // {
