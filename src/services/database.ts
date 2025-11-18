@@ -182,7 +182,20 @@ export class ProjectService extends DatabaseService {
   }
 
   async createProject(data: Partial<Project>): Promise<Project> {
-    return this.insert<Project>('projects', data)
+    // 获取当前用户ID
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('用户未登录')
+    }
+
+    const projectData = {
+      ...data,
+      user_id: user.id,
+    }
+
+    return this.insert<Project>('projects', projectData)
   }
 
   async updateProject(id: string, data: Partial<Project>): Promise<Project> {
@@ -259,7 +272,20 @@ export class CategoryService extends DatabaseService {
   }
 
   async createCategory(data: Partial<Category>): Promise<Category> {
-    return this.insert<Category>('categories', data)
+    // 获取当前用户ID
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('用户未登录')
+    }
+
+    const categoryData = {
+      ...data,
+      user_id: user.id,
+    }
+
+    return this.insert<Category>('categories', categoryData)
   }
 
   async updateCategory(id: string, data: Partial<Category>): Promise<Category> {
@@ -289,7 +315,20 @@ export class TagService extends DatabaseService {
   }
 
   async createTag(data: Partial<Tag>): Promise<Tag> {
-    return this.insert<Tag>('tags', data)
+    // 获取当前用户ID
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('用户未登录')
+    }
+
+    const tagData = {
+      ...data,
+      user_id: user.id,
+    }
+
+    return this.insert<Tag>('tags', tagData)
   }
 
   async updateTag(id: string, data: Partial<Tag>): Promise<Tag> {
@@ -319,7 +358,20 @@ export class SkillService extends DatabaseService {
   }
 
   async createSkill(data: Partial<Skill>): Promise<Skill> {
-    return this.insert<Skill>('skills', data)
+    // 获取当前用户ID
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('用户未登录')
+    }
+
+    const skillData = {
+      ...data,
+      user_id: user.id,
+    }
+
+    return this.insert<Skill>('skills', skillData)
   }
 
   async updateSkill(id: string, data: Partial<Skill>): Promise<Skill> {
@@ -349,7 +401,20 @@ export class SocialLinkService extends DatabaseService {
   }
 
   async createSocialLink(data: Partial<SocialLink>): Promise<SocialLink> {
-    return this.insert<SocialLink>('social_links', data)
+    // 获取当前用户ID
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      throw new Error('用户未登录')
+    }
+
+    const socialLinkData = {
+      ...data,
+      user_id: user.id,
+    }
+
+    return this.insert<SocialLink>('social_links', socialLinkData)
   }
 
   async updateSocialLink(id: string, data: Partial<SocialLink>): Promise<SocialLink> {

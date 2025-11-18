@@ -304,27 +304,27 @@ const formatTime = (dateString: string) => {
 
 // 导航方法
 const navigateToProjects = () => {
-  router.push('/admin/projects')
+  router.push({ name: 'admin-projects' })
 }
 
 const navigateToCategories = () => {
-  router.push('/admin/categories')
+  router.push({ name: 'admin-categories' })
 }
 
 const navigateToTags = () => {
-  router.push('/admin/tags')
+  router.push({ name: 'admin-tags' })
 }
 
 const navigateToSkills = () => {
-  router.push('/admin/skills')
+  router.push({ name: 'admin-skills' })
 }
 
 const navigateToSocialLinks = () => {
-  router.push('/admin/social-links')
+  router.push({ name: 'admin-social-links' })
 }
 
 const navigateToSiteSettings = () => {
-  router.push('/admin/site-settings')
+  router.push({ name: 'admin-site-settings' })
 }
 
 // 组件挂载时加载数据
