@@ -624,6 +624,55 @@ html.dark {
   }
 }
 
+html.dark {
+  .el-button {
+    font-weight: 500;
+    border-radius: var(--el-border-radius-base);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 255, 65, 0.3);
+      color: white;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &.el-button--primary {
+      background: linear-gradient(135deg, #00ff41, #00cc33);
+      border: none;
+
+      &:hover {
+        background: linear-gradient(135deg, #00ff50, #00dd38);
+        box-shadow: 0 4px 16px rgba(0, 255, 65, 0.4);
+      }
+    }
+
+    &.el-button--success {
+      background: linear-gradient(135deg, #00ff41, #00cc33);
+      border: none;
+    }
+
+    &.el-button--warning {
+      background: linear-gradient(135deg, #ff9800, #e68900);
+      border: none;
+    }
+
+    &.el-button--danger {
+      background: linear-gradient(135deg, #ff4757, #e63946);
+      border: none;
+    }
+
+    &.el-button--info {
+      background: linear-gradient(135deg, #00ffff, #00cccc);
+      border: none;
+      color: #000;
+    }
+  }
+}
+
 // Notification 组件
 .el-notification {
   border-radius: var(--el-border-radius-base);

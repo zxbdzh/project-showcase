@@ -72,7 +72,7 @@
             type="primary"
             size="large"
             class="admin__action-btn"
-            @click="() => router.push('/admin/projects')"
+            @click="navigateToProjects"
           >
             <el-icon><Document /></el-icon>
             项目管理
@@ -82,28 +82,18 @@
             type="success"
             size="large"
             class="admin__action-btn"
-            @click="() => router.push('/admin/categories')"
+            @click="navigateToCategories"
           >
             <el-icon><Folder /></el-icon>
             分类管理
           </el-button>
 
-          <el-button
-            type="warning"
-            size="large"
-            class="admin__action-btn"
-            @click="() => router.push('/admin/tags')"
-          >
+          <el-button type="warning" size="large" class="admin__action-btn" @click="navigateToTags">
             <el-icon><CollectionTag /></el-icon>
             标签管理
           </el-button>
 
-          <el-button
-            type="info"
-            size="large"
-            class="admin__action-btn"
-            @click="() => router.push('/admin/skills')"
-          >
+          <el-button type="info" size="large" class="admin__action-btn" @click="navigateToSkills">
             <el-icon><TrendCharts /></el-icon>
             技能管理
           </el-button>
@@ -112,7 +102,7 @@
             type="danger"
             size="large"
             class="admin__action-btn"
-            @click="() => router.push('/admin/social-links')"
+            @click="navigateToSocialLinks"
           >
             <el-icon><Link /></el-icon>
             社交链接
@@ -308,6 +298,27 @@ const formatTime = (dateString: string) => {
   } else {
     return date.toLocaleDateString('zh-CN')
   }
+}
+
+// 导航方法
+const navigateToProjects = () => {
+  router.push('/admin/projects')
+}
+
+const navigateToCategories = () => {
+  router.push('/admin/categories')
+}
+
+const navigateToTags = () => {
+  router.push('/admin/tags')
+}
+
+const navigateToSkills = () => {
+  router.push('/admin/skills')
+}
+
+const navigateToSocialLinks = () => {
+  router.push('/admin/social-links')
 }
 
 // 组件挂载时加载数据

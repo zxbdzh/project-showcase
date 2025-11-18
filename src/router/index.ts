@@ -82,9 +82,9 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
-    const { isAuthenticated } = useAuth()
+    const auth = useAuth()
 
-    if (!isAuthenticated.value) {
+    if (!auth.isAuthenticated.value) {
       // 未登录，重定向到首页并显示登录模态框
       next({ name: 'home' })
       return
@@ -92,9 +92,7 @@ router.beforeEach((to, from, next) => {
 
     // 检查是否需要管理员权限
     if (to.meta.requiresAdmin) {
-      const { isAdmin } = useAuth()
-
-      if (!isAdmin.value) {
+      if (!auth.isAdmin.value) {
         // 权限不足，重定向到首页
         next({ name: 'home' })
         return
