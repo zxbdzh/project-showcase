@@ -35,16 +35,30 @@
             <span>{{ project.description }}</span>
           </div>
           <div class="info-item">
-            <label>技术栈:</label>
+            <label>项目分类:</label>
             <div class="tech-tags">
               <el-tag
-                v-for="tech in project.technologies"
-                :key="tech"
-                type="info"
+                v-for="category in project.categories"
+                :key="category.id"
+                :color="category.color"
                 size="small"
                 class="tech-tag"
               >
-                {{ tech }}
+                {{ category.name }}
+              </el-tag>
+            </div>
+          </div>
+          <div class="info-item">
+            <label>项目标签:</label>
+            <div class="tech-tags">
+              <el-tag
+                v-for="tag in project.tags"
+                :key="tag.id"
+                :color="tag.color"
+                size="small"
+                class="tech-tag"
+              >
+                {{ tag.name }}
               </el-tag>
             </div>
           </div>
@@ -65,70 +79,29 @@
         </div>
       </el-card>
 
-      <!-- 项目图片 -->
-      <el-card v-if="project.images && project.images.length > 0" class="project-images">
+      <!-- 项目内容 -->
+      <el-card v-if="project.content" class="project-content-card">
         <template #header>
-          <h3>项目截图</h3>
+          <h3>项目详情</h3>
         </template>
-
-        <div class="image-grid">
-          <div
-            v-for="(image, index) in project.images"
-            :key="index"
-            class="image-item"
-            @click="previewImage(image)"
-          >
-            <img :src="image.url" :alt="`项目截图 ${index + 1}`" />
-            <div class="image-overlay">
-              <el-icon><zoom-in /></el-icon>
-            </div>
-          </div>
-        </div>
-      </el-card>
-
-      <!-- 项目文件 -->
-      <el-card v-if="project.files && project.files.length > 0" class="project-files">
-        <template #header>
-          <h3>项目文件</h3>
-        </template>
-
-        <div class="file-list">
-          <div v-for="file in project.files" :key="file.id" class="file-item">
-            <el-icon class="file-icon"><document /></el-icon>
-            <div class="file-info">
-              <span class="file-name">{{ file.name }}</span>
-              <span class="file-size">{{ formatFileSize(file.size) }}</span>
-            </div>
-            <div class="file-actions">
-              <el-button @click="downloadFile(file)" type="primary" size="small">
-                <el-icon><download /></el-icon>
-                下载
-              </el-button>
-              <el-button v-if="isAdmin" @click="deleteFile(file)" type="danger" size="small">
-                <el-icon><delete /></el-icon>
-                删除
-              </el-button>
-            </div>
-          </div>
-        </div>
+        <div class="project-content-text" v-html="project.content"></div>
       </el-card>
 
       <!-- 项目链接 -->
-      <el-card v-if="project.links && project.links.length > 0" class="project-links">
+      <el-card class="project-links">
         <template #header>
           <h3>相关链接</h3>
         </template>
 
         <div class="link-list">
-          <a
-            v-for="link in project.links"
-            :key="link.id"
-            :href="link.url"
-            target="_blank"
-            class="link-item"
-          >
+          <a v-if="project.demo_url" :href="project.demo_url" target="_blank" class="link-item">
             <el-icon><link /></el-icon>
-            <span>{{ link.title }}</span>
+            <span>在线演示</span>
+            <el-icon class="external-icon"><link /></el-icon>
+          </a>
+          <a v-if="project.github_url" :href="project.github_url" target="_blank" class="link-item">
+            <el-icon><link /></el-icon>
+            <span>GitHub 仓库</span>
             <el-icon class="external-icon"><link /></el-icon>
           </a>
         </div>
@@ -152,8 +125,10 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Edit, Document, Download, Delete, ZoomIn, Link } from '@element-plus/icons-vue'
+import { ArrowLeft, Edit } from '@element-plus/icons-vue'
 import { useAuth } from '@/composables/useAuth'
+import { useProjects } from '@/composables/useData'
+import type { Project } from '@/utils/supabase'
 
 // 路由相关
 const route = useRoute()
@@ -162,9 +137,12 @@ const router = useRouter()
 // 认证相关
 const { isAdmin } = useAuth()
 
+// 数据相关
+const { getProject } = useProjects()
+
 // 状态管理
 const loading = ref(true)
-const project = ref<any>(null)
+const project = ref<Project | null>(null)
 const imagePreviewVisible = ref(false)
 const previewImageUrl = ref('')
 
@@ -174,34 +152,15 @@ const fetchProject = async () => {
     loading.value = true
     const projectId = route.params.id as string
 
-    // 模拟数据，实际应该从API获取
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // 从真实API获取项目数据
+    const projectData = await getProject(projectId)
 
-    project.value = {
-      id: projectId,
-      title: 'Vue 3 项目展示系统',
-      description:
-        '一个基于 Vue 3 + TypeScript + Supabase 的现代化个人主页展示系统，包含完整的前端展示和后台管理功能。',
-      technologies: ['Vue 3', 'TypeScript', 'Supabase', 'Element Plus', 'Vite'],
-      status: 'active',
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-15T00:00:00Z',
-      images: [
-        { id: 1, url: 'https://via.placeholder.com/600x400/4CAF50/FFFFFF?text=项目截图1' },
-        { id: 2, url: 'https://via.placeholder.com/600x400/2196F3/FFFFFF?text=项目截图2' },
-        { id: 3, url: 'https://via.placeholder.com/600x400/FF9800/FFFFFF?text=项目截图3' },
-      ],
-      files: [
-        { id: 1, name: '项目文档.pdf', size: 1024 * 1024 * 2, url: '#' },
-        { id: 2, name: '源代码.zip', size: 1024 * 1024 * 10, url: '#' },
-      ],
-      links: [
-        { id: 1, title: '在线演示', url: 'https://example.com' },
-        { id: 2, title: 'GitHub 仓库', url: 'https://github.com/example' },
-        { id: 3, title: 'API 文档', url: 'https://docs.example.com' },
-      ],
+    if (projectData) {
+      project.value = projectData
+    } else {
+      ElMessage.warning('项目不存在或已被删除')
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('获取项目详情失败:', error)
     ElMessage.error('获取项目详情失败')
   } finally {
@@ -244,33 +203,6 @@ const formatFileSize = (size: number) => {
 // 操作方法
 const editProject = () => {
   router.push(`/admin/projects/${project.value?.id}/edit`)
-}
-
-const previewImage = (image: any) => {
-  previewImageUrl.value = image.url
-  imagePreviewVisible.value = true
-}
-
-const downloadFile = (file: any) => {
-  // 模拟文件下载
-  ElMessage.success(`开始下载 ${file.name}`)
-  // 实际项目中应该调用下载API
-  window.open(file.url, '_blank')
-}
-
-const deleteFile = async (file: any) => {
-  try {
-    await ElMessageBox.confirm(`确定要删除文件 "${file.name}" 吗？`, '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-
-    ElMessage.success('文件删除成功')
-    // 实际项目中应该调用删除API并更新数据
-  } catch {
-    // 用户取消删除
-  }
 }
 
 // 组件挂载时获取数据
@@ -317,8 +249,7 @@ onMounted(() => {
 }
 
 .project-info,
-.project-images,
-.project-files,
+.project-content-card,
 .project-links {
   background: var(--card-bg);
   border: 1px solid var(--border-primary);
@@ -486,6 +417,50 @@ onMounted(() => {
 
 .external-icon {
   margin-left: auto;
+  color: var(--text-secondary);
+}
+
+.project-content-text {
+  line-height: 1.6;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.project-content-text :deep(h1),
+.project-content-text :deep(h2),
+.project-content-text :deep(h3),
+.project-content-text :deep(h4),
+.project-content-text :deep(h5),
+.project-content-text :deep(h6) {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.project-content-text :deep(p) {
+  margin-bottom: 16px;
+}
+
+.project-content-text :deep(code) {
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.project-content-text :deep(pre) {
+  background: var(--bg-secondary);
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.project-content-text :deep(blockquote) {
+  border-left: 4px solid var(--accent-primary);
+  padding-left: 16px;
+  margin: 16px 0;
   color: var(--text-secondary);
 }
 

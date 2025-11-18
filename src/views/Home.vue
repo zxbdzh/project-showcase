@@ -47,7 +47,7 @@
             @click="openProject(project)"
           >
             <div class="home__project-image">
-              <img :src="'/placeholder-project.jpg'" :alt="project.title" loading="lazy" />
+              <img src="/placeholder-project.svg" :alt="project.title" loading="lazy" />
               <div class="home__project-overlay">
                 <el-button type="primary" size="small"> 查看详情 </el-button>
               </div>
@@ -135,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw } from 'vue'
+import { computed, markRaw, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Link,
@@ -159,9 +159,27 @@ const router = useRouter()
 const { isDark } = useTheme()
 
 // 使用数据服务
-const { featuredProjects } = useProjects()
-const { skills } = useSkills()
-const { socialLinks } = useSocialLinks()
+const { featuredProjects, loadProjects } = useProjects()
+const { skills, loadSkills } = useSkills()
+const { socialLinks, loadSocialLinks } = useSocialLinks()
+
+// 加载数据
+const loadData = async () => {
+  try {
+    await Promise.all([
+      loadProjects({ status: 'published', featured: true }),
+      loadSkills(),
+      loadSocialLinks(),
+    ])
+  } catch (error) {
+    console.error('Failed to load data:', error)
+  }
+}
+
+// 组件挂载时加载数据
+onMounted(() => {
+  loadData()
+})
 
 // 特色技能（从技能数据中提取）
 const featuredSkills = computed(() => skills.value.slice(0, 8).map((skill) => skill.name))

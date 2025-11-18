@@ -25,7 +25,7 @@
 
         <div class="projects__filter-tags">
           <el-tag
-            v-for="category in categories"
+            v-for="category in categoriesWithAll"
             :key="category.id"
             :type="selectedCategory === category.id ? 'primary' : undefined"
             :effect="selectedCategory === category.id ? 'dark' : 'plain'"
@@ -48,11 +48,7 @@
           @click="openProject(project)"
         >
           <div class="projects__card-image">
-            <img
-              :src="project.cover_image || '/placeholder-project.jpg'"
-              :alt="project.title"
-              loading="lazy"
-            />
+            <img src="/placeholder-project.svg" :alt="project.title" loading="lazy" />
             <div class="projects__card-overlay">
               <el-button type="primary" size="small"> 查看详情 </el-button>
             </div>
@@ -66,11 +62,11 @@
               <div class="projects__card-tags">
                 <el-tag
                   v-for="tag in project.tags?.slice(0, 3)"
-                  :key="tag"
+                  :key="tag.id"
                   size="small"
                   effect="plain"
                 >
-                  {{ tag }}
+                  {{ tag.name }}
                 </el-tag>
               </div>
 
@@ -100,25 +96,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 
 import GlitchText from '@/components/GlitchText.vue'
+import { useProjects, useCategories } from '@/composables/useData'
+import type { Project, Category } from '@/utils/supabase'
 
-// 定义项目类型接口
-interface Project {
-  id: number
-  title: string
-  description: string
-  cover_image?: string
-  tags: string[]
-  category: string
-  url: string
-  created_at: string
-}
+const router = useRouter()
 
-interface Category {
-  id: string
-  name: string
-}
+// 使用数据服务
+const { publishedProjects, loadProjects } = useProjects()
+const { categories, loadCategories } = useCategories()
 
 // 响应式数据
 const searchQuery = ref('')
@@ -126,88 +114,19 @@ const selectedCategory = ref<string | null>(null)
 const loading = ref(false)
 const hasMore = ref(true)
 
-// 模拟项目数据
-const projects = ref([
-  {
-    id: 1,
-    title: 'Vue 3 项目展示系统',
-    description: '基于 Vue 3 + Supabase 的现代化个人主页展示系统，包含完整的前端展示和后台管理功能',
-    cover_image: '/project-1.jpg',
-    tags: ['Vue.js', 'TypeScript', 'Supabase', 'Element Plus'],
-    category: 'frontend',
-    url: 'https://github.com/example/project1',
-    created_at: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: 2,
-    title: 'Spring Boot 微服务架构',
-    description: '基于 Spring Boot 的微服务架构项目，包含完整的 CI/CD 流程和容器化部署',
-    cover_image: '/project-2.jpg',
-    tags: ['Java', 'Spring Boot', 'Docker', 'Kubernetes'],
-    category: 'backend',
-    url: 'https://github.com/example/project2',
-    created_at: '2024-01-10T15:30:00Z',
-  },
-  {
-    id: 3,
-    title: '实时数据监控平台',
-    description: '基于 WebSocket 的实时数据监控和可视化平台，支持多数据源接入',
-    cover_image: '/project-3.jpg',
-    tags: ['WebSocket', 'ECharts', 'Node.js', 'Redis'],
-    category: 'fullstack',
-    url: 'https://github.com/example/project3',
-    created_at: '2024-01-05T09:15:00Z',
-  },
-  {
-    id: 4,
-    title: '智能推荐系统',
-    description: '基于机器学习的智能推荐系统，支持协同过滤和内容推荐算法',
-    cover_image: '/project-4.jpg',
-    tags: ['Python', 'TensorFlow', 'Redis', 'MongoDB'],
-    category: 'ai',
-    url: 'https://github.com/example/project4',
-    created_at: '2023-12-28T14:20:00Z',
-  },
-  {
-    id: 5,
-    title: '移动端商城应用',
-    description: '基于 uni-app 的跨平台商城应用，支持微信小程序和APP',
-    cover_image: '/project-5.jpg',
-    tags: ['uni-app', 'Vue.js', '微信小程序', '移动端'],
-    category: 'mobile',
-    url: 'https://github.com/example/project5',
-    created_at: '2023-12-20T11:45:00Z',
-  },
-  {
-    id: 6,
-    title: 'DevOps 自动化平台',
-    description: '基于 Jenkins 和 Docker 的 DevOps 自动化平台，实现持续集成和部署',
-    cover_image: '/project-6.jpg',
-    tags: ['DevOps', 'Jenkins', 'Docker', 'CI/CD'],
-    category: 'devops',
-    url: 'https://github.com/example/project6',
-    created_at: '2023-12-15T16:00:00Z',
-  },
-])
-
-// 分类数据
-const categories = ref([
-  { id: 'all', name: '全部' },
-  { id: 'frontend', name: '前端' },
-  { id: 'backend', name: '后端' },
-  { id: 'fullstack', name: '全栈' },
-  { id: 'mobile', name: '移动端' },
-  { id: 'ai', name: '人工智能' },
-  { id: 'devops', name: 'DevOps' },
-])
+// 计算属性 - 添加"全部"分类选项
+const categoriesWithAll = computed(() => [{ id: 'all', name: '全部' }, ...categories.value])
 
 // 计算属性
 const filteredProjects = computed(() => {
-  let filtered = projects.value
+  let filtered = publishedProjects.value
 
   // 按分类筛选
   if (selectedCategory.value && selectedCategory.value !== 'all') {
-    filtered = filtered.filter((project) => project.category === selectedCategory.value)
+    filtered = filtered.filter((project) => {
+      const categoryIds = project.categories?.map((cat: any) => cat.id) || []
+      return categoryIds.includes(selectedCategory.value)
+    })
   }
 
   // 按搜索关键词筛选
@@ -216,8 +135,8 @@ const filteredProjects = computed(() => {
     filtered = filtered.filter(
       (project) =>
         project.title.toLowerCase().includes(query) ||
-        project.description.toLowerCase().includes(query) ||
-        project.tags?.some((tag) => tag.toLowerCase().includes(query)),
+        (project.description && project.description.toLowerCase().includes(query)) ||
+        project.tags?.some((tag: any) => tag.name.toLowerCase().includes(query)),
     )
   }
 
@@ -234,7 +153,14 @@ const handleCategoryFilter = (categoryId: string) => {
 }
 
 const openProject = (project: Project) => {
-  window.open(project.url, '_blank')
+  // 优先使用 demo_url，其次使用 github_url
+  const url = project.demo_url || project.github_url
+  if (url) {
+    window.open(url, '_blank')
+  } else {
+    // 如果没有外部链接，跳转到项目详情页
+    router.push(`/project/${project.id}`)
+  }
 }
 
 const formatDate = (dateString: string) => {
@@ -252,16 +178,25 @@ const loadMore = async () => {
     // 模拟加载更多数据
     await new Promise((resolve) => setTimeout(resolve, 1000))
     ElMessage.success('已加载更多项目')
-  } catch (error) {
+  } catch {
     ElMessage.error('加载失败')
   } finally {
     loading.value = false
   }
 }
 
+// 加载数据
+const loadData = async () => {
+  try {
+    await Promise.all([loadProjects({ status: 'published' }), loadCategories()])
+  } catch (error) {
+    console.error('Failed to load data:', error)
+  }
+}
+
 // 组件挂载
 onMounted(() => {
-  // 可以在这里加载真实数据
+  loadData()
 })
 </script>
 

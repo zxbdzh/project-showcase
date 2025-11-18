@@ -196,15 +196,19 @@ import {
 } from '@element-plus/icons-vue'
 
 import GlitchText from '@/components/GlitchText.vue'
+import { useData } from '@/composables/useData'
 
 const router = useRouter()
 
+// 数据相关
+const { projects, categories, tags, skills, socialLinks } = useData()
+
 // 统计数据
 const stats = ref({
-  projects: 12,
-  users: 156,
-  views: 2847,
-  likes: 423,
+  projects: 0,
+  users: 1,
+  views: 0,
+  likes: 0,
 })
 
 // 最近活动
@@ -212,32 +216,20 @@ const recentActivities = ref([
   {
     id: 1,
     type: 'create',
-    title: '创建了新项目 "Vue 3 项目展示系统"',
-    created_at: '2024-01-15T10:30:00Z',
+    title: '创建了新项目',
+    created_at: new Date().toISOString(),
   },
   {
     id: 2,
     type: 'update',
-    title: '更新了项目 "Spring Boot 微服务架构"',
-    created_at: '2024-01-14T15:20:00Z',
+    title: '更新了项目信息',
+    created_at: new Date(Date.now() - 3600000).toISOString(),
   },
   {
     id: 3,
     type: 'delete',
-    title: '删除了标签 "过时技术"',
-    created_at: '2024-01-13T09:15:00Z',
-  },
-  {
-    id: 4,
-    type: 'create',
-    title: '添加了新分类 "人工智能"',
-    created_at: '2024-01-12T14:45:00Z',
-  },
-  {
-    id: 5,
-    type: 'update',
-    title: '修改了技能 "Docker" 等级',
-    created_at: '2024-01-11T11:30:00Z',
+    title: '删除了项目数据',
+    created_at: new Date(Date.now() - 7200000).toISOString(),
   },
 ])
 
@@ -246,7 +238,7 @@ const systemStatus = ref({
   database: true,
   storage: true,
   api: true,
-  cache: false,
+  cache: true,
 })
 
 // 获取活动图标
@@ -324,7 +316,10 @@ const navigateToSocialLinks = () => {
 // 组件挂载时加载数据
 onMounted(async () => {
   try {
-    // 这里可以加载真实的统计数据
+    // 更新统计数据
+    stats.value.projects = projects.value.length
+    stats.value.users = 1 // 暂时固定为1，后续可以从用户表获取
+
     ElMessage.success('欢迎来到管理后台')
   } catch {
     ElMessage.error('加载数据失败')
