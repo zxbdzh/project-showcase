@@ -1,10 +1,12 @@
 <template>
-  <div v-if="isTransitioning" class="theme-transition-overlay" :class="{ active: isTransitioning }">
-    <div class="theme-transition-content">
-      <div class="theme-transition-icon">{{ currentIcon }}</div>
-      <div class="theme-transition-text">切换主题中...</div>
+  <transition name="theme-transition">
+    <div v-if="isTransitioning" class="theme-transition-overlay">
+      <div class="theme-transition-content">
+        <div class="theme-transition-icon">{{ currentIcon }}</div>
+        <div class="theme-transition-text">切换主题中...</div>
+      </div>
     </div>
-  </div>
+  </transition>
 </template>
 
 <script setup lang="ts">
@@ -32,20 +34,12 @@ const currentIcon = computed(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle, rgba(0, 255, 65, 0.15) 0%, transparent 70%);
-  backdrop-filter: blur(2px);
-  pointer-events: none;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
   z-index: 9999;
-  opacity: 0;
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.theme-transition-overlay.active {
-  opacity: 1;
-  pointer-events: all;
 }
 
 .theme-transition-content {
@@ -54,17 +48,15 @@ const currentIcon = computed(() => {
   align-items: center;
   gap: 16px;
   padding: 32px;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 255, 65, 0.1);
   border-radius: 16px;
   border: 2px solid var(--accent-primary);
   box-shadow: 0 8px 32px rgba(0, 255, 65, 0.3);
-  backdrop-filter: blur(8px);
-  animation: themeTransitionPulse 1.5s ease-in-out infinite;
 }
 
 .theme-transition-icon {
   font-size: 48px;
-  animation: themeIconSpin 2s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 .theme-transition-text {
@@ -75,42 +67,24 @@ const currentIcon = computed(() => {
   letter-spacing: 1px;
 }
 
-@keyframes themeTransitionPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.9;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
   }
-  50% {
-    transform: scale(1.05);
-    opacity: 1;
+  to {
+    transform: rotate(360deg);
   }
 }
 
-@keyframes themeIconSpin {
-  0% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.1);
-  }
-  100% {
-    transform: rotate(360deg) scale(1);
-  }
+/* 过渡动画 */
+.theme-transition-enter-active,
+.theme-transition-leave-active {
+  transition: opacity 0.3s ease;
 }
 
-/* 深色模式适配 */
-[data-theme='dark'] .theme-transition-content {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--accent-primary);
-  box-shadow: 0 8px 32px rgba(0, 255, 65, 0.4);
-}
-
-/* 浅色模式适配 */
-[data-theme='light'] .theme-transition-content {
-  background: rgba(0, 0, 0, 0.8);
-  border-color: var(--accent-primary);
-  box-shadow: 0 8px 32px rgba(0, 255, 65, 0.2);
+.theme-transition-enter-from,
+.theme-transition-leave-to {
+  opacity: 0;
 }
 
 /* 响应式设计 */
@@ -131,10 +105,6 @@ const currentIcon = computed(() => {
 
 /* 减少动画模式支持 */
 @media (prefers-reduced-motion: reduce) {
-  .theme-transition-content {
-    animation: none;
-  }
-
   .theme-transition-icon {
     animation: none;
   }

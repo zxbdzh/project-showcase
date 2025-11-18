@@ -18,80 +18,64 @@ export function useTheme() {
     return 'light'
   }
 
+  // 应用主题到DOM
+  const applyThemeToDOM = (themeValue: 'light' | 'dark') => {
+    const root = document.documentElement
+
+    // 设置data-theme属性
+    root.setAttribute('data-theme', themeValue)
+
+    // 更新Element Plus主题类
+    if (themeValue === 'dark') {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+
+    // 应用CSS变量
+    applyThemeVariables(themeValue)
+
+    // 更新Element Plus变量
+    updateElementPlusTheme(themeValue)
+
+    // 更新meta标签
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', themeValue === 'dark' ? '#0a0a0a' : '#ffffff')
+    }
+
+    // 触发全局主题更新事件
+    window.dispatchEvent(
+      new CustomEvent('theme-changed', {
+        detail: { theme: themeValue },
+      }),
+    )
+  }
+
   // 应用主题
   const applyTheme = (newTheme: 'light' | 'dark', showTransition = false) => {
     if (showTransition) {
+      // 显示过渡动画
       isTransitioning.value = true
 
-      // 设置过渡状态
-      const root = document.documentElement
-      root.classList.add('theme-transitioning')
+      // 添加过渡类
+      document.documentElement.classList.add('theme-transitioning')
 
       // 延迟应用主题，让过渡动画先开始
       setTimeout(() => {
         actualTheme.value = newTheme
-
-        // 设置data-theme属性
-        root.setAttribute('data-theme', newTheme)
-
-        // 更新Element Plus主题 - 添加或移除dark类
-        if (newTheme === 'dark') {
-          root.classList.add('dark')
-        } else {
-          root.classList.remove('dark')
-        }
-
-        // 应用CSS变量
-        applyThemeVariables(newTheme)
-
-        // 更新Element Plus CSS变量
-        updateElementPlusTheme(newTheme)
-
-        // 更新meta标签
-        const metaThemeColor = document.querySelector('meta[name="theme-color"]')
-        if (metaThemeColor) {
-          metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0a0a' : '#ffffff')
-        }
-
-        // 触发全局主题更新事件
-        window.dispatchEvent(
-          new CustomEvent('theme-changed', {
-            detail: { theme: newTheme },
-          }),
-        )
+        applyThemeToDOM(newTheme)
 
         // 过渡结束后移除过渡状态
         setTimeout(() => {
-          root.classList.remove('theme-transitioning')
+          document.documentElement.classList.remove('theme-transitioning')
           isTransitioning.value = false
-        }, 300) // 与CSS过渡时间匹配
+        }, 300)
       }, 50)
     } else {
       // 直接应用主题，不显示过渡动画
       actualTheme.value = newTheme
-
-      const root = document.documentElement
-      root.setAttribute('data-theme', newTheme)
-
-      if (newTheme === 'dark') {
-        root.classList.add('dark')
-      } else {
-        root.classList.remove('dark')
-      }
-
-      applyThemeVariables(newTheme)
-      updateElementPlusTheme(newTheme)
-
-      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
-      if (metaThemeColor) {
-        metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0a0a' : '#ffffff')
-      }
-
-      window.dispatchEvent(
-        new CustomEvent('theme-changed', {
-          detail: { theme: newTheme },
-        }),
-      )
+      applyThemeToDOM(newTheme)
     }
   }
 
@@ -184,7 +168,7 @@ export function useTheme() {
   }
 
   // 切换主题
-  const setTheme = (newTheme: ThemeMode, showTransition = true) => {
+  const setTheme = (newTheme: ThemeMode, showTransition = false) => {
     theme.value = newTheme
     localStorage.setItem(THEME_STORAGE_KEY, newTheme)
 
@@ -211,7 +195,7 @@ export function useTheme() {
       const handleChange = (e: MediaQueryListEvent) => {
         systemTheme.value = e.matches ? 'dark' : 'light'
         if (theme.value === 'system') {
-          applyTheme(systemTheme.value)
+          applyTheme(systemTheme.value, false) // 系统主题变化不显示过渡
         }
       }
 
@@ -244,11 +228,11 @@ export function useTheme() {
     // 检测系统主题
     systemTheme.value = detectSystemTheme()
 
-    // 应用主题
+    // 应用主题（不显示过渡动画）
     if (theme.value === 'system') {
-      applyTheme(systemTheme.value)
+      applyTheme(systemTheme.value, false)
     } else {
-      applyTheme(theme.value)
+      applyTheme(theme.value, false)
     }
   }
 
@@ -284,7 +268,7 @@ export function useTheme() {
   // 监听主题变化
   watch(theme, (newTheme) => {
     if (newTheme === 'system') {
-      applyTheme(systemTheme.value, false) // 系统主题变化不显示过渡
+      applyTheme(systemTheme.value, false) // watch触发的变化不显示过渡
     } else {
       applyTheme(newTheme, false) // watch触发的变化不显示过渡
     }

@@ -46,7 +46,6 @@ body {
   line-height: 1.6;
   color: var(--text-primary);
   background: var(--bg-primary);
-  transition: all 0.3s ease;
   min-height: 100vh;
 }
 
@@ -145,6 +144,15 @@ body {
 
   --shadow-color: rgba(0, 102, 204, 0.1);
   --shadow-hover: rgba(0, 102, 204, 0.2);
+}
+
+/* 主题切换过渡 */
+.theme-transitioning {
+  transition:
+    background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* 滚动条样式 */
