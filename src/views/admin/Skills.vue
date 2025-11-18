@@ -55,10 +55,10 @@
 
           <el-select v-model="levelFilter" placeholder="技能水平" clearable @change="handleFilter">
             <el-option label="全部" value="" />
-            <el-option label="初级" value="beginner" />
-            <el-option label="中级" value="intermediate" />
-            <el-option label="高级" value="advanced" />
-            <el-option label="专家" value="expert" />
+            <el-option label="初级" :value="1" />
+            <el-option label="中级" :value="2" />
+            <el-option label="高级" :value="3" />
+            <el-option label="专家" :value="4" />
           </el-select>
         </div>
       </div>
@@ -183,10 +183,10 @@
           <el-col :span="12">
             <el-form-item label="技能水平" prop="level">
               <el-select v-model="formData.level" placeholder="请选择水平">
-                <el-option label="初级" value="beginner" />
-                <el-option label="中级" value="intermediate" />
-                <el-option label="高级" value="advanced" />
-                <el-option label="专家" value="expert" />
+                <el-option label="初级" :value="1" />
+                <el-option label="中级" :value="2" />
+                <el-option label="高级" :value="3" />
+                <el-option label="专家" :value="4" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -264,72 +264,25 @@ import {
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+import { useSkills } from '@/composables/useData'
 
 const router = useRouter()
+const { skills, loading, loadSkills, createSkill, updateSkill, deleteSkill } = useSkills()
 
 // 响应式数据
 const searchQuery = ref('')
 const categoryFilter = ref('')
 const levelFilter = ref('')
-const loading = ref(false)
 const showCreateDialog = ref(false)
 const editingSkill = ref(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 
-// 模拟技能数据
-const skills = ref([
-  {
-    id: 1,
-    name: 'Vue.js',
-    category: 'frontend',
-    level: 'advanced',
-    years_experience: 3,
-    projects_count: 8,
-    icon: 'Star',
-    color: '#409EFF',
-    sort_order: 1,
-  },
-  {
-    id: 2,
-    name: 'Node.js',
-    category: 'backend',
-    level: 'intermediate',
-    years_experience: 2,
-    projects_count: 5,
-    icon: 'Setting',
-    color: '#67C23A',
-    sort_order: 2,
-  },
-  {
-    id: 3,
-    name: 'MongoDB',
-    category: 'database',
-    level: 'intermediate',
-    years_experience: 2,
-    projects_count: 4,
-    icon: 'DataBoard',
-    color: '#E6A23C',
-    sort_order: 3,
-  },
-  {
-    id: 4,
-    name: 'Docker',
-    category: 'devops',
-    level: 'advanced',
-    years_experience: 3,
-    projects_count: 6,
-    icon: 'Tools',
-    color: '#F56C6C',
-    sort_order: 4,
-  },
-])
-
 // 表单数据
 const formData = reactive({
   name: '',
   category: '',
-  level: '',
+  level: 1,
   years_experience: 0,
   icon: '',
   color: '#409EFF',
@@ -414,38 +367,38 @@ const getCategoryText = (category: string) => {
   return categoryMap[category] || category
 }
 
-const getLevelText = (level: string) => {
-  const levelMap = {
-    beginner: '初级',
-    intermediate: '中级',
-    advanced: '高级',
-    expert: '专家',
+const getLevelText = (level: number) => {
+  const levelMap: Record<number, string> = {
+    1: '初级',
+    2: '中级',
+    3: '高级',
+    4: '专家',
   }
-  return levelMap[level] || level
+  return levelMap[level] || '未知'
 }
 
-const getLevelPercentage = (level: string) => {
-  const levelMap = {
-    beginner: 25,
-    intermediate: 50,
-    advanced: 75,
-    expert: 100,
+const getLevelPercentage = (level: number) => {
+  const levelMap: Record<number, number> = {
+    1: 25,
+    2: 50,
+    3: 75,
+    4: 100,
   }
   return levelMap[level] || 0
 }
 
-const handleSkillAction = async ({ action, skill }) => {
+const handleSkillAction = async ({ action, skill }: { action: string; skill: any }) => {
   switch (action) {
     case 'edit':
-      editSkill(skill)
+      editSkillItem(skill)
       break
     case 'delete':
-      await deleteSkill(skill)
+      await deleteSkillItem(skill)
       break
   }
 }
 
-const editSkill = (skill) => {
+const editSkillItem = (skill: any) => {
   editingSkill.value = skill
   Object.assign(formData, {
     name: skill.name,
@@ -454,12 +407,12 @@ const editSkill = (skill) => {
     years_experience: skill.years_experience,
     icon: skill.icon,
     color: skill.color,
-    sort_order: skill.sort_order,
+    sort_order: skill.sort_order || 0,
   })
   showCreateDialog.value = true
 }
 
-const deleteSkill = async (skill) => {
+const deleteSkillItem = async (skill: any) => {
   try {
     await ElMessageBox.confirm(`确定要删除技能 "${skill.name}" 吗？此操作不可恢复。`, '确认删除', {
       confirmButtonText: '确定',
@@ -467,25 +420,20 @@ const deleteSkill = async (skill) => {
       type: 'warning',
     })
 
-    // 这里应该调用API删除技能
-    const index = skills.value.findIndex((s) => s.id === skill.id)
-    if (index > -1) {
-      skills.value.splice(index, 1)
-    }
-
+    await deleteSkill(skill.id)
     ElMessage.success('技能删除成功')
-  } catch (error) {
+  } catch (error: any) {
     if (error !== 'cancel') {
       ElMessage.error('删除技能失败')
     }
   }
 }
 
-const handleSortOrderChange = async (skill) => {
+const handleSortOrderChange = async (skill: any) => {
   try {
-    // 这里应该调用API更新排序
+    await updateSkill(skill.id, { sort_order: skill.sort_order })
     ElMessage.success('排序更新成功')
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error('更新排序失败')
   }
 }
@@ -500,7 +448,7 @@ const resetForm = () => {
   Object.assign(formData, {
     name: '',
     category: '',
-    level: '',
+    level: 1,
     years_experience: 0,
     icon: '',
     color: '#409EFF',
@@ -518,27 +466,16 @@ const handleSubmit = async () => {
 
     if (editingSkill.value) {
       // 更新技能
-      const index = skills.value.findIndex((s) => s.id === editingSkill.value.id)
-      if (index > -1) {
-        skills.value[index] = {
-          ...skills.value[index],
-          ...formData,
-        }
-      }
+      await updateSkill(editingSkill.value.id, formData)
       ElMessage.success('技能更新成功')
     } else {
       // 创建技能
-      const newSkill = {
-        id: Date.now(),
-        ...formData,
-        projects_count: 0,
-      }
-      skills.value.push(newSkill)
+      await createSkill(formData)
       ElMessage.success('技能创建成功')
     }
 
     handleDialogClose()
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error(editingSkill.value ? '更新技能失败' : '创建技能失败')
   } finally {
     submitting.value = false
@@ -547,7 +484,7 @@ const handleSubmit = async () => {
 
 // 生命周期
 onMounted(() => {
-  // 这里可以加载技能数据
+  loadSkills()
 })
 </script>
 

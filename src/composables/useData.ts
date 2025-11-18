@@ -7,12 +7,14 @@ import {
   skillService,
   socialLinkService,
   profileService,
+  systemSettingsService,
   type Project,
   type Category,
   type Tag,
   type Skill,
   type SocialLink,
   type Profile,
+  type SystemSetting,
 } from '@/services/database'
 
 // 全局数据状态
@@ -22,6 +24,7 @@ const tags = ref<Tag[]>([])
 const skills = ref<Skill[]>([])
 const socialLinks = ref<SocialLink[]>([])
 const currentProfile = ref<Profile | null>(null)
+const systemSettings = ref<SystemSetting[]>([])
 
 // 加载状态
 const loading = ref({
@@ -31,6 +34,7 @@ const loading = ref({
   skills: false,
   socialLinks: false,
   profile: false,
+  systemSettings: false,
 })
 
 // 错误状态
@@ -38,56 +42,63 @@ const error = ref<string | null>(null)
 
 // 计算属性
 const featuredProjects = computed(() => {
+  console.log('featuredProjects computed - projects.value:', projects.value)
+
   // 如果有数据库中的项目数据，使用它们
   if (projects.value && projects.value.length > 0) {
-    return projects.value.filter((project) => project.featured && project.status === 'published')
+    const filtered = projects.value.filter(
+      (project) => project.featured && project.status === 'published',
+    )
+    console.log('featuredProjects computed - filtered:', filtered)
+    return filtered
   }
 
   // 否则返回默认的项目数据
-  return [
-    {
-      id: '1',
-      title: '项目展示系统',
-      description: '基于 Vue 3 和 TypeScript 构建的现代化项目展示平台，支持响应式设计和主题切换。',
-      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-      demo_url: 'https://demo.example.com',
-      github_url: 'https://github.com',
-      featured: true,
-      status: 'published' as const,
-      sort_order: 1,
-      user_id: 'demo-user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: '企业管理系统',
-      description: '全栈企业管理解决方案，包含用户管理、权限控制、数据可视化等功能模块。',
-      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-      demo_url: 'https://demo.example.com',
-      github_url: 'https://github.com',
-      featured: true,
-      status: 'published' as const,
-      sort_order: 2,
-      user_id: 'demo-user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      title: '数据可视化平台',
-      description: '实时数据监控和可视化分析平台，支持多种图表类型和自定义仪表板。',
-      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-      demo_url: 'https://demo.example.com',
-      github_url: 'https://github.com',
-      featured: true,
-      status: 'published' as const,
-      sort_order: 3,
-      user_id: 'demo-user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
+  // console.log('featuredProjects computed - using default data')
+  // return [
+  //   {
+  //     id: '1',
+  //     title: '项目展示系统',
+  //     description: '基于 Vue 3 和 TypeScript 构建的现代化项目展示平台，支持响应式设计和主题切换。',
+  //     content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
+  //     demo_url: 'https://demo.example.com',
+  //     github_url: 'https://github.com',
+  //     featured: true,
+  //     status: 'published' as const,
+  //     sort_order: 1,
+  //     user_id: 'demo-user',
+  //     created_at: new Date().toISOString(),
+  //     updated_at: new Date().toISOString(),
+  //   },
+  //   {
+  //     id: '2',
+  //     title: '企业管理系统',
+  //     description: '全栈企业管理解决方案，包含用户管理、权限控制、数据可视化等功能模块。',
+  //     content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
+  //     demo_url: 'https://demo.example.com',
+  //     github_url: 'https://github.com',
+  //     featured: true,
+  //     status: 'published' as const,
+  //     sort_order: 2,
+  //     user_id: 'demo-user',
+  //     created_at: new Date().toISOString(),
+  //     updated_at: new Date().toISOString(),
+  //   },
+  //   {
+  //     id: '3',
+  //     title: '数据可视化平台',
+  //     description: '实时数据监控和可视化分析平台，支持多种图表类型和自定义仪表板。',
+  //     content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
+  //     demo_url: 'https://demo.example.com',
+  //     github_url: 'https://github.com',
+  //     featured: true,
+  //     status: 'published' as const,
+  //     sort_order: 3,
+  //     user_id: 'demo-user',
+  //     created_at: new Date().toISOString(),
+  //     updated_at: new Date().toISOString(),
+  //   },
+  // ]
 })
 
 const publishedProjects = computed(() =>
@@ -538,6 +549,110 @@ export function useData() {
   }
 }
 
+// 系统设置相关操作
+export function useSystemSettings() {
+  const loadSystemSettings = async () => {
+    loading.value.systemSettings = true
+    error.value = null
+
+    try {
+      const data = await systemSettingsService.getSettings()
+      systemSettings.value = data
+      return data
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('加载系统设置失败')
+      throw err
+    } finally {
+      loading.value.systemSettings = false
+    }
+  }
+
+  const getSystemSetting = async (key: string) => {
+    try {
+      return await systemSettingsService.getSetting(key)
+    } catch (err: any) {
+      ElMessage.error('获取系统设置失败')
+      throw err
+    }
+  }
+
+  const updateSystemSetting = async (key: string, value: string, description?: string) => {
+    try {
+      const updatedSetting = await systemSettingsService.updateSetting(key, value, description)
+      const index = systemSettings.value.findIndex((s) => s.key === key)
+      if (index !== -1) {
+        systemSettings.value[index] = updatedSetting
+      } else {
+        systemSettings.value.push(updatedSetting)
+      }
+      ElMessage.success('设置更新成功')
+      return updatedSetting
+    } catch (err: any) {
+      ElMessage.error('更新设置失败')
+      throw err
+    }
+  }
+
+  const batchUpdateSystemSettings = async (
+    settings: Record<string, { value: string; description?: string }>,
+  ) => {
+    loading.value.systemSettings = true
+    error.value = null
+
+    try {
+      const results = await systemSettingsService.batchUpdateSettings(settings)
+
+      // 更新本地状态
+      for (const setting of results) {
+        const index = systemSettings.value.findIndex((s) => s.key === setting.key)
+        if (index !== -1) {
+          systemSettings.value[index] = setting
+        } else {
+          systemSettings.value.push(setting)
+        }
+      }
+
+      ElMessage.success('批量更新设置成功')
+      return results
+    } catch (err: any) {
+      error.value = err.message
+      ElMessage.error('批量更新设置失败')
+      throw err
+    } finally {
+      loading.value.systemSettings = false
+    }
+  }
+
+  const deleteSystemSetting = async (key: string) => {
+    try {
+      await systemSettingsService.deleteSetting(key)
+      systemSettings.value = systemSettings.value.filter((s) => s.key !== key)
+      ElMessage.success('设置删除成功')
+    } catch (err: any) {
+      ElMessage.error('删除设置失败')
+      throw err
+    }
+  }
+
+  // 获取设置值的便捷方法
+  const getSettingValue = (key: string, defaultValue: string = ''): string => {
+    const setting = systemSettings.value.find((s) => s.key === key)
+    return setting?.value || defaultValue
+  }
+
+  return {
+    systemSettings: computed(() => systemSettings.value),
+    loading: computed(() => loading.value.systemSettings),
+    loadSystemSettings,
+    getSystemSetting,
+    updateSystemSetting,
+    batchUpdateSystemSettings,
+    deleteSystemSetting,
+    getSettingValue,
+  }
+}
+
 // 初始化数据
 export function initializeData() {
   onMounted(async () => {
@@ -549,6 +664,7 @@ export function initializeData() {
         useTags().loadTags(),
         useSkills().loadSkills(),
         useSocialLinks().loadSocialLinks(),
+        useSystemSettings().loadSystemSettings(),
       ])
     } catch (error) {
       console.error('Failed to initialize data:', error)

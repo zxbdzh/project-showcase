@@ -227,9 +227,11 @@ import { ArrowLeft, Check, Setting, Picture, Message, Search, Link } from '@elem
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
 import FileUpload from '@/components/FileUpload.vue'
+import { useSystemSettings } from '@/composables/useData'
 
 const router = useRouter()
 const saving = ref(false)
+const { getSettingValue, batchUpdateSystemSettings, loadSystemSettings } = useSystemSettings()
 
 // 默认设置
 const defaultSettings = {
@@ -257,10 +259,26 @@ const settings = ref({ ...defaultSettings })
 // 加载设置
 const loadSettings = async () => {
   try {
-    // 从localStorage加载设置
-    const savedSettings = localStorage.getItem('site-settings')
-    if (savedSettings) {
-      settings.value = { ...defaultSettings, ...JSON.parse(savedSettings) }
+    await loadSystemSettings()
+
+    // 从数据库加载设置
+    settings.value = {
+      site_title: getSettingValue('site_title', defaultSettings.site_title),
+      site_subtitle: getSettingValue('site_subtitle', defaultSettings.site_subtitle),
+      brand_text: getSettingValue('brand_text', defaultSettings.brand_text),
+      site_description: getSettingValue('site_description', defaultSettings.site_description),
+      site_logo: getSettingValue('site_logo', defaultSettings.site_logo),
+      site_favicon: getSettingValue('site_favicon', defaultSettings.site_favicon),
+      contact_email: getSettingValue('contact_email', defaultSettings.contact_email),
+      contact_phone: getSettingValue('contact_phone', defaultSettings.contact_phone),
+      contact_address: getSettingValue('contact_address', defaultSettings.contact_address),
+      seo_keywords: getSettingValue('seo_keywords', defaultSettings.seo_keywords),
+      seo_author: getSettingValue('seo_author', defaultSettings.seo_author),
+      custom_css: getSettingValue('custom_css', defaultSettings.custom_css),
+      social_github: getSettingValue('social_github', defaultSettings.social_github),
+      social_twitter: getSettingValue('social_twitter', defaultSettings.social_twitter),
+      social_linkedin: getSettingValue('social_linkedin', defaultSettings.social_linkedin),
+      social_weibo: getSettingValue('social_weibo', defaultSettings.social_weibo),
     }
   } catch (error) {
     console.error('Failed to load settings:', error)
@@ -268,38 +286,64 @@ const loadSettings = async () => {
   }
 }
 
+// 应用设置到页面
+const applySettingsToPage = () => {
+  // 更新页面标题
+  if (settings.value.site_title) {
+    document.title = settings.value.site_title
+  }
+
+  // 更新favicon
+  if (settings.value.site_favicon) {
+    const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
+    if (favicon) {
+      favicon.href = settings.value.site_favicon
+    }
+  }
+
+  // 应用自定义CSS
+  const customStyleElement = document.getElementById('custom-css')
+  if (customStyleElement) {
+    customStyleElement.remove()
+  }
+
+  if (settings.value.custom_css) {
+    const style = document.createElement('style')
+    style.id = 'custom-css'
+    style.textContent = settings.value.custom_css
+    document.head.appendChild(style)
+  }
+}
+
 // 保存设置
 const saveSettings = async () => {
   saving.value = true
   try {
-    // 保存到localStorage
-    localStorage.setItem('site-settings', JSON.stringify(settings.value))
-
-    // 更新页面标题
-    if (settings.value.site_title) {
-      document.title = settings.value.site_title
+    // 准备要保存的设置数据
+    const settingsData = {
+      site_title: { value: settings.value.site_title, description: '网站标题' },
+      site_subtitle: { value: settings.value.site_subtitle, description: '网站副标题' },
+      brand_text: { value: settings.value.brand_text, description: '左上角文字' },
+      site_description: { value: settings.value.site_description, description: '网站描述' },
+      site_logo: { value: settings.value.site_logo, description: '网站Logo' },
+      site_favicon: { value: settings.value.site_favicon, description: '网站Favicon' },
+      contact_email: { value: settings.value.contact_email, description: '联系邮箱' },
+      contact_phone: { value: settings.value.contact_phone, description: '联系电话' },
+      contact_address: { value: settings.value.contact_address, description: '联系地址' },
+      seo_keywords: { value: settings.value.seo_keywords, description: 'SEO关键词' },
+      seo_author: { value: settings.value.seo_author, description: 'SEO作者' },
+      custom_css: { value: settings.value.custom_css, description: '自定义CSS' },
+      social_github: { value: settings.value.social_github, description: 'GitHub链接' },
+      social_twitter: { value: settings.value.social_twitter, description: 'Twitter链接' },
+      social_linkedin: { value: settings.value.social_linkedin, description: 'LinkedIn链接' },
+      social_weibo: { value: settings.value.social_weibo, description: '微博链接' },
     }
 
-    // 更新favicon
-    if (settings.value.site_favicon) {
-      const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-      if (favicon) {
-        favicon.href = settings.value.site_favicon
-      }
-    }
+    // 批量保存到数据库
+    await batchUpdateSystemSettings(settingsData)
 
-    // 应用自定义CSS
-    const customStyleElement = document.getElementById('custom-css')
-    if (customStyleElement) {
-      customStyleElement.remove()
-    }
-
-    if (settings.value.custom_css) {
-      const style = document.createElement('style')
-      style.id = 'custom-css'
-      style.textContent = settings.value.custom_css
-      document.head.appendChild(style)
-    }
+    // 应用设置到页面
+    applySettingsToPage()
 
     ElMessage.success('设置保存成功')
   } catch (error) {

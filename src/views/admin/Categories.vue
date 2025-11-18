@@ -194,56 +194,18 @@ import {
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+import { useCategories } from '@/composables/useData'
 
 const router = useRouter()
+const { categories, loading, loadCategories, createCategory, updateCategory, deleteCategory } =
+  useCategories()
 
 // 响应式数据
 const searchQuery = ref('')
-const loading = ref(false)
 const showCreateDialog = ref(false)
-const editingCategory = ref(null)
+const editingCategory = ref<any>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
-
-// 模拟分类数据
-const categories = ref([
-  {
-    id: 1,
-    name: 'Web开发',
-    description: '前端和后端Web应用开发项目',
-    icon: 'Monitor',
-    color: '#409EFF',
-    sort_order: 1,
-    project_count: 8,
-  },
-  {
-    id: 2,
-    name: '移动应用',
-    description: 'iOS和Android移动应用开发',
-    icon: 'Phone',
-    color: '#67C23A',
-    sort_order: 2,
-    project_count: 3,
-  },
-  {
-    id: 3,
-    name: '后端开发',
-    description: '服务器端API和微服务项目',
-    icon: 'Setting',
-    color: '#E6A23C',
-    sort_order: 3,
-    project_count: 5,
-  },
-  {
-    id: 4,
-    name: '人工智能',
-    description: '机器学习和深度学习项目',
-    icon: 'TrendCharts',
-    color: '#F56C6C',
-    sort_order: 4,
-    project_count: 2,
-  },
-])
 
 // 表单数据
 const formData = reactive({
@@ -307,30 +269,30 @@ const getCategoryIcon = (iconName: string) => {
   return icon ? icon.component : markRaw(Folder)
 }
 
-const handleCategoryAction = async ({ action, category }) => {
+const handleCategoryAction = async ({ action, category }: { action: string; category: any }) => {
   switch (action) {
     case 'edit':
-      editCategory(category)
+      editCategoryItem(category)
       break
     case 'delete':
-      await deleteCategory(category)
+      await deleteCategoryItem(category)
       break
   }
 }
 
-const editCategory = (category) => {
+const editCategoryItem = (category: any) => {
   editingCategory.value = category
   Object.assign(formData, {
     name: category.name,
-    description: category.description,
-    icon: category.icon,
-    color: category.color,
-    sort_order: category.sort_order,
+    description: category.description || '',
+    icon: category.icon || '',
+    color: category.color || '#409EFF',
+    sort_order: category.sort_order || 0,
   })
   showCreateDialog.value = true
 }
 
-const deleteCategory = async (category) => {
+const deleteCategoryItem = async (category: any) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除分类 "${category.name}" 吗？此操作不可恢复。`,
@@ -342,25 +304,20 @@ const deleteCategory = async (category) => {
       },
     )
 
-    // 这里应该调用API删除分类
-    const index = categories.value.findIndex((c) => c.id === category.id)
-    if (index > -1) {
-      categories.value.splice(index, 1)
-    }
-
+    await deleteCategory(category.id)
     ElMessage.success('分类删除成功')
-  } catch (error) {
+  } catch (error: any) {
     if (error !== 'cancel') {
       ElMessage.error('删除分类失败')
     }
   }
 }
 
-const handleSortOrderChange = async (category) => {
+const handleSortOrderChange = async (category: any) => {
   try {
-    // 这里应该调用API更新排序
+    await updateCategory(category.id, { sort_order: category.sort_order })
     ElMessage.success('排序更新成功')
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error('更新排序失败')
   }
 }
@@ -391,27 +348,16 @@ const handleSubmit = async () => {
 
     if (editingCategory.value) {
       // 更新分类
-      const index = categories.value.findIndex((c) => c.id === editingCategory.value.id)
-      if (index > -1) {
-        categories.value[index] = {
-          ...categories.value[index],
-          ...formData,
-        }
-      }
+      await updateCategory(editingCategory.value.id, formData)
       ElMessage.success('分类更新成功')
     } else {
       // 创建分类
-      const newCategory = {
-        id: Date.now(),
-        ...formData,
-        project_count: 0,
-      }
-      categories.value.push(newCategory)
+      await createCategory(formData)
       ElMessage.success('分类创建成功')
     }
 
     handleDialogClose()
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error(editingCategory.value ? '更新分类失败' : '创建分类失败')
   } finally {
     submitting.value = false
@@ -420,7 +366,7 @@ const handleSubmit = async () => {
 
 // 生命周期
 onMounted(() => {
-  // 这里可以加载分类数据
+  loadCategories()
 })
 </script>
 

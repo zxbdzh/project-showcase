@@ -157,7 +157,7 @@
             <el-icon :size="24">
               <component :is="link.icon" />
             </el-icon>
-            <span>{{ link.name }}</span>
+            <span>{{ link.platform }}</span>
           </a>
         </div>
       </section>
@@ -208,13 +208,15 @@ const loadData = async () => {
   loadingError.value = null
 
   try {
-    await Promise.all([
+    console.log('Home.vue - 开始加载数据...')
+    const results = await Promise.all([
       loadProjects({ status: 'published', featured: true }),
       loadSkills(),
       loadSocialLinks(),
     ])
+    console.log('Home.vue - 数据加载完成:', results)
   } catch (error) {
-    console.error('Failed to load data:', error)
+    console.error('Home.vue - Failed to load data:', error)
     loadingError.value = '加载数据失败，请稍后重试'
   } finally {
     isLoading.value = false

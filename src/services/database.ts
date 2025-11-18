@@ -6,6 +6,7 @@ import {
   type Tag,
   type Skill,
   type SocialLink,
+  type SystemSetting,
 } from '@/utils/supabase'
 
 // 基础数据服务类
@@ -392,11 +393,120 @@ export class SocialLinkService extends DatabaseService {
   }
 }
 
+// 系统设置服务
+export class SystemSettingsService extends DatabaseService {
+  async getSettings(): Promise<SystemSetting[]> {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('*')
+        .order('key', { ascending: true })
+
+      if (error) throw error
+      return data as SystemSetting[]
+    } catch (error) {
+      this.handleError(error, 'get system settings')
+      throw error
+    }
+  }
+
+  async getSetting(key: string): Promise<SystemSetting | null> {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('key', key)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        throw error
+      }
+      return data
+    } catch (error) {
+      this.handleError(error, 'get system setting')
+      throw error
+    }
+  }
+
+  async updateSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
+    try {
+      // 先尝试更新
+      const { data: updateData, error: updateError } = await supabase
+        .from('system_settings')
+        .update({ value, description })
+        .eq('key', key)
+        .select()
+        .single()
+
+      if (!updateError && updateData) {
+        return updateData as SystemSetting
+      }
+
+      // 如果更新失败（记录不存在），则创建新记录
+      const { data: insertData, error: insertError } = await supabase
+        .from('system_settings')
+        .insert({
+          key,
+          value,
+          description: description || key,
+          type: 'string',
+          user_id: 'system', // 系统设置使用固定用户ID
+        })
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+      return insertData as SystemSetting
+    } catch (error) {
+      this.handleError(error, 'update system setting')
+      throw error
+    }
+  }
+
+  async batchUpdateSettings(
+    settings: Record<string, { value: string; description?: string }>,
+  ): Promise<SystemSetting[]> {
+    try {
+      const results: SystemSetting[] = []
+
+      for (const [key, setting] of Object.entries(settings)) {
+        const result = await this.updateSetting(key, setting.value, setting.description)
+        results.push(result)
+      }
+
+      return results
+    } catch (error) {
+      this.handleError(error, 'batch update system settings')
+      throw error
+    }
+  }
+
+  async deleteSetting(key: string): Promise<void> {
+    try {
+      const { error } = await supabase.from('system_settings').delete().eq('key', key)
+
+      if (error) throw error
+    } catch (error) {
+      this.handleError(error, 'delete system setting')
+      throw error
+    }
+  }
+}
+
 // 导出类型和服务实例
-export type { Profile, Project, Category, Tag, Skill, SocialLink } from '@/utils/supabase'
+export type {
+  Profile,
+  Project,
+  Category,
+  Tag,
+  Skill,
+  SocialLink,
+  SystemSetting,
+} from '@/utils/supabase'
 export const profileService = new ProfileService()
 export const projectService = new ProjectService()
 export const categoryService = new CategoryService()
 export const tagService = new TagService()
 export const skillService = new SkillService()
 export const socialLinkService = new SocialLinkService()
+export const systemSettingsService = new SystemSettingsService()

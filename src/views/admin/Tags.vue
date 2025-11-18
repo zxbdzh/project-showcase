@@ -156,69 +156,18 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { Plus, Search, Edit, Delete, MoreFilled, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+import { useTags } from '@/composables/useData'
 
 const router = useRouter()
+const { tags, loading, loadTags, createTag, updateTag, deleteTag } = useTags()
 
 // 响应式数据
 const searchQuery = ref('')
 const colorFilter = ref('')
-const loading = ref(false)
 const showCreateDialog = ref(false)
-const editingTag = ref(null)
+const editingTag = ref<any>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
-
-// 模拟标签数据
-const tags = ref([
-  {
-    id: 1,
-    name: 'Vue.js',
-    color: '#409EFF',
-    project_count: 5,
-  },
-  {
-    id: 2,
-    name: 'React',
-    color: '#67C23A',
-    project_count: 3,
-  },
-  {
-    id: 3,
-    name: 'Node.js',
-    color: '#E6A23C',
-    project_count: 4,
-  },
-  {
-    id: 4,
-    name: 'TypeScript',
-    color: '#F56C6C',
-    project_count: 6,
-  },
-  {
-    id: 5,
-    name: 'Docker',
-    color: '#909399',
-    project_count: 2,
-  },
-  {
-    id: 6,
-    name: 'MongoDB',
-    color: '#409EFF',
-    project_count: 3,
-  },
-  {
-    id: 7,
-    name: 'Python',
-    color: '#67C23A',
-    project_count: 4,
-  },
-  {
-    id: 8,
-    name: 'Redis',
-    color: '#E6A23C',
-    project_count: 2,
-  },
-])
 
 // 表单数据
 const formData = reactive({
@@ -266,27 +215,27 @@ const handleFilter = () => {
   // 筛选逻辑已在计算属性中处理
 }
 
-const handleTagAction = async ({ action, tag }) => {
+const handleTagAction = async ({ action, tag }: { action: string; tag: any }) => {
   switch (action) {
     case 'edit':
-      editTag(tag)
+      editTagItem(tag)
       break
     case 'delete':
-      await deleteTag(tag)
+      await deleteTagItem(tag)
       break
   }
 }
 
-const editTag = (tag) => {
+const editTagItem = (tag: any) => {
   editingTag.value = tag
   Object.assign(formData, {
     name: tag.name,
-    color: tag.color,
+    color: tag.color || '#409EFF',
   })
   showCreateDialog.value = true
 }
 
-const deleteTag = async (tag) => {
+const deleteTagItem = async (tag: any) => {
   try {
     await ElMessageBox.confirm(`确定要删除标签 "${tag.name}" 吗？此操作不可恢复。`, '确认删除', {
       confirmButtonText: '确定',
@@ -294,25 +243,20 @@ const deleteTag = async (tag) => {
       type: 'warning',
     })
 
-    // 这里应该调用API删除标签
-    const index = tags.value.findIndex((t) => t.id === tag.id)
-    if (index > -1) {
-      tags.value.splice(index, 1)
-    }
-
+    await deleteTag(tag.id)
     ElMessage.success('标签删除成功')
-  } catch (error) {
+  } catch (error: any) {
     if (error !== 'cancel') {
       ElMessage.error('删除标签失败')
     }
   }
 }
 
-const handleColorChange = async (tag) => {
+const handleColorChange = async (tag: any) => {
   try {
-    // 这里应该调用API更新颜色
+    await updateTag(tag.id, { color: tag.color })
     ElMessage.success('颜色更新成功')
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error('更新颜色失败')
   }
 }
@@ -340,27 +284,16 @@ const handleSubmit = async () => {
 
     if (editingTag.value) {
       // 更新标签
-      const index = tags.value.findIndex((t) => t.id === editingTag.value.id)
-      if (index > -1) {
-        tags.value[index] = {
-          ...tags.value[index],
-          ...formData,
-        }
-      }
+      await updateTag(editingTag.value.id, formData)
       ElMessage.success('标签更新成功')
     } else {
       // 创建标签
-      const newTag = {
-        id: Date.now(),
-        ...formData,
-        project_count: 0,
-      }
-      tags.value.push(newTag)
+      await createTag(formData)
       ElMessage.success('标签创建成功')
     }
 
     handleDialogClose()
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error(editingTag.value ? '更新标签失败' : '创建标签失败')
   } finally {
     submitting.value = false
@@ -369,7 +302,7 @@ const handleSubmit = async () => {
 
 // 生命周期
 onMounted(() => {
-  // 这里可以加载标签数据
+  loadTags()
 })
 </script>
 
