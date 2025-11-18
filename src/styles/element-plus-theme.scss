@@ -381,6 +381,49 @@ html.dark {
   }
 }
 
+// 深色模式下的Tag组件特殊处理
+html.dark {
+  .el-tag {
+    // 确保深色模式下标签文字有足够的对比度
+    &.el-tag--primary {
+      background: rgba(0, 255, 65, 0.15);
+      color: #00ff41;
+      border: 1px solid rgba(0, 255, 65, 0.3);
+    }
+
+    &.el-tag--success {
+      background: rgba(0, 255, 65, 0.15);
+      color: #00ff41;
+      border: 1px solid rgba(0, 255, 65, 0.3);
+    }
+
+    &.el-tag--warning {
+      background: rgba(255, 152, 0, 0.15);
+      color: #ff9800;
+      border: 1px solid rgba(255, 152, 0, 0.3);
+    }
+
+    &.el-tag--danger {
+      background: rgba(255, 71, 87, 0.15);
+      color: #ff4757;
+      border: 1px solid rgba(255, 71, 87, 0.3);
+    }
+
+    &.el-tag--info {
+      background: rgba(0, 255, 255, 0.15);
+      color: #00ffff;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+    }
+
+    // 默认标签样式
+    &:not([class*='el-tag--']) {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e5eaf3;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  }
+}
+
 // Table 组件
 .el-table {
   border-radius: var(--el-border-radius-base);
