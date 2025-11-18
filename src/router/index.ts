@@ -31,11 +31,17 @@ const router = createRouter({
     //   component: () => import('../views/Profile.vue'),
     //   meta: { requiresAuth: true },
     // },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/Admin.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
     // {
-    //   path: '/admin',
-    //   name: 'admin',
-    //   component: () => import('../views/Admin.vue'),
-    //   meta: { requiresAuth: true, requiresAdmin: true },
+    //   path: '/profile',
+    //   name: 'profile',
+    //   component: () => import('../views/Profile.vue'),
+    //   meta: { requiresAuth: true },
     // },
     {
       path: '/:pathMatch(.*)*',
