@@ -172,11 +172,23 @@ watch(
   position: relative;
   width: 100%;
   height: v-bind('props.height + "px"');
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: v-bind('props.height / 2 + "px"');
   overflow: hidden;
   backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+/* 深色模式适配 */
+[data-theme='dark'] .cool-progress-bar__track {
+  background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 浅色模式适配 */
+[data-theme='light'] .cool-progress-bar__track {
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .cool-progress-bar__fill {
@@ -205,6 +217,21 @@ watch(
   animation: shimmer 2s infinite;
 }
 
+/* 深色模式流动光效 */
+[data-theme='dark'] .cool-progress-bar__shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+}
+
+/* 浅色模式流动光效 */
+[data-theme='light'] .cool-progress-bar__shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+}
+
 @keyframes shimmer {
   0% {
     left: -100%;
@@ -224,6 +251,16 @@ watch(
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.6);
   animation: ripple 1s ease-out;
+}
+
+/* 深色模式波纹效果 */
+[data-theme='dark'] .cool-progress-bar__ripple {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* 浅色模式波纹效果 */
+[data-theme='light'] .cool-progress-bar__ripple {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 @keyframes ripple {
