@@ -23,11 +23,11 @@
       <div class="cool-progress-bar__glow" :style="glowStyle"></div>
     </div>
 
-    <!-- 技能等级指示器 -->
-    <div class="cool-progress-bar__indicator">
-      <div class="cool-progress-bar__level-dot" :class="levelClass" :style="levelDotStyle">
-        <div class="cool-progress-bar__level-pulse"></div>
-      </div>
+    <!-- 百分比显示 -->
+    <div class="cool-progress-bar__percentage">
+      <span class="cool-progress-bar__percentage-text" :style="percentageTextStyle">
+        {{ Math.round(props.percentage) }}%
+      </span>
     </div>
 
     <!-- 完成时的粒子效果 -->
@@ -69,34 +69,35 @@ const ripplePosition = ref(0)
 // 计算属性
 const isCompleted = computed(() => props.percentage >= 100)
 
-const levelClass = computed(() => {
-  if (props.percentage >= 90) return 'cool-progress-bar__level-dot--expert'
-  if (props.percentage >= 75) return 'cool-progress-bar__level-dot--advanced'
-  if (props.percentage >= 50) return 'cool-progress-bar__level-dot--intermediate'
-  if (props.percentage >= 25) return 'cool-progress-bar__level-dot--beginner'
-  return 'cool-progress-bar__level-dot--novice'
+// 根据进度获取颜色
+const getProgressColor = computed(() => {
+  if (props.percentage >= 90) return '#a8e6cf' // 专家 - 薄荷绿
+  if (props.percentage >= 75) return '#4ecdc4' // 高级 - 青色
+  if (props.percentage >= 50) return '#6bcf7f' // 中级 - 绿色
+  if (props.percentage >= 25) return '#ffd93d' // 初级 - 黄色
+  return '#ff6b6b' // 新手 - 红色
 })
 
 const fillStyle = computed(() => ({
   width: `${Math.min(props.percentage, 100)}%`,
   background: `linear-gradient(90deg,
-    ${props.color} 0%,
-    ${adjustBrightness(props.color, 20)} 50%,
-    ${props.color} 100%)`,
+    ${getProgressColor.value} 0%,
+    ${adjustBrightness(getProgressColor.value, 20)} 50%,
+    ${getProgressColor.value} 100%)`,
   transition: props.animated ? 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
 }))
 
 const glowStyle = computed(() => ({
   width: `${Math.min(props.percentage, 100)}%`,
-  boxShadow: `0 0 20px ${props.color}40, 0 0 40px ${props.color}20`,
+  boxShadow: `0 0 20px ${getProgressColor.value}40, 0 0 40px ${getProgressColor.value}20`,
   transition: props.animated ? 'width 1.5s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
 }))
 
-const levelDotStyle = computed(() => ({
-  left: `${Math.min(props.percentage, 100)}%`,
-  backgroundColor: props.color,
-  boxShadow: `0 0 15px ${props.color}`,
-  transition: props.animated ? 'left 1.5s cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+const percentageTextStyle = computed(() => ({
+  color: getProgressColor.value,
+  fontWeight: 'bold' as const,
+  fontSize: '14px',
+  textShadow: `0 0 10px ${getProgressColor.value}40`,
 }))
 
 const rippleStyle = computed(() => ({
@@ -248,73 +249,28 @@ watch(
   pointer-events: none;
 }
 
-/* 等级指示器 */
-.cool-progress-bar__indicator {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+/* 百分比显示 */
+.cool-progress-bar__percentage {
+  margin-top: 8px;
+  text-align: center;
 }
 
-.cool-progress-bar__level-dot {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  z-index: 2;
+.cool-progress-bar__percentage-text {
+  font-weight: bold;
+  font-size: 14px;
   transition: all 0.3s ease;
+  display: inline-block;
+  animation: fadeInUp 0.5s ease-out;
 }
 
-.cool-progress-bar__level-dot--novice {
-  background: #ff6b6b;
-}
-
-.cool-progress-bar__level-dot--beginner {
-  background: #ffd93d;
-}
-
-.cool-progress-bar__level-dot--intermediate {
-  background: #6bcf7f;
-}
-
-.cool-progress-bar__level-dot--advanced {
-  background: #4ecdc4;
-}
-
-.cool-progress-bar__level-dot--expert {
-  background: #a8e6cf;
-}
-
-/* 脉冲效果 */
-.cool-progress-bar__level-pulse {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: inherit;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
+@keyframes fadeInUp {
   0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.5);
-    opacity: 0.5;
+    opacity: 0;
+    transform: translateY(10px);
   }
   100% {
-    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -331,7 +287,7 @@ watch(
   position: absolute;
   width: 4px;
   height: 4px;
-  background: v-bind('props.color');
+  background: v-bind('getProgressColor');
   border-radius: 50%;
   animation: particle-burst 2s ease-out forwards;
   animation-delay: var(--delay);
@@ -354,30 +310,29 @@ watch(
   filter: brightness(1.2);
 }
 
-.cool-progress-bar--hover .cool-progress-bar__level-dot {
-  transform: translate(-50%, -50%) scale(1.2);
+.cool-progress-bar--hover .cool-progress-bar__percentage-text {
+  transform: scale(1.1);
 }
 
 /* 完成状态 */
-.cool-progress-bar--completed .cool-progress-bar__level-dot {
+.cool-progress-bar--completed .cool-progress-bar__percentage-text {
   animation: celebrate 0.5s ease-out;
 }
 
 @keyframes celebrate {
   0%,
   100% {
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
   50% {
-    transform: translate(-50%, -50%) scale(1.5);
+    transform: scale(1.2);
   }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .cool-progress-bar__level-dot {
-    width: 12px;
-    height: 12px;
+  .cool-progress-bar__percentage-text {
+    font-size: 12px;
   }
 
   .cool-progress-bar__track {
