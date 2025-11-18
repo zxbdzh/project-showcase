@@ -275,9 +275,18 @@ export class ProjectService extends DatabaseService {
 // 分类服务
 export class CategoryService extends DatabaseService {
   async getCategories(): Promise<Category[]> {
-    return this.fetch<Category>('categories', {
-      orderBy: { column: 'sort_order', ascending: true },
-    })
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order', { ascending: true })
+
+      if (error) throw error
+      return data as Category[]
+    } catch (error) {
+      this.handleError(error, 'get categories')
+      throw error
+    }
   }
 
   async createCategory(data: Partial<Category>): Promise<Category> {
@@ -296,9 +305,18 @@ export class CategoryService extends DatabaseService {
 // 标签服务
 export class TagService extends DatabaseService {
   async getTags(): Promise<Tag[]> {
-    return this.fetch<Tag>('tags', {
-      orderBy: { column: 'name', ascending: true },
-    })
+    try {
+      const { data, error } = await supabase
+        .from('tags')
+        .select('*')
+        .order('name', { ascending: true })
+
+      if (error) throw error
+      return data as Tag[]
+    } catch (error) {
+      this.handleError(error, 'get tags')
+      throw error
+    }
   }
 
   async createTag(data: Partial<Tag>): Promise<Tag> {
@@ -317,9 +335,18 @@ export class TagService extends DatabaseService {
 // 技能服务
 export class SkillService extends DatabaseService {
   async getSkills(): Promise<Skill[]> {
-    return this.fetch<Skill>('skills', {
-      orderBy: { column: 'level', ascending: false },
-    })
+    try {
+      const { data, error } = await supabase
+        .from('skills')
+        .select('*')
+        .order('level', { ascending: false })
+
+      if (error) throw error
+      return data as Skill[]
+    } catch (error) {
+      this.handleError(error, 'get skills')
+      throw error
+    }
   }
 
   async createSkill(data: Partial<Skill>): Promise<Skill> {
@@ -338,9 +365,18 @@ export class SkillService extends DatabaseService {
 // 社交链接服务
 export class SocialLinkService extends DatabaseService {
   async getSocialLinks(): Promise<SocialLink[]> {
-    return this.fetch<SocialLink>('social_links', {
-      orderBy: { column: 'sort_order', ascending: true },
-    })
+    try {
+      const { data, error } = await supabase
+        .from('social_links')
+        .select('*')
+        .order('sort_order', { ascending: true })
+
+      if (error) throw error
+      return data as SocialLink[]
+    } catch (error) {
+      this.handleError(error, 'get social links')
+      throw error
+    }
   }
 
   async createSocialLink(data: Partial<SocialLink>): Promise<SocialLink> {
