@@ -177,26 +177,26 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
-  opacity: 0.8;
+  z-index: 0; /* 降低z-index，确保不影响UI组件 */
+  opacity: 0.3; /* 降低透明度，减少对前景元素的影响 */
   transition: opacity 0.3s ease;
 }
 
 .matrix-rain--active {
-  opacity: 0.8;
+  opacity: 0.3;
 }
 
 .matrix-rain:not(.matrix-rain--active) {
   opacity: 0;
 }
 
-/* 深色主题下的样式 */
+/* 深色主题下的样式 - 进一步降低透明度 */
 [data-theme='dark'] .matrix-rain {
-  opacity: 0.6;
+  opacity: 0.15; /* 大幅降低透明度，确保不影响前景元素 */
 }
 
 [data-theme='dark'] .matrix-rain--active {
-  opacity: 0.6;
+  opacity: 0.15;
 }
 
 /* 浅色主题下的样式 - 完全隐藏 */

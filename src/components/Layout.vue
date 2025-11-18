@@ -120,7 +120,7 @@ const handleSwitchMode = (mode: string) => {
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(10, 10, 10, 0.8);
+  background: var(--bg-primary);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border-primary);
 }
@@ -180,17 +180,6 @@ const handleSwitchMode = (mode: string) => {
 .page-leave-to {
   opacity: 0;
   transform: translateX(-30px);
-}
-
-/* 深色主题适配 */
-[data-theme='dark'] .layout__header {
-  background: rgba(10, 10, 10, 0.9);
-}
-
-/* 浅色主题适配 */
-[data-theme='light'] .layout__header {
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid var(--border-primary);
 }
 
 /* 响应式设计 */

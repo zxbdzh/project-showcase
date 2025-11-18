@@ -1,6 +1,6 @@
 <template>
   <div id="app" :data-theme="actualTheme">
-    <router-view />
+    <router-view :key="route.fullPath" />
   </div>
 </template>
 
@@ -8,6 +8,9 @@
 import { onMounted } from 'vue'
 import { useTheme } from './composables/useTheme'
 import { initializeData } from './composables/useData'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 // 初始化主题系统
 const { actualTheme, initTheme } = useTheme()
@@ -112,8 +115,8 @@ body {
   --accent-secondary: #00cc33;
   --accent-hover: #00aa29;
 
-  --shadow-color: rgba(0, 255, 65, 0.2);
-  --shadow-hover: rgba(0, 255, 65, 0.3);
+  --shadow-color: rgba(0, 255, 65, 0.3);
+  --shadow-hover: rgba(0, 255, 65, 0.4);
 
   /* 状态颜色 - 深色模式调整 */
   --success: #00ff41;

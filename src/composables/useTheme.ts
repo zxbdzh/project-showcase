@@ -1,4 +1,5 @@
 import { ref, watch, onMounted, onUnmounted, computed, readonly } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -8,6 +9,8 @@ export function useTheme() {
   const theme = ref<ThemeMode>('system')
   const systemTheme = ref<'light' | 'dark'>('light')
   const actualTheme = ref<'light' | 'dark'>('light')
+  const router = useRouter()
+  const route = useRoute()
 
   // 检测系统主题
   const detectSystemTheme = (): 'light' | 'dark' => {
@@ -48,7 +51,7 @@ export function useTheme() {
     )
   }
 
-  // 使用页面刷新切换主题
+  // 刷新页面切换主题（保持当前路由）
   const applyThemeWithTransition = (newTheme: 'light' | 'dark') => {
     // 直接应用主题到localStorage
     localStorage.setItem(THEME_STORAGE_KEY, theme.value)
@@ -56,11 +59,7 @@ export function useTheme() {
     // 应用主题到DOM
     actualTheme.value = newTheme
     applyThemeToDOM(newTheme)
-
-    // 刷新页面以确保所有组件正确应用主题
-    setTimeout(() => {
-      window.location.reload()
-    }, 100)
+    window.location.reload()
   }
 
   // 切换主题

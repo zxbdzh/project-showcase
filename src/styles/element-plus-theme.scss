@@ -147,7 +147,7 @@
 }
 
 // 深色主题变量覆盖
-[data-theme='dark'] {
+html.dark {
   // 基础色彩系统 - 深色模式
   --el-color-primary: #00ff41;
   --el-color-primary-light-3: #00ff50;
@@ -213,7 +213,7 @@
   --el-color-fill-darker: #363636;
   --el-color-fill-blank: #141414;
 
-  // 背景色
+  // 背景色 - 确保完全不透明
   --el-bg-color: #141414;
   --el-bg-color-page: #0a0a0a;
   --el-bg-color-overlay: #1d1e1f;
