@@ -47,9 +47,12 @@
             <el-card class="social-link-card" shadow="hover">
               <div class="social-link-card__content">
                 <div class="social-link-card__header">
-                  <div class="social-link-card__icon" :style="{ backgroundColor: link.color }">
+                  <div
+                    class="social-link-card__icon"
+                    :style="{ backgroundColor: link.color || '#409EFF' }"
+                  >
                     <el-icon :size="24">
-                      <component :is="getLinkIcon(link.icon)" />
+                      <component :is="getLinkIcon(link.icon || 'Link')" />
                     </el-icon>
                   </div>
                   <div class="social-link-card__actions">
@@ -185,52 +188,24 @@ import {
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+import { useSocialLinks } from '@/composables/useData'
 
 const router = useRouter()
+const {
+  socialLinks,
+  loading,
+  loadSocialLinks,
+  createSocialLink,
+  updateSocialLink,
+  deleteSocialLink,
+} = useSocialLinks()
 
 // 响应式数据
 const searchQuery = ref('')
-const loading = ref(false)
 const showCreateDialog = ref(false)
-const editingLink = ref(null)
+const editingLink = ref<any>(null)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
-
-// 模拟社交链接数据
-const socialLinks = ref([
-  {
-    id: 1,
-    name: 'GitHub',
-    url: 'https://github.com/username',
-    icon: 'Document',
-    color: '#24292e',
-    sort_order: 1,
-  },
-  {
-    id: 2,
-    name: 'LinkedIn',
-    url: 'https://linkedin.com/in/username',
-    icon: 'User',
-    color: '#0077b5',
-    sort_order: 2,
-  },
-  {
-    id: 3,
-    name: 'Twitter',
-    url: 'https://twitter.com/username',
-    icon: 'Message',
-    color: '#1da1f2',
-    sort_order: 3,
-  },
-  {
-    id: 4,
-    name: 'Email',
-    url: 'mailto:email@example.com',
-    icon: 'Message',
-    color: '#ea4335',
-    sort_order: 4,
-  },
-])
 
 // 表单数据
 const formData = reactive({
@@ -313,7 +288,7 @@ const editLink = (link) => {
   showCreateDialog.value = true
 }
 
-const deleteLink = async (link) => {
+const deleteLink = async (link: any) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除社交链接 "${link.name}" 吗？此操作不可恢复。`,
@@ -325,25 +300,20 @@ const deleteLink = async (link) => {
       },
     )
 
-    // 这里应该调用API删除链接
-    const index = socialLinks.value.findIndex((l) => l.id === link.id)
-    if (index > -1) {
-      socialLinks.value.splice(index, 1)
-    }
-
+    await deleteSocialLink(link.id)
     ElMessage.success('社交链接删除成功')
-  } catch (error) {
+  } catch (error: any) {
     if (error !== 'cancel') {
       ElMessage.error('删除社交链接失败')
     }
   }
 }
 
-const handleSortOrderChange = async (link) => {
+const handleSortOrderChange = async (link: any) => {
   try {
-    // 这里应该调用API更新排序
+    await updateSocialLink(link.id, { sort_order: link.sort_order })
     ElMessage.success('排序更新成功')
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error('更新排序失败')
   }
 }
@@ -374,26 +344,16 @@ const handleSubmit = async () => {
 
     if (editingLink.value) {
       // 更新链接
-      const index = socialLinks.value.findIndex((l) => l.id === editingLink.value.id)
-      if (index > -1) {
-        socialLinks.value[index] = {
-          ...socialLinks.value[index],
-          ...formData,
-        }
-      }
+      await updateSocialLink(editingLink.value.id, formData)
       ElMessage.success('社交链接更新成功')
     } else {
       // 创建链接
-      const newLink = {
-        id: Date.now(),
-        ...formData,
-      }
-      socialLinks.value.push(newLink)
+      await createSocialLink(formData)
       ElMessage.success('社交链接创建成功')
     }
 
     handleDialogClose()
-  } catch (error) {
+  } catch (error: any) {
     ElMessage.error(editingLink.value ? '更新社交链接失败' : '创建社交链接失败')
   } finally {
     submitting.value = false
@@ -402,7 +362,7 @@ const handleSubmit = async () => {
 
 // 生命周期
 onMounted(() => {
-  // 这里可以加载社交链接数据
+  loadSocialLinks()
 })
 </script>
 
