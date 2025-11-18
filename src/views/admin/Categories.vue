@@ -9,6 +9,10 @@
         <p class="admin-categories__subtitle">管理项目分类</p>
       </div>
       <div class="admin-categories__actions">
+        <el-button size="large" @click="goBack">
+          <el-icon><ArrowLeft /></el-icon>
+          返回
+        </el-button>
         <el-button type="primary" size="large" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           新建分类
@@ -186,8 +190,12 @@ import {
   Tools,
   DataBoard,
   TrendCharts,
+  ArrowLeft,
 } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+
+const router = useRouter()
 
 // 响应式数据
 const searchQuery = ref('')
@@ -286,6 +294,10 @@ const filteredCategories = computed(() => {
 })
 
 // 方法
+const goBack = () => {
+  router.back()
+}
+
 const handleSearch = () => {
   // 搜索逻辑已在计算属性中处理
 }

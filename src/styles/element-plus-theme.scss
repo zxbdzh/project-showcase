@@ -330,11 +330,13 @@ html.dark {
   border-radius: var(--el-border-radius-base);
   border: 1px solid var(--el-color-border-light);
   box-shadow: var(--el-box-shadow);
+  background: var(--el-color-fill-blank);
 
   .el-dropdown-menu__item {
     border-radius: 4px;
     margin: 2px 4px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--el-color-text-primary);
 
     &:hover {
       background: var(--el-color-primary-light-9);
@@ -345,6 +347,28 @@ html.dark {
       background: var(--el-color-primary-light-8);
       color: var(--el-color-primary);
       font-weight: 500;
+    }
+  }
+}
+
+// 深色模式下的 Dropdown 特殊处理
+html.dark {
+  .el-dropdown-menu {
+    background: var(--el-color-fill-dark);
+    border-color: var(--el-color-border-dark);
+
+    .el-dropdown-menu__item {
+      color: var(--el-color-text-primary);
+
+      &:hover {
+        background: rgba(0, 255, 65, 0.1);
+        color: #00ff41;
+      }
+
+      &.is-active {
+        background: rgba(0, 255, 65, 0.15);
+        color: #00ff41;
+      }
     }
   }
 }
@@ -494,6 +518,7 @@ html.dark {
   border-radius: var(--el-border-radius-base);
   border: none;
   box-shadow: var(--el-box-shadow);
+  color: var(--el-color-text-primary);
 
   &.el-message--success {
     background: linear-gradient(
@@ -525,6 +550,64 @@ html.dark {
   &.el-message--info {
     background: linear-gradient(135deg, var(--el-color-info-light-9), var(--el-color-info-light-8));
     border-left: 4px solid var(--el-color-info);
+  }
+
+  .el-message__content {
+    color: inherit;
+  }
+
+  .el-message__icon {
+    color: inherit;
+  }
+}
+
+// 深色模式下的 Message 特殊处理
+html.dark {
+  .el-message {
+    color: #e5eaf3;
+    background: var(--el-color-fill-dark);
+    border: 1px solid var(--el-color-border-dark);
+
+    &.el-message--success {
+      background: rgba(0, 255, 65, 0.15);
+      border-color: #00ff41;
+      color: #00ff41;
+    }
+
+    &.el-message--warning {
+      background: rgba(255, 152, 0, 0.15);
+      border-color: #ff9800;
+      color: #ff9800;
+    }
+
+    &.el-message--error {
+      background: rgba(255, 71, 87, 0.15);
+      border-color: #ff4757;
+      color: #ff4757;
+    }
+
+    &.el-message--info {
+      background: rgba(0, 255, 255, 0.15);
+      border-color: #00ffff;
+      color: #00ffff;
+    }
+
+    .el-message__content {
+      color: inherit;
+    }
+
+    .el-message__icon {
+      color: inherit;
+    }
+
+    .el-message__closeBtn {
+      color: inherit;
+      opacity: 0.7;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
   }
 }
 

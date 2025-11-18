@@ -9,6 +9,10 @@
         <p class="admin-projects__subtitle">管理所有项目内容</p>
       </div>
       <div class="admin-projects__actions">
+        <el-button size="large" @click="goBack">
+          <el-icon><ArrowLeft /></el-icon>
+          返回
+        </el-button>
         <el-button type="primary" size="large" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           新建项目
@@ -189,21 +193,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, markRaw } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, View, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Search, View, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { useData } from '@/composables/useData'
+import { useData, useProjects } from '@/composables/useData'
 import GlitchText from '@/components/GlitchText.vue'
 import ProjectForm from '@/components/ProjectForm.vue'
 
 const router = useRouter()
+const { projects, loading } = useData()
 const {
-  projects,
-  loading,
-  fetchProjects,
+  loadProjects,
   createProject,
   updateProject,
   deleteProject: deleteProjectData,
-} = useData()
+} = useProjects()
 
 // 响应式数据
 const searchQuery = ref('')
@@ -246,6 +249,10 @@ const filteredProjects = computed(() => {
 const total = computed(() => filteredProjects.value.length)
 
 // 方法
+const goBack = () => {
+  router.back()
+}
+
 const handleSearch = () => {
   currentPage.value = 1
 }
@@ -320,7 +327,7 @@ const deleteProject = async (project) => {
 
     await deleteProjectData(project.id)
     ElMessage.success('项目删除成功')
-    await fetchProjects()
+    await loadProjects()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除项目失败')
@@ -364,7 +371,7 @@ const handleProjectSubmit = async (projectData) => {
     }
 
     handleDialogClose()
-    await fetchProjects()
+    await loadProjects()
   } catch (error) {
     ElMessage.error(editingProject.value ? '更新项目失败' : '创建项目失败')
   }
@@ -387,7 +394,7 @@ const batchDelete = async () => {
 
     ElMessage.success('批量删除成功')
     selectedProjects.value = []
-    await fetchProjects()
+    await loadProjects()
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('批量删除失败')
@@ -404,7 +411,7 @@ const batchSetFeatured = async (featured: boolean) => {
 
     ElMessage.success(featured ? '批量设为精选成功' : '批量取消精选成功')
     selectedProjects.value = []
-    await fetchProjects()
+    await loadProjects()
   } catch (error) {
     ElMessage.error('批量操作失败')
   }
@@ -412,7 +419,7 @@ const batchSetFeatured = async (featured: boolean) => {
 
 // 生命周期
 onMounted(async () => {
-  await fetchProjects()
+  await loadProjects()
 })
 </script>
 
