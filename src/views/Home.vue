@@ -424,13 +424,8 @@ const scrollToContact = () => {
 
 // 打开项目
 const openProject = (project: Project) => {
-  const url = project.demo_url || project.github_url || '#'
-  if (url !== '#') {
-    window.open(url, '_blank')
-  } else {
-    // 如果没有外部链接，跳转到项目详情页
-    router.push(`/project/${project.id}`)
-  }
+  // 直接跳转到项目详情页
+  router.push(`/project/${project.id}`)
 }
 
 // 查看所有项目

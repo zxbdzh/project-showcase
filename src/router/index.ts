@@ -20,10 +20,16 @@ const router = createRouter({
           component: () => import('../views/Projects.vue'),
         },
         {
-          path: 'project/:id',
-          name: 'project-detail',
-          component: () => import('../views/ProjectDetail.vue'),
-          meta: { requiresAuth: false },
+          path: 'social-links',
+          name: 'AdminSocialLinks',
+          component: () => import('@/views/admin/SocialLinks.vue'),
+          meta: { title: '社交链接管理' },
+        },
+        {
+          path: 'site-settings',
+          name: 'AdminSiteSettings',
+          component: () => import('@/views/admin/SiteSettings.vue'),
+          meta: { title: '网站设置' },
         },
         {
           path: 'admin',

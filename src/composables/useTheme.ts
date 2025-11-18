@@ -119,9 +119,9 @@ export function useTheme() {
 
   // 初始化主题
   const initTheme = () => {
-    // 从localStorage读取保存的主题
+    // 从localStorage读取保存的主题，新用户默认夜间模式
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null
-    theme.value = savedTheme || 'system'
+    theme.value = savedTheme || 'dark'
 
     // 检测系统主题
     systemTheme.value = detectSystemTheme()

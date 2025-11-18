@@ -107,6 +107,16 @@
             <el-icon><Link /></el-icon>
             社交链接
           </el-button>
+
+          <el-button
+            type="primary"
+            size="large"
+            class="admin__action-btn"
+            @click="navigateToSiteSettings"
+          >
+            <el-icon><Setting /></el-icon>
+            网站设置
+          </el-button>
         </div>
       </div>
     </section>
@@ -311,6 +321,10 @@ const navigateToSkills = () => {
 
 const navigateToSocialLinks = () => {
   router.push('/admin/social-links')
+}
+
+const navigateToSiteSettings = () => {
+  router.push('/admin/site-settings')
 }
 
 // 组件挂载时加载数据

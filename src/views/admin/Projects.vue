@@ -195,13 +195,15 @@ import { ref, computed, onMounted, markRaw } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, View, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { useData, useProjects } from '@/composables/useData'
+import { useProjects } from '@/composables/useData'
+import type { Project } from '@/utils/supabase'
 import GlitchText from '@/components/GlitchText.vue'
 import ProjectForm from '@/components/ProjectForm.vue'
 
 const router = useRouter()
-const { projects, loading } = useData()
 const {
+  projects,
+  loading,
   loadProjects,
   createProject,
   updateProject,

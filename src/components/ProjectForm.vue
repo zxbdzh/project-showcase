@@ -200,6 +200,24 @@ const formRules: FormRules = {
 // 计算属性
 const isEdit = computed(() => !!props.project)
 
+// 重置表单
+const resetForm = () => {
+  Object.assign(formData, {
+    title: '',
+    description: '',
+    content: '',
+    demo_url: '',
+    github_url: '',
+    cover_image: '',
+    featured: false,
+    status: 'active',
+    sort_order: 0,
+    categories: [],
+    tags: [],
+  })
+  formRef.value?.clearValidate()
+}
+
 // 模拟数据（实际应该从API获取）
 const categories = ref([
   { id: 1, name: 'Web开发' },
@@ -233,8 +251,8 @@ watch(
         featured: newProject.featured || false,
         status: newProject.status || 'active',
         sort_order: newProject.sort_order || 0,
-        categories: newProject.categories?.map((c: any) => c.id) || [],
-        tags: newProject.tags?.map((t: any) => t.id) || [],
+        categories: newProject.categories?.map((c: { id: string }) => c.id) || [],
+        tags: newProject.tags?.map((t: { id: string }) => t.id) || [],
       })
     } else {
       resetForm()
@@ -242,24 +260,6 @@ watch(
   },
   { immediate: true },
 )
-
-// 重置表单
-const resetForm = () => {
-  Object.assign(formData, {
-    title: '',
-    description: '',
-    content: '',
-    demo_url: '',
-    github_url: '',
-    cover_image: '',
-    featured: false,
-    status: 'active',
-    sort_order: 0,
-    categories: [],
-    tags: [],
-  })
-  formRef.value?.clearValidate()
-}
 
 // 处理提交
 const handleSubmit = async () => {
