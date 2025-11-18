@@ -48,35 +48,19 @@ export function useTheme() {
     )
   }
 
-  // 使用View Transitions API切换主题
+  // 使用页面刷新切换主题
   const applyThemeWithTransition = (newTheme: 'light' | 'dark') => {
-    // 检查是否支持View Transitions API
-    if (document.startViewTransition) {
-      // 使用View Transitions API
-      const transition = document.startViewTransition(() => {
-        actualTheme.value = newTheme
-        applyThemeToDOM(newTheme)
-      })
+    // 直接应用主题到localStorage
+    localStorage.setItem(THEME_STORAGE_KEY, theme.value)
 
-      // 等待过渡完成
-      transition.finished
-        .then(() => {
-          console.log('Theme transition completed')
-        })
-        .catch((err) => {
-          console.warn('Theme transition failed:', err)
-        })
-    } else {
-      // 降级到简单的CSS过渡
-      document.documentElement.classList.add('theme-transitioning')
-      actualTheme.value = newTheme
-      applyThemeToDOM(newTheme)
+    // 应用主题到DOM
+    actualTheme.value = newTheme
+    applyThemeToDOM(newTheme)
 
-      // 移除过渡类
-      setTimeout(() => {
-        document.documentElement.classList.remove('theme-transitioning')
-      }, 300)
-    }
+    // 刷新页面以确保所有组件正确应用主题
+    setTimeout(() => {
+      window.location.reload()
+    }, 100)
   }
 
   // 切换主题
