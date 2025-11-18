@@ -230,12 +230,43 @@ const skillsWithIcons = computed(() =>
 )
 
 // 处理社交链接图标
-const socialLinksWithIcons = computed(() =>
-  socialLinks.value.map((link) => ({
-    ...link,
-    icon: getIconComponent(link.name),
-  })),
-)
+const socialLinksWithIcons = computed(() => {
+  // 如果有数据库中的社交链接，使用它们
+  if (socialLinks.value.length > 0) {
+    return socialLinks.value.map((link) => ({
+      ...link,
+      icon: getIconComponent(link.name),
+    }))
+  }
+
+  // 否则使用默认的社交链接
+  return [
+    {
+      id: '1',
+      name: 'GitHub',
+      url: 'https://github.com',
+      icon: getIconComponent('GitHub'),
+    },
+    {
+      id: '2',
+      name: 'Email',
+      url: 'mailto:contact@example.com',
+      icon: getIconComponent('Email'),
+    },
+    {
+      id: '3',
+      name: 'LinkedIn',
+      url: 'https://linkedin.com',
+      icon: getIconComponent('LinkedIn'),
+    },
+    {
+      id: '4',
+      name: 'Twitter',
+      url: 'https://twitter.com',
+      icon: getIconComponent('Twitter'),
+    },
+  ]
+})
 
 // 滚动到项目区域
 const scrollToProjects = () => {
