@@ -20,18 +20,6 @@ const router = createRouter({
           component: () => import('../views/Projects.vue'),
         },
         {
-          path: 'social-links',
-          name: 'AdminSocialLinks',
-          component: () => import('@/views/admin/SocialLinks.vue'),
-          meta: { title: '社交链接管理' },
-        },
-        {
-          path: 'site-settings',
-          name: 'AdminSiteSettings',
-          component: () => import('@/views/admin/SiteSettings.vue'),
-          meta: { title: '网站设置' },
-        },
-        {
           path: 'admin',
           name: 'admin',
           component: () => import('@/views/Admin.vue'),
@@ -65,6 +53,12 @@ const router = createRouter({
           path: 'admin/social-links',
           name: 'admin-social-links',
           component: () => import('@/views/admin/SocialLinks.vue'),
+          meta: { requiresAuth: true, requiresAdmin: true },
+        },
+        {
+          path: 'admin/site-settings',
+          name: 'admin-site-settings',
+          component: () => import('@/views/admin/SiteSettings.vue'),
           meta: { requiresAuth: true, requiresAdmin: true },
         },
         // 其他路由将在对应页面创建后启用

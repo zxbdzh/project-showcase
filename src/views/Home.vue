@@ -198,63 +198,9 @@ const isLoading = ref(true)
 const loadingError = ref<string | null>(null)
 
 // 使用数据服务
-const { projects, loadProjects } = useProjects()
+const { featuredProjects, loadProjects } = useProjects()
 const { skills, loadSkills } = useSkills()
 const { socialLinks, loadSocialLinks } = useSocialLinks()
-
-// 特色项目计算属性
-const featuredProjects = computed(() => {
-  // 如果有数据库中的项目数据，使用它们
-  if (projects.value && projects.value.length > 0) {
-    return projects.value.filter((project) => project.featured && project.status === 'published')
-  }
-
-  // 否则使用默认的项目数据
-  return [
-    {
-      id: '1',
-      title: '项目展示系统',
-      description: '基于 Vue 3 和 TypeScript 构建的现代化项目展示平台，支持响应式设计和主题切换。',
-      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-      demo_url: 'https://demo.example.com',
-      github_url: 'https://github.com',
-      featured: true,
-      status: 'published' as const,
-      sort_order: 1,
-      user_id: 'demo-user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: '企业管理系统',
-      description: '全栈企业管理解决方案，包含用户管理、权限控制、数据可视化等功能模块。',
-      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-      demo_url: 'https://demo.example.com',
-      github_url: 'https://github.com',
-      featured: true,
-      status: 'published' as const,
-      sort_order: 2,
-      user_id: 'demo-user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: '3',
-      title: '数据可视化平台',
-      description: '实时数据监控和可视化分析平台，支持多种图表类型和自定义仪表板。',
-      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-      demo_url: 'https://demo.example.com',
-      github_url: 'https://github.com',
-      featured: true,
-      status: 'published' as const,
-      sort_order: 3,
-      user_id: 'demo-user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
-})
 
 // 加载数据
 const loadData = async () => {
