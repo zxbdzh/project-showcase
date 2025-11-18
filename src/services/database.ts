@@ -27,30 +27,30 @@ export class DatabaseService {
     },
   ): Promise<T[]> {
     try {
-      let query = supabase.from(table)
+      // 使用最简单的方法，直接构建查询
+      let query: any = supabase.from(table)
 
-      // 构建查询链
       if (options?.select) {
-        query = (query as any).select(options.select)
+        query = query.select(options.select)
       }
 
       if (options?.filter) {
         Object.entries(options.filter).forEach(([key, value]) => {
-          query = (query as any).eq(key, value)
+          query = query.eq(key, value)
         })
       }
 
       if (options?.orderBy) {
-        query = (query as any).order(options.orderBy.column, {
+        query = query.order(options.orderBy.column, {
           ascending: options.orderBy.ascending,
         })
       }
 
       if (options?.limit) {
-        query = (query as any).limit(options.limit)
+        query = query.limit(options.limit)
       }
 
-      const { data, error } = await (query as any)
+      const { data, error } = await query
 
       if (error) throw error
       return data as T[]
