@@ -160,9 +160,63 @@ const router = useRouter()
 const { isDark } = useTheme()
 
 // 使用数据服务
-const { featuredProjects, loadProjects } = useProjects()
+const { projects, loadProjects } = useProjects()
 const { skills, loadSkills } = useSkills()
 const { socialLinks, loadSocialLinks } = useSocialLinks()
+
+// 特色项目计算属性
+const featuredProjects = computed(() => {
+  // 如果有数据库中的项目数据，使用它们
+  if (projects.value && projects.value.length > 0) {
+    return projects.value.filter((project) => project.featured && project.status === 'published')
+  }
+
+  // 否则使用默认的项目数据
+  return [
+    {
+      id: '1',
+      title: '项目展示系统',
+      description: '基于 Vue 3 和 TypeScript 构建的现代化项目展示平台，支持响应式设计和主题切换。',
+      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
+      demo_url: 'https://demo.example.com',
+      github_url: 'https://github.com',
+      featured: true,
+      status: 'published' as const,
+      sort_order: 1,
+      user_id: 'demo-user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      title: '企业管理系统',
+      description: '全栈企业管理解决方案，包含用户管理、权限控制、数据可视化等功能模块。',
+      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
+      demo_url: 'https://demo.example.com',
+      github_url: 'https://github.com',
+      featured: true,
+      status: 'published' as const,
+      sort_order: 2,
+      user_id: 'demo-user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: '3',
+      title: '数据可视化平台',
+      description: '实时数据监控和可视化分析平台，支持多种图表类型和自定义仪表板。',
+      content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
+      demo_url: 'https://demo.example.com',
+      github_url: 'https://github.com',
+      featured: true,
+      status: 'published' as const,
+      sort_order: 3,
+      user_id: 'demo-user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ]
+})
 
 // 加载数据
 const loadData = async () => {
@@ -221,26 +275,61 @@ const convertSkillLevelToNumber = (level: string | number): number => {
 }
 
 // 处理技能图标
-const skillsWithIcons = computed(() =>
-  skills.value.map((skill) => ({
-    ...skill,
-    icon: getIconComponent(skill.name),
-    level: convertSkillLevelToNumber(skill.level),
-  })),
-)
-
-// 处理社交链接图标
-const socialLinksWithIcons = computed(() => {
-  // 如果有数据库中的社交链接，使用它们
-  if (socialLinks.value.length > 0) {
-    return socialLinks.value.map((link) => ({
-      ...link,
-      icon: getIconComponent(link.name),
+const skillsWithIcons = computed(() => {
+  // 如果有数据库中的技能数据，使用它们
+  if (skills.value && skills.value.length > 0) {
+    return skills.value.map((skill) => ({
+      ...skill,
+      icon: getIconComponent(skill.name),
+      level: convertSkillLevelToNumber(skill.level),
     }))
   }
 
-  // 否则使用默认的社交链接
+  // 否则使用默认的技能数据
   return [
+    {
+      id: '1',
+      name: 'Vue.js',
+      level: 85,
+      icon: getIconComponent('Vue.js'),
+    },
+    {
+      id: '2',
+      name: 'TypeScript',
+      level: 80,
+      icon: getIconComponent('TypeScript'),
+    },
+    {
+      id: '3',
+      name: 'Java',
+      level: 90,
+      icon: getIconComponent('Java'),
+    },
+    {
+      id: '4',
+      name: 'Docker',
+      level: 75,
+      icon: getIconComponent('Docker'),
+    },
+    {
+      id: '5',
+      name: 'Redis',
+      level: 70,
+      icon: getIconComponent('Redis'),
+    },
+    {
+      id: '6',
+      name: 'MongoDB',
+      level: 65,
+      icon: getIconComponent('MongoDB'),
+    },
+  ]
+})
+
+// 处理社交链接图标
+const socialLinksWithIcons = computed(() => {
+  // 始终返回默认的社交链接，避免闪烁
+  const defaultLinks = [
     {
       id: '1',
       name: 'GitHub',
@@ -266,6 +355,17 @@ const socialLinksWithIcons = computed(() => {
       icon: getIconComponent('Twitter'),
     },
   ]
+
+  // 如果有数据库中的社交链接，使用它们
+  if (socialLinks.value && socialLinks.value.length > 0) {
+    return socialLinks.value.map((link) => ({
+      ...link,
+      icon: getIconComponent(link.name),
+    }))
+  }
+
+  // 否则使用默认的社交链接
+  return defaultLinks
 })
 
 // 滚动到项目区域
