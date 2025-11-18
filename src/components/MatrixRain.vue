@@ -199,13 +199,15 @@ onMounted(() => {
   opacity: 0.6;
 }
 
-/* 浅色主题下的样式 */
+/* 浅色主题下的样式 - 完全隐藏 */
 [data-theme='light'] .matrix-rain {
-  opacity: 0.3;
+  opacity: 0;
+  pointer-events: none;
 }
 
 [data-theme='light'] .matrix-rain--active {
-  opacity: 0.3;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* 响应式设计 */

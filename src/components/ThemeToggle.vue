@@ -33,7 +33,7 @@ import { computed } from 'vue'
 import { ArrowDown, Check } from '@element-plus/icons-vue'
 import { useTheme, type ThemeMode } from '@/composables/useTheme'
 
-const { theme, currentThemeIcon, setTheme } = useTheme()
+const { theme, currentThemeIcon, setTheme, toggleTheme } = useTheme()
 
 // 主题模式配置
 const themeModes = [
@@ -65,7 +65,7 @@ const themeLabel = computed(() => {
 
 // 处理主题切换
 const handleThemeChange = (newTheme: ThemeMode) => {
-  setTheme(newTheme)
+  setTheme(newTheme, true) // 手动切换时显示过渡动画
 }
 </script>
 
