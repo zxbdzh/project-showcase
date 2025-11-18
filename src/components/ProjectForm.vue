@@ -271,16 +271,23 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitting.value = true
 
-    // 准备提交数据
+    // 准备提交数据 - 排除categories和tags，因为它们是关联表
+    const { categories, tags, ...projectData } = formData
+
     const submitData = {
-      ...formData,
+      ...projectData,
       // 如果是编辑模式，包含ID
       ...(isEdit.value && { id: props.project.id }),
       // 创建项目时需要user_id
       ...(!isEdit.value && user.value && { user_id: user.value.id }),
     }
 
-    emit('submit', submitData)
+    // 发送项目数据和关联数据
+    emit('submit', {
+      project: submitData,
+      categories,
+      tags,
+    })
   } catch {
     ElMessage.error('请检查表单输入')
   } finally {

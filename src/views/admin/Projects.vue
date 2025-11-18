@@ -196,6 +196,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, View, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useProjects } from '@/composables/useData'
+import { projectService } from '@/services/database'
 import type { Project } from '@/utils/supabase'
 import GlitchText from '@/components/GlitchText.vue'
 import ProjectForm from '@/components/ProjectForm.vue'
@@ -362,19 +363,42 @@ const handleDialogClose = () => {
   editingProject.value = null
 }
 
-const handleProjectSubmit = async (projectData) => {
+const handleProjectSubmit = async (data) => {
   try {
+    const { project, categories, tags } = data
+
     if (editingProject.value) {
-      await updateProject(editingProject.value.id, projectData)
+      // 更新项目基本信息
+      await updateProject(editingProject.value.id, project)
+
+      // 更新分类和标签关联
+      if (categories !== undefined) {
+        await projectService.updateProjectCategories(editingProject.value.id, categories)
+      }
+      if (tags !== undefined) {
+        await projectService.updateProjectTags(editingProject.value.id, tags)
+      }
+
       ElMessage.success('项目更新成功')
     } else {
-      await createProject(projectData)
+      // 创建项目
+      const newProject = await createProject(project)
+
+      // 创建分类和标签关联
+      if (categories && categories.length > 0) {
+        await projectService.updateProjectCategories(newProject.id, categories)
+      }
+      if (tags && tags.length > 0) {
+        await projectService.updateProjectTags(newProject.id, tags)
+      }
+
       ElMessage.success('项目创建成功')
     }
 
     handleDialogClose()
     await loadProjects()
   } catch (error) {
+    console.error('项目提交错误:', error)
     ElMessage.error(editingProject.value ? '更新项目失败' : '创建项目失败')
   }
 }
