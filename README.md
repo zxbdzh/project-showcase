@@ -28,7 +28,7 @@
 - **数据库**: Supabase PostgreSQL
 - **认证系统**: Supabase Auth
 - **文件存储**: MinIO (自部署对象存储)
-- **缓存系统**: Redis (多层缓存 + 降级机制)
+- **缓存系统**: Redis (纯Redis缓存，无本地存储依赖)
 - **实时同步**: Supabase Realtime
 - **样式方案**: SCSS + CSS Variables
 - **图表库**: ECharts + Vue-ECharts
@@ -382,6 +382,16 @@ pnpm build
 - [ ] 部署配置和CI/CD
 
 ## 📝 更新日志
+
+### v1.4.0 (2025-01-20) - 纯Redis缓存机制重构
+
+- ✅ 重构缓存机制，移除所有localStorage降级逻辑，实现纯Redis缓存
+- ✅ 重写Redis服务，优化浏览器环境检测，避免不必要的客户端创建
+- ✅ 更新缓存组合式函数，简化缓存逻辑，提高可维护性
+- ✅ 使用Function构造器替代eval，提高代码安全性
+- ✅ 保持API兼容性，确保现有功能正常工作
+- ✅ 优化缓存性能，移除复杂的同步逻辑
+- ✅ 构建成功，无TypeScript错误和警告
 
 ### v1.3.0 (2025-01-19) - Redis缓存系统实现
 
