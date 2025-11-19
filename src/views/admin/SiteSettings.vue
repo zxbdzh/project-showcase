@@ -250,60 +250,43 @@ const updateMetaTag = (name: string, content: string) => {
   meta.content = content
 }
 
-// 更新favicon的独立函数
+// 更新favicon的独立函数（使用博客园推荐的方法）
 const updateFavicon = () => {
-  // 移除所有现有的favicon相关链接
-  const existingFavicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')
-  existingFavicons.forEach((favicon) => favicon.remove())
-
   if (settings.value.site_favicon) {
-    // 方法1: 创建带有版本号的favicon链接
-    const createFaviconWithVersion = (version: number) => {
-      const favicon = document.createElement('link')
-      favicon.rel = 'icon'
-      favicon.type = 'image/x-icon'
+    // 使用博客园推荐的方法：直接查找并更新现有的favicon
+    let $favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
 
-      // 使用版本号而不是时间戳，更稳定
-      const separator = settings.value.site_favicon.includes('?') ? '&' : '?'
-      favicon.href = `${settings.value.site_favicon}${separator}v=${version}`
-
-      return favicon
+    if ($favicon !== null) {
+      // 如果存在现有的favicon，直接更新href
+      $favicon.href = settings.value.site_favicon
+      console.log('Existing favicon updated:', settings.value.site_favicon)
+    } else {
+      // 如果不存在，创建新的favicon元素
+      $favicon = document.createElement('link')
+      $favicon.rel = 'icon'
+      $favicon.type = 'image/x-icon'
+      $favicon.href = settings.value.site_favicon
+      document.head.appendChild($favicon)
+      console.log('New favicon created:', settings.value.site_favicon)
     }
 
-    // 方法3: 强制刷新iframe技术
-    const forceRefreshWithIframe = () => {
-      const iframe = document.createElement('iframe')
-      iframe.style.display = 'none'
-      iframe.src = settings.value.site_favicon
-      document.body.appendChild(iframe)
-
-      // 短暂延迟后移除iframe
-      setTimeout(() => {
-        document.body.removeChild(iframe)
-      }, 100)
+    // 同时处理shortcut icon
+    let $shortcutIcon = document.querySelector('link[rel="shortcut icon"]') as HTMLLinkElement
+    if ($shortcutIcon !== null) {
+      $shortcutIcon.href = settings.value.site_favicon
+      console.log('Existing shortcut icon updated:', settings.value.site_favicon)
+    } else {
+      $shortcutIcon = document.createElement('link')
+      $shortcutIcon.rel = 'shortcut icon'
+      $shortcutIcon.type = 'image/x-icon'
+      $shortcutIcon.href = settings.value.site_favicon
+      document.head.appendChild($shortcutIcon)
+      console.log('New shortcut icon created:', settings.value.site_favicon)
     }
-
-    // 使用版本号方法创建favicon
-    const version = Date.now()
-    const favicon = createFaviconWithVersion(version)
-    document.head.appendChild(favicon)
-
-    // 同时创建shortcut icon
-    const shortcutIcon = document.createElement('link')
-    shortcutIcon.rel = 'shortcut icon'
-    shortcutIcon.type = 'image/x-icon'
-    shortcutIcon.href = favicon.href
-    document.head.appendChild(shortcutIcon)
 
     // 额外的强制刷新技术
     setTimeout(() => {
-      // 方法4: 直接访问favicon URL强制刷新
-      const link = document.createElement('link')
-      link.rel = 'prefetch'
-      link.href = settings.value.site_favicon
-      document.head.appendChild(link)
-
-      // 方法5: 使用Image对象预加载
+      // 方法1: 使用Image对象预加载强制浏览器重新下载
       const img = new Image()
       img.onload = () => {
         console.log('Favicon preloaded successfully')
@@ -313,13 +296,21 @@ const updateFavicon = () => {
       }
       img.src = settings.value.site_favicon
 
-      // 方法6: iframe强制刷新（最后手段）
-      forceRefreshWithIframe()
-    }, 100)
+      // 方法2: iframe隐藏加载技术强制刷新缓存
+      const iframe = document.createElement('iframe')
+      iframe.style.display = 'none'
+      iframe.src = settings.value.site_favicon
+      document.body.appendChild(iframe)
 
-    console.log('Favicon updated with advanced cache busting:', favicon.href)
+      // 短暂延迟后移除iframe
+      setTimeout(() => {
+        if (iframe.parentNode) {
+          document.body.removeChild(iframe)
+        }
+      }, 100)
+    }, 50)
 
-    // 方法7: 尝试强制刷新浏览器缓存
+    // 方法3: 尝试强制刷新浏览器缓存
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
         registrations.forEach((registration) => {
@@ -327,15 +318,34 @@ const updateFavicon = () => {
         })
       })
     }
-  } else {
-    // 如果favicon为空，创建默认的favicon
-    const defaultFavicon = document.createElement('link')
-    defaultFavicon.rel = 'icon'
-    defaultFavicon.type = 'image/x-icon'
-    defaultFavicon.href = '/favicon.ico'
-    document.head.appendChild(defaultFavicon)
 
-    console.log('Default favicon applied')
+    console.log('Favicon update completed using blog garden method:', settings.value.site_favicon)
+  } else {
+    // 如果favicon为空，恢复默认的favicon
+    let $favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
+    if ($favicon !== null) {
+      $favicon.href = '/favicon.ico'
+      console.log('Favicon reset to default')
+    } else {
+      $favicon = document.createElement('link')
+      $favicon.rel = 'icon'
+      $favicon.type = 'image/x-icon'
+      $favicon.href = '/favicon.ico'
+      document.head.appendChild($favicon)
+      console.log('Default favicon created')
+    }
+
+    // 同时处理shortcut icon
+    let $shortcutIcon = document.querySelector('link[rel="shortcut icon"]') as HTMLLinkElement
+    if ($shortcutIcon !== null) {
+      $shortcutIcon.href = '/favicon.ico'
+    } else {
+      $shortcutIcon = document.createElement('link')
+      $shortcutIcon.rel = 'shortcut icon'
+      $shortcutIcon.type = 'image/x-icon'
+      $shortcutIcon.href = '/favicon.ico'
+      document.head.appendChild($shortcutIcon)
+    }
   }
 }
 
