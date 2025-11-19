@@ -76,6 +76,13 @@
       show-icon
       class="login-form__error"
     />
+
+    <!-- 修改密码对话框 -->
+    <change-password-dialog
+      v-model="showChangePasswordDialog"
+      :email="form.email"
+      @success="handlePasswordChanged"
+    />
   </div>
 </template>
 
@@ -86,6 +93,7 @@ import { Message, Lock } from '@element-plus/icons-vue'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
 import GlitchText from '@/components/GlitchText.vue'
+import ChangePasswordDialog from '@/components/Auth/ChangePasswordDialog.vue'
 
 interface Emits {
   (e: 'switch-mode', mode: 'register' | 'login'): void
@@ -98,6 +106,7 @@ const { signIn, loading, error, clearError } = useAuth()
 const { isDark } = useTheme()
 
 const formRef = ref<FormInstance>()
+const showChangePasswordDialog = ref(false)
 const form = reactive({
   email: '',
   password: '',
@@ -173,8 +182,13 @@ const handleChangePassword = () => {
     return
   }
 
-  // 这里可以打开修改密码的模态框或跳转到修改密码页面
-  ElMessage.info('修改密码功能开发中，请使用忘记密码功能')
+  showChangePasswordDialog.value = true
+}
+
+// 处理密码修改成功
+const handlePasswordChanged = () => {
+  ElMessage.success('密码修改成功，请使用新密码登录')
+  showChangePasswordDialog.value = false
 }
 
 // 初始化时检查记住的邮箱
