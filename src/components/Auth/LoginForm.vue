@@ -59,10 +59,10 @@
     </el-form>
 
     <div class="login-form__footer">
-      <p class="login-form__register">
-        还没有账户？
-        <el-button type="text" :disabled="loading" @click="$emit('switch-mode', 'register')">
-          立即注册
+      <p class="login-form__change-password">
+        需要修改密码？
+        <el-button type="text" :disabled="loading" @click="handleChangePassword">
+          修改密码
         </el-button>
       </p>
     </div>
@@ -166,6 +166,17 @@ const handleResetPassword = async () => {
   }
 }
 
+// 处理修改密码
+const handleChangePassword = () => {
+  if (!form.email) {
+    ElMessage.warning('请先输入邮箱地址')
+    return
+  }
+
+  // 这里可以打开修改密码的模态框或跳转到修改密码页面
+  ElMessage.info('修改密码功能开发中，请使用忘记密码功能')
+}
+
 // 初始化时检查记住的邮箱
 const initRememberedEmail = () => {
   const rememberedEmail = localStorage.getItem('remember_email')
@@ -240,7 +251,7 @@ initRememberedEmail()
   border-top: 1px solid var(--border-secondary);
 }
 
-.login-form__register {
+.login-form__change-password {
   color: var(--text-secondary);
   font-size: 0.9rem;
   margin: 0;

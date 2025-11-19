@@ -194,15 +194,24 @@ export class ProjectService extends DatabaseService {
         .select('*')
         .in(
           'id',
-          projectsData.flatMap((p) => p.tech_stack || []),
+          projectsData.flatMap((p) => p.tech_stack || []).filter((id) => typeof id === 'string'),
         )
 
       // 组合数据
-      return projectsData.map((project) => ({
-        ...project,
-        categories: categoriesData?.filter((cat) => cat.id === project.category_id) || [],
-        tags: tagsData?.filter((tag) => project.tech_stack?.includes(tag.name)) || [],
-      }))
+      return projectsData.map((project) => {
+        const projectCategories =
+          categoriesData?.filter((cat) => cat.id === project.category_id) || []
+        const projectTags =
+          tagsData?.filter(
+            (tag) => Array.isArray(project.tech_stack) && project.tech_stack.includes(tag.id),
+          ) || []
+
+        return {
+          ...project,
+          categories: projectCategories,
+          tags: projectTags,
+        }
+      })
     } catch (error) {
       this.handleError(error, 'get projects with relations')
       throw error

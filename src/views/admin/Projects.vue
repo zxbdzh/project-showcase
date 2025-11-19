@@ -298,15 +298,20 @@ const getStatusText = (status: string) => {
       return '已完成'
     case 'paused':
       return '暂停'
+    case 'draft':
+      return '草稿'
+    case 'published':
+      return '已发布'
+    case 'archived':
+      return '已归档'
     default:
-      return '未知'
+      return status || '未知'
   }
 }
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('zh-CN')
 }
-
 const viewProject = (project: any) => {
   router.push(`/project/${project.id}`)
 }
@@ -384,13 +389,7 @@ const handleProjectSubmit = async (data: any) => {
       // 创建项目
       const newProject = await createProject(project)
 
-      // 创建分类和标签关联
-      if (categories && categories.length > 0) {
-        await projectService.updateProjectCategories(newProject.id, categories)
-      }
-      if (tags && tags.length > 0) {
-        await projectService.updateProjectTags(newProject.id, tags)
-      }
+      // 项目创建时已包含category_id和tech_stack
 
       ElMessage.success('项目创建成功')
     }
