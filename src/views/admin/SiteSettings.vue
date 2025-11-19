@@ -257,16 +257,35 @@ const updateFavicon = () => {
   existingFavicons.forEach((favicon) => favicon.remove())
 
   if (settings.value.site_favicon) {
-    // 创建新的favicon链接，使用缓存破坏技术
-    const favicon = document.createElement('link')
-    favicon.rel = 'icon'
-    favicon.type = 'image/x-icon'
+    // 方法1: 创建带有版本号的favicon链接
+    const createFaviconWithVersion = (version: number) => {
+      const favicon = document.createElement('link')
+      favicon.rel = 'icon'
+      favicon.type = 'image/x-icon'
 
-    // 添加时间戳来强制浏览器重新加载
-    const timestamp = Date.now()
-    const separator = settings.value.site_favicon.includes('?') ? '&' : '?'
-    favicon.href = `${settings.value.site_favicon}${separator}_t=${timestamp}`
+      // 使用版本号而不是时间戳，更稳定
+      const separator = settings.value.site_favicon.includes('?') ? '&' : '?'
+      favicon.href = `${settings.value.site_favicon}${separator}v=${version}`
 
+      return favicon
+    }
+
+    // 方法3: 强制刷新iframe技术
+    const forceRefreshWithIframe = () => {
+      const iframe = document.createElement('iframe')
+      iframe.style.display = 'none'
+      iframe.src = settings.value.site_favicon
+      document.body.appendChild(iframe)
+
+      // 短暂延迟后移除iframe
+      setTimeout(() => {
+        document.body.removeChild(iframe)
+      }, 100)
+    }
+
+    // 使用版本号方法创建favicon
+    const version = Date.now()
+    const favicon = createFaviconWithVersion(version)
     document.head.appendChild(favicon)
 
     // 同时创建shortcut icon
@@ -276,7 +295,38 @@ const updateFavicon = () => {
     shortcutIcon.href = favicon.href
     document.head.appendChild(shortcutIcon)
 
-    console.log('Favicon updated with cache busting:', favicon.href)
+    // 额外的强制刷新技术
+    setTimeout(() => {
+      // 方法4: 直接访问favicon URL强制刷新
+      const link = document.createElement('link')
+      link.rel = 'prefetch'
+      link.href = settings.value.site_favicon
+      document.head.appendChild(link)
+
+      // 方法5: 使用Image对象预加载
+      const img = new Image()
+      img.onload = () => {
+        console.log('Favicon preloaded successfully')
+      }
+      img.onerror = () => {
+        console.log('Favicon preload failed')
+      }
+      img.src = settings.value.site_favicon
+
+      // 方法6: iframe强制刷新（最后手段）
+      forceRefreshWithIframe()
+    }, 100)
+
+    console.log('Favicon updated with advanced cache busting:', favicon.href)
+
+    // 方法7: 尝试强制刷新浏览器缓存
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          registration.update()
+        })
+      })
+    }
   } else {
     // 如果favicon为空，创建默认的favicon
     const defaultFavicon = document.createElement('link')
