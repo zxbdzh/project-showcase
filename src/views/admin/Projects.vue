@@ -190,12 +190,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, markRaw } from 'vue'
+import { ref, computed, onMounted, markRaw } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, View, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useProjects } from '@/composables/useData'
-import { useRealtimeTable } from '@/composables/useRealtime'
 import { projectService } from '@/services/database'
 import type { Project } from '@/utils/supabase'
 import GlitchText from '@/components/GlitchText.vue'
@@ -444,51 +443,9 @@ const batchSetFeatured = async (featured: boolean) => {
   }
 }
 
-// 实时同步处理
-const handleRealtimeChange = (event: any) => {
-  console.log('Projects realtime change:', event)
-
-  switch (event.type) {
-    case 'INSERT':
-      // 新项目插入
-      if (event.record) {
-        projects.value.push(event.record)
-        ElMessage.success('新项目已添加')
-      }
-      break
-    case 'UPDATE':
-      // 项目更新
-      if (event.record) {
-        const index = projects.value.findIndex((p) => p.id === event.record.id)
-        if (index !== -1) {
-          projects.value[index] = event.record
-          ElMessage.info('项目已更新')
-        }
-      }
-      break
-    case 'DELETE':
-      // 项目删除
-      if (event.old_record) {
-        const index = projects.value.findIndex((p) => p.id === event.old_record.id)
-        if (index !== -1) {
-          projects.value.splice(index, 1)
-          ElMessage.warning('项目已删除')
-        }
-      }
-      break
-  }
-}
-
 // 生命周期
 onMounted(async () => {
   await loadProjects()
-
-  // 启用实时同步
-  useRealtimeTable('projects', handleRealtimeChange)
-})
-
-onUnmounted(() => {
-  // 清理实时同步（useRealtimeTable会自动处理）
 })
 </script>
 

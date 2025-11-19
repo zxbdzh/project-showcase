@@ -123,14 +123,15 @@ class MinIOService {
       // 构建对象键
       const objectKey = folder ? `${folder}/${fileName}` : fileName
 
-      // 将File转换为ArrayBuffer以避免浏览器兼容性问题
+      // 将File转换为Uint8Array以避免浏览器兼容性问题
       const arrayBuffer = await file.arrayBuffer()
+      const uint8Array = new Uint8Array(arrayBuffer)
 
       // 创建上传命令
       const command = new PutObjectCommand({
         Bucket: bucket,
         Key: objectKey,
-        Body: arrayBuffer,
+        Body: uint8Array,
         ContentType: file.type || 'application/octet-stream',
         Metadata: {
           originalName: file.name,

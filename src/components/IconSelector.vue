@@ -1,165 +1,289 @@
 <template>
   <div class="icon-selector">
-    <el-popover :width="400" trigger="click" placement="bottom" :persistent="false">
-      <template #reference>
-        <el-button
-          :size="size"
-          :disabled="disabled"
-          class="icon-selector__button"
-          @click="togglePopover"
-        >
-          <div class="icon-selector__selected">
-            <component
-              v-if="selectedIcon"
-              :is="selectedIcon"
-              :size="iconSize"
-              :color="iconColor"
-              class="icon-selector__selected-icon"
-            />
-            <span v-else class="icon-selector__placeholder">
-              {{ placeholder }}
-            </span>
-          </div>
-          <el-icon class="icon-selector__arrow">
+    <el-form-item :label="label" :required="required">
+      <div class="icon-selector-container">
+        <!-- 当前选中的图标预览 -->
+        <div class="current-icon" @click="showSelector = !showSelector">
+          <component :is="currentIcon" v-if="currentIcon" :size="24" />
+          <span v-else class="placeholder">选择图标</span>
+          <el-icon class="arrow" :class="{ 'is-open': showSelector }">
             <ArrowDown />
           </el-icon>
-        </el-button>
-      </template>
+        </div>
 
-      <template #default>
-        <div class="icon-selector__content">
+        <!-- 图标选择器弹窗 -->
+        <div v-if="showSelector" class="icon-selector-dropdown">
           <!-- 搜索框 -->
-          <div class="icon-selector__search">
+          <div class="search-box">
             <el-input
               v-model="searchQuery"
               placeholder="搜索图标..."
               :prefix-icon="Search"
               clearable
-              @input="handleSearch"
+              @input="filterIcons"
             />
           </div>
 
           <!-- 分类标签 -->
-          <div class="icon-selector__categories">
-            <el-radio-group v-model="selectedCategory" size="small">
-              <el-radio-button
-                v-for="category in categories"
+          <div class="category-tabs">
+            <el-tabs v-model="activeCategory" @tab-change="filterIcons">
+              <el-tab-pane
+                v-for="category in iconCategories"
                 :key="category.key"
-                :label="category.key"
-              >
-                {{ category.name }}
-              </el-radio-button>
-            </el-radio-group>
+                :label="category.name"
+                :name="category.key"
+              />
+            </el-tabs>
           </div>
 
           <!-- 图标网格 -->
-          <div class="icon-selector__grid">
+          <div class="icon-grid">
             <div
               v-for="icon in filteredIcons"
               :key="icon.name"
-              class="icon-selector__item"
-              :class="{ 'icon-selector__item--selected': isSelected(icon) }"
+              class="icon-item"
+              :class="{ 'is-selected': selectedIcon === icon.name }"
               @click="selectIcon(icon)"
             >
-              <component
-                :is="icon.component"
-                :size="iconSize"
-                :color="iconColor"
-                class="icon-selector__icon"
-              />
-              <div class="icon-selector__tooltip">
-                {{ icon.name }}
-              </div>
+              <component :is="icon.component" :size="20" />
+              <span class="icon-name">{{ icon.name }}</span>
             </div>
           </div>
 
-          <!-- 分页 -->
-          <div v-if="totalPages > 1" class="icon-selector__pagination">
-            <el-pagination
-              v-model:current-page="currentPage"
-              :page-size="pageSize"
-              :total="filteredIcons.length"
-              layout="prev, pager, next"
-              small
-              @current-change="handlePageChange"
-            />
+          <!-- 加载状态 -->
+          <div v-if="loading" class="loading-state">
+            <el-icon class="is-loading">
+              <Loader2 />
+            </el-icon>
+            <span>加载图标中...</span>
+          </div>
+
+          <!-- 无结果状态 -->
+          <div v-if="!loading && filteredIcons.length === 0" class="no-results">
+            <el-icon>
+              <SearchX />
+            </el-icon>
+            <span>未找到匹配的图标</span>
           </div>
         </div>
-      </template>
-    </el-popover>
+      </div>
+    </el-form-item>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { ArrowDown, Search } from '@element-plus/icons-vue'
 import * as LucideIcons from 'lucide-vue-next'
-
-// 图标分类
-interface IconCategory {
-  key: string
-  name: string
-  icons: string[]
-}
-
-// 图标项
-interface IconItem {
-  name: string
-  component: any
-  category: string
-}
+import { ArrowDown, Search, Loader2, SearchX } from 'lucide-vue-next'
 
 // Props
 interface Props {
   modelValue?: string
+  label?: string
+  required?: boolean
   placeholder?: string
   size?: 'small' | 'default' | 'large'
-  iconSize?: number
-  iconColor?: string
-  disabled?: boolean
-  categories?: IconCategory[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  modelValue: '',
+  label: '图标',
+  required: false,
   placeholder: '选择图标',
   size: 'default',
-  iconSize: 20,
-  iconColor: 'currentColor',
-  disabled: false,
-  categories: () => getDefaultCategories(),
 })
 
 // Emits
-interface Emits {
-  (e: 'update:modelValue', value: string): void
-  (e: 'change', value: string): void
-}
-
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+  change: [value: string]
+}>()
 
 // 响应式数据
+const showSelector = ref(false)
 const searchQuery = ref('')
-const selectedCategory = ref('all')
-const currentPage = ref(1)
-const pageSize = ref(48)
+const activeCategory = ref('all')
+const selectedIcon = ref(props.modelValue)
+const loading = ref(false)
+const allIcons = ref<Array<{ name: string; component: unknown; category: string }>>([])
+
+// 图标分类
+const iconCategories = [
+  { key: 'all', name: '全部' },
+  { key: 'arrows', name: '箭头' },
+  { key: 'ui', name: '界面' },
+  { key: 'media', name: '媒体' },
+  { key: 'files', name: '文件' },
+  { key: 'communication', name: '通讯' },
+  { key: 'business', name: '商务' },
+  { key: 'development', name: '开发' },
+  { key: 'design', name: '设计' },
+  { key: 'social', name: '社交' },
+]
+
+// 图标分类映射
+const iconCategoryMap: Record<string, string[]> = {
+  arrows: [
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'ChevronUp',
+    'ChevronDown',
+    'ChevronLeft',
+    'ChevronRight',
+    'Expand',
+    'Shrink',
+    'Maximize2',
+    'Minimize2',
+  ],
+  ui: [
+    'Menu',
+    'X',
+    'Plus',
+    'Minus',
+    'Check',
+    'Square',
+    'Circle',
+    'Star',
+    'Heart',
+    'Bookmark',
+    'Flag',
+    'Bell',
+    'Eye',
+    'EyeOff',
+    'Lock',
+    'Unlock',
+    'Key',
+    'Shield',
+    'Home',
+    'Settings',
+    'Grid',
+    'List',
+    'Layers',
+    'Layout',
+  ],
+  media: [
+    'Play',
+    'Pause',
+    'SkipBack',
+    'SkipForward',
+    'Rewind',
+    'FastForward',
+    'Volume2',
+    'VolumeX',
+    'Mic',
+    'MicOff',
+    'Video',
+    'VideoOff',
+    'Camera',
+    'CameraOff',
+    'Image',
+    'Film',
+    'Tv',
+    'Radio',
+    'Speaker',
+  ],
+  files: [
+    'File',
+    'FileText',
+    'FilePlus',
+    'FileMinus',
+    'FileX',
+    'FileCheck',
+    'Folder',
+    'FolderOpen',
+    'FolderPlus',
+    'FolderMinus',
+    'FolderX',
+  ],
+  communication: [
+    'MessageSquare',
+    'MessageCircle',
+    'Send',
+    'Share',
+    'Mail',
+    'MailOpen',
+    'Phone',
+    'PhoneCall',
+    'PhoneOff',
+    'AtSign',
+    'Hash',
+  ],
+  business: [
+    'Briefcase',
+    'Building',
+    'Store',
+    'Factory',
+    'CreditCard',
+    'DollarSign',
+    'TrendingUp',
+    'TrendingDown',
+    'BarChart',
+    'PieChart',
+    'Calendar',
+  ],
+  development: [
+    'Code',
+    'Terminal',
+    'GitBranch',
+    'GitCommit',
+    'GitMerge',
+    'GitPullRequest',
+    'Database',
+    'Server',
+    'Cloud',
+    'Download',
+    'Upload',
+    'Cpu',
+  ],
+  design: [
+    'Palette',
+    'Brush',
+    'PenTool',
+    'Eraser',
+    'Droplet',
+    'PaintBucket',
+    'Type',
+    'Image',
+    'Crop',
+    'Move',
+    'RotateCw',
+    'ZoomIn',
+    'ZoomOut',
+  ],
+  social: [
+    'Facebook',
+    'Twitter',
+    'Instagram',
+    'Youtube',
+    'Linkedin',
+    'Github',
+    'Discord',
+    'Slack',
+    'Telegram',
+    'Whatsapp',
+  ],
+}
 
 // 计算属性
-const selectedIcon = computed(() => {
-  if (!props.modelValue) return null
-  return findIconByName(props.modelValue)
+const currentIcon = computed(() => {
+  if (!selectedIcon.value) return null
+  return (LucideIcons as Record<string, unknown>)[selectedIcon.value]
 })
 
 const filteredIcons = computed(() => {
-  let icons = getAllIcons()
+  let icons = allIcons.value
 
   // 按分类筛选
-  if (selectedCategory.value !== 'all') {
-    icons = icons.filter((icon) => icon.category === selectedCategory.value)
+  if (activeCategory.value !== 'all') {
+    const categoryIcons = iconCategoryMap[activeCategory.value] || []
+    icons = icons.filter((icon) => categoryIcons.includes(icon.name))
   }
 
   // 按搜索关键词筛选
-  if (searchQuery.value.trim()) {
+  if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     icons = icons.filter((icon) => icon.name.toLowerCase().includes(query))
   }
@@ -167,353 +291,269 @@ const filteredIcons = computed(() => {
   return icons
 })
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredIcons.value.length / pageSize.value)
-})
+// 方法
+const loadIcons = async () => {
+  loading.value = true
+  try {
+    const icons = Object.entries(LucideIcons).map(([name, component]) => {
+      // 确定图标分类
+      let category = 'all'
+      for (const [catName, iconList] of Object.entries(iconCategoryMap)) {
+        if (iconList.includes(name)) {
+          category = catName
+          break
+        }
+      }
 
-const paginatedIcons = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredIcons.value.slice(start, end)
-})
-
-// 获取默认分类
-function getDefaultCategories(): IconCategory[] {
-  return [
-    {
-      key: 'all',
-      name: '全部',
-      icons: [],
-    },
-    {
-      key: 'arrows',
-      name: '箭头',
-      icons: [
-        'ArrowUp',
-        'ArrowDown',
-        'ArrowLeft',
-        'ArrowRight',
-        'ChevronUp',
-        'ChevronDown',
-        'ChevronLeft',
-        'ChevronRight',
-      ],
-    },
-    {
-      key: 'interface',
-      name: '界面',
-      icons: [
-        'Menu',
-        'Settings',
-        'Home',
-        'User',
-        'Users',
-        'Search',
-        'Filter',
-        'Plus',
-        'Minus',
-        'X',
-        'Check',
-      ],
-    },
-    {
-      key: 'media',
-      name: '媒体',
-      icons: ['Play', 'Pause', 'Square', 'Circle', 'Image', 'Video', 'Music', 'Volume2', 'VolumeX'],
-    },
-    {
-      key: 'files',
-      name: '文件',
-      icons: [
-        'File',
-        'FileText',
-        'Folder',
-        'FolderOpen',
-        'Download',
-        'Upload',
-        'Save',
-        'Copy',
-        'Trash2',
-      ],
-    },
-    {
-      key: 'communication',
-      name: '通信',
-      icons: ['Mail', 'MessageSquare', 'Phone', 'PhoneCall', 'Share2', 'Link', 'Globe', 'Wifi'],
-    },
-    {
-      key: 'social',
-      name: '社交',
-      icons: ['Github', 'Twitter', 'Linkedin', 'Facebook', 'Instagram', 'Youtube'],
-    },
-    {
-      key: 'development',
-      name: '开发',
-      icons: ['Code', 'Code2', 'Terminal', 'Database', 'Server', 'Cloud', 'Package', 'GitBranch'],
-    },
-    {
-      key: 'design',
-      name: '设计',
-      icons: ['Palette', 'Brush', 'PenTool', 'Eraser', 'Move', 'RotateCw', 'ZoomIn', 'ZoomOut'],
-    },
-  ]
-}
-
-// 获取所有图标
-function getAllIcons(): IconItem[] {
-  const allIcons: IconItem[] = []
-
-  props.categories.forEach((category) => {
-    category.icons.forEach((iconName) => {
-      const component = (LucideIcons as any)[iconName]
-      if (component) {
-        allIcons.push({
-          name: iconName,
-          component,
-          category: category.key,
-        })
+      return {
+        name,
+        component,
+        category,
       }
     })
-  })
 
-  return allIcons
+    allIcons.value = icons
+  } catch (error) {
+    console.error('Failed to load icons:', error)
+    ElMessage.error('加载图标失败')
+  } finally {
+    loading.value = false
+  }
 }
 
-// 根据名称查找图标
-function findIconByName(name: string): IconItem | null {
-  const allIcons = getAllIcons()
-  return allIcons.find((icon) => icon.name === name) || null
+const filterIcons = () => {
+  // 搜索和分类筛选会自动通过计算属性处理
 }
 
-// 检查是否选中
-function isSelected(icon: IconItem): boolean {
-  return props.modelValue === icon.name
-}
-
-// 选择图标
-function selectIcon(icon: IconItem) {
+const selectIcon = (icon: { name: string; component: unknown; category: string }) => {
+  selectedIcon.value = icon.name
   emit('update:modelValue', icon.name)
   emit('change', icon.name)
-  ElMessage.success(`已选择图标: ${icon.name}`)
+  showSelector.value = false
 }
 
-// 搜索处理
-function handleSearch() {
-  currentPage.value = 1
+// 点击外部关闭选择器
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.icon-selector-container')) {
+    showSelector.value = false
+  }
 }
 
-// 分类切换
-function handlePageChange(page: number) {
-  currentPage.value = page
-}
-
-// 切换弹出框
-function togglePopover() {
-  // 重置搜索和分页
-  searchQuery.value = ''
-  currentPage.value = 1
-  selectedCategory.value = 'all'
-}
-
-// 监听modelValue变化
+// 监听器
 watch(
   () => props.modelValue,
-  () => {
-    // 当外部值变化时，更新内部状态
+  (newValue) => {
+    selectedIcon.value = newValue
   },
-  { immediate: true },
 )
+
+// 生命周期
+onMounted(() => {
+  loadIcons()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
 .icon-selector {
-  display: inline-block;
+  width: 100%;
 }
 
-.icon-selector__button {
+.icon-selector-container {
+  position: relative;
+}
+
+.current-icon {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   padding: 8px 12px;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--el-border-color);
   border-radius: 6px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
   cursor: pointer;
+  background: var(--el-bg-color);
   transition: all 0.3s ease;
+  min-height: 40px;
 }
 
-.icon-selector__button:hover {
-  border-color: var(--primary-color);
-  background: var(--bg-secondary);
+.current-icon:hover {
+  border-color: var(--el-color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--el-color-primary-rgb), 0.1);
 }
 
-.icon-selector__selected {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 120px;
-}
-
-.icon-selector__selected-icon {
-  flex-shrink: 0;
-}
-
-.icon-selector__placeholder {
-  color: var(--text-secondary);
+.current-icon .placeholder {
+  color: var(--el-text-color-placeholder);
   font-size: 14px;
 }
 
-.icon-selector__arrow {
+.current-icon .arrow {
   transition: transform 0.3s ease;
 }
 
-.icon-selector__button:hover .icon-selector__arrow {
+.current-icon .arrow.is-open {
   transform: rotate(180deg);
 }
 
-.icon-selector__content {
-  padding: 16px;
-  max-width: 400px;
+.icon-selector-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  background: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   max-height: 500px;
+  overflow: hidden;
+  margin-top: 4px;
 }
 
-.icon-selector__search {
-  margin-bottom: 16px;
+.search-box {
+  padding: 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
-.icon-selector__categories {
-  margin-bottom: 16px;
+.category-tabs {
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
-.icon-selector__grid {
+.category-tabs :deep(.el-tabs__header) {
+  margin: 0;
+}
+
+.category-tabs :deep(.el-tabs__nav-wrap) {
+  padding: 0 12px;
+}
+
+.category-tabs :deep(.el-tabs__item) {
+  padding: 0 16px;
+  font-size: 12px;
+}
+
+.icon-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 8px;
-  max-height: 320px;
+  padding: 12px;
+  max-height: 300px;
   overflow-y: auto;
-  padding: 8px;
-  border: 1px solid var(--border-primary);
-  border-radius: 6px;
-  background: var(--bg-secondary);
 }
 
-.icon-selector__item {
+.icon-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  padding: 8px;
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  position: relative;
+  min-height: 60px;
 }
 
-.icon-selector__item:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--primary-color);
-  transform: scale(1.1);
+.icon-item:hover {
+  background: var(--el-fill-color-light);
+  border-color: var(--el-border-color);
+  transform: translateY(-2px);
 }
 
-.icon-selector__item--selected {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
-  color: white;
+.icon-item.is-selected {
+  background: var(--el-color-primary-light-9);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 
-.icon-selector__icon {
-  pointer-events: none;
+.icon-name {
+  font-size: 10px;
+  margin-top: 4px;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.icon-selector__tooltip {
-  position: absolute;
-  bottom: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-tooltip);
-  color: var(--text-tooltip);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  pointer-events: none;
-  z-index: 1000;
-}
-
-.icon-selector__item:hover .icon-selector__tooltip {
-  opacity: 1;
-}
-
-.icon-selector__pagination {
-  margin-top: 16px;
+.loading-state,
+.no-results {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  padding: 40px 20px;
+  color: var(--el-text-color-secondary);
+}
+
+.loading-state span,
+.no-results span {
+  margin-top: 8px;
+  font-size: 14px;
 }
 
 /* 深色主题适配 */
-:deep(.dark) .icon-selector__button {
-  background: var(--bg-secondary);
-  border-color: var(--border-secondary);
+.dark .icon-selector-dropdown {
+  background: var(--el-bg-color-overlay);
+  border-color: var(--el-border-color);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-:deep(.dark) .icon-selector__button:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--primary-color);
+.dark .icon-item:hover {
+  background: var(--el-fill-color-dark);
 }
 
-:deep(.dark) .icon-selector__content {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-}
-
-:deep(.dark) .icon-selector__grid {
-  background: var(--bg-primary);
-  border-color: var(--border-primary);
-}
-
-:deep(.dark) .icon-selector__item:hover {
-  background: var(--bg-secondary);
+.dark .icon-item.is-selected {
+  background: rgba(var(--el-color-primary-rgb), 0.2);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .icon-selector__content {
-    max-width: 320px;
+  .icon-selector-dropdown {
     max-height: 400px;
-    padding: 12px;
   }
 
-  .icon-selector__grid {
-    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  .icon-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 6px;
-    max-height: 240px;
+    padding: 8px;
+    max-height: 250px;
   }
 
-  .icon-selector__item {
-    width: 40px;
-    height: 40px;
+  .icon-item {
+    min-height: 50px;
+    padding: 6px;
+  }
+
+  .icon-name {
+    font-size: 9px;
+    margin-top: 2px;
   }
 }
 
-@media (max-width: 480px) {
-  .icon-selector__content {
-    max-width: 280px;
-    padding: 8px;
-  }
+/* 滚动条样式 */
+.icon-grid::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .icon-selector__grid {
-    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
-    gap: 4px;
-    max-height: 200px;
-  }
+.icon-grid::-webkit-scrollbar-track {
+  background: var(--el-fill-color-lighter);
+  border-radius: 3px;
+}
 
-  .icon-selector__item {
-    width: 36px;
-    height: 36px;
-  }
+.icon-grid::-webkit-scrollbar-thumb {
+  background: var(--el-border-color-darker);
+  border-radius: 3px;
+}
+
+.icon-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--el-border-color-dark);
 }
 </style>

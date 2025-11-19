@@ -16,7 +16,10 @@ import {
   type Profile,
   type SystemSetting,
 } from '@/services/database'
-import { useCache, cacheKeys, withCache } from '@/composables/useCache'
+import { useCache } from './useCache'
+
+// 获取缓存实例
+const cache = useCache()
 
 // 全局数据状态
 const projects = ref<(Project & { categories: Category[]; tags: Tag[] })[]>([])
@@ -54,52 +57,7 @@ const featuredProjects = computed(() => {
     return filtered
   }
 
-  // 否则返回默认的项目数据
-  // console.log('featuredProjects computed - using default data')
-  // return [
-  //   {
-  //     id: '1',
-  //     title: '项目展示系统',
-  //     description: '基于 Vue 3 和 TypeScript 构建的现代化项目展示平台，支持响应式设计和主题切换。',
-  //     content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-  //     demo_url: 'https://demo.example.com',
-  //     github_url: 'https://github.com',
-  //     featured: true,
-  //     status: 'published' as const,
-  //     sort_order: 1,
-  //     user_id: 'demo-user',
-  //     created_at: new Date().toISOString(),
-  //     updated_at: new Date().toISOString(),
-  //   },
-  //   {
-  //     id: '2',
-  //     title: '企业管理系统',
-  //     description: '全栈企业管理解决方案，包含用户管理、权限控制、数据可视化等功能模块。',
-  //     content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-  //     demo_url: 'https://demo.example.com',
-  //     github_url: 'https://github.com',
-  //     featured: true,
-  //     status: 'published' as const,
-  //     sort_order: 2,
-  //     user_id: 'demo-user',
-  //     created_at: new Date().toISOString(),
-  //     updated_at: new Date().toISOString(),
-  //   },
-  //   {
-  //     id: '3',
-  //     title: '数据可视化平台',
-  //     description: '实时数据监控和可视化分析平台，支持多种图表类型和自定义仪表板。',
-  //     content: '详细的项目介绍内容，包含技术栈、功能特性、实现思路等。',
-  //     demo_url: 'https://demo.example.com',
-  //     github_url: 'https://github.com',
-  //     featured: true,
-  //     status: 'published' as const,
-  //     sort_order: 3,
-  //     user_id: 'demo-user',
-  //     created_at: new Date().toISOString(),
-  //     updated_at: new Date().toISOString(),
-  //   },
-  // ]
+  return []
 })
 
 const publishedProjects = computed(() =>
@@ -121,7 +79,13 @@ export function useProjects() {
     error.value = null
 
     try {
-      const data = await projectService.getProjectsWithRelations(options)
+      // 使用缓存装饰器
+      const cacheKey = `projects:${JSON.stringify(options)}`
+      const cachedProjects = cache.withCache(cacheKey, () =>
+        projectService.getProjectsWithRelations(options),
+      )()
+
+      const data = await cachedProjects
       projects.value = data
       return data
     } catch (err: any) {
@@ -136,6 +100,10 @@ export function useProjects() {
   const createProject = async (data: Partial<Project>) => {
     try {
       const newProject = await projectService.createProject(data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('projects')
+
       // 重新加载项目数据以获取关联的分类和标签
       await loadProjects()
       ElMessage.success('项目创建成功')
@@ -149,6 +117,10 @@ export function useProjects() {
   const updateProject = async (id: string, data: Partial<Project>) => {
     try {
       const updatedProject = await projectService.updateProject(id, data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('projects')
+
       // 重新加载项目数据以获取关联的分类和标签
       await loadProjects()
       ElMessage.success('项目更新成功')
@@ -162,6 +134,10 @@ export function useProjects() {
   const deleteProject = async (id: string) => {
     try {
       await projectService.deleteProject(id)
+
+      // 清除相关缓存
+      cache.clearByPrefix('projects')
+
       projects.value = projects.value.filter((p) => p.id !== id)
       ElMessage.success('项目删除成功')
     } catch (err: any) {
@@ -172,7 +148,11 @@ export function useProjects() {
 
   const getProject = async (id: string) => {
     try {
-      return await projectService.getProject(id)
+      // 使用缓存装饰器
+      const cacheKey = `project:${id}`
+      const cachedProject = cache.withCache(cacheKey, () => projectService.getProject(id))()
+
+      return await cachedProject
     } catch (err: any) {
       ElMessage.error('获取项目详情失败')
       throw err
@@ -200,7 +180,11 @@ export function useCategories() {
     error.value = null
 
     try {
-      const data = await categoryService.getCategories()
+      // 使用缓存装饰器
+      const cacheKey = 'categories'
+      const cachedCategories = cache.withCache(cacheKey, () => categoryService.getCategories())()
+
+      const data = await cachedCategories
       categories.value = data
       return data
     } catch (err: any) {
@@ -215,6 +199,10 @@ export function useCategories() {
   const createCategory = async (data: Partial<Category>) => {
     try {
       const newCategory = await categoryService.createCategory(data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('categories')
+
       categories.value.push(newCategory)
       ElMessage.success('分类创建成功')
       return newCategory
@@ -227,6 +215,10 @@ export function useCategories() {
   const updateCategory = async (id: string, data: Partial<Category>) => {
     try {
       const updatedCategory = await categoryService.updateCategory(id, data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('categories')
+
       const index = categories.value.findIndex((c) => c.id === id)
       if (index !== -1) {
         categories.value[index] = updatedCategory
@@ -242,6 +234,10 @@ export function useCategories() {
   const deleteCategory = async (id: string) => {
     try {
       await categoryService.deleteCategory(id)
+
+      // 清除相关缓存
+      cache.clearByPrefix('categories')
+
       categories.value = categories.value.filter((c) => c.id !== id)
       ElMessage.success('分类删除成功')
     } catch (err: any) {
@@ -267,7 +263,11 @@ export function useTags() {
     error.value = null
 
     try {
-      const data = await tagService.getTags()
+      // 使用缓存装饰器
+      const cacheKey = 'tags'
+      const cachedTags = cache.withCache(cacheKey, () => tagService.getTags())()
+
+      const data = await cachedTags
       tags.value = data
       return data
     } catch (err: any) {
@@ -282,6 +282,10 @@ export function useTags() {
   const createTag = async (data: Partial<Tag>) => {
     try {
       const newTag = await tagService.createTag(data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('tags')
+
       tags.value.push(newTag)
       ElMessage.success('标签创建成功')
       return newTag
@@ -294,6 +298,10 @@ export function useTags() {
   const updateTag = async (id: string, data: Partial<Tag>) => {
     try {
       const updatedTag = await tagService.updateTag(id, data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('tags')
+
       const index = tags.value.findIndex((t) => t.id === id)
       if (index !== -1) {
         tags.value[index] = updatedTag
@@ -309,6 +317,10 @@ export function useTags() {
   const deleteTag = async (id: string) => {
     try {
       await tagService.deleteTag(id)
+
+      // 清除相关缓存
+      cache.clearByPrefix('tags')
+
       tags.value = tags.value.filter((t) => t.id !== id)
       ElMessage.success('标签删除成功')
     } catch (err: any) {
@@ -334,7 +346,11 @@ export function useSkills() {
     error.value = null
 
     try {
-      const data = await skillService.getSkills()
+      // 使用缓存装饰器
+      const cacheKey = 'skills'
+      const cachedSkills = cache.withCache(cacheKey, () => skillService.getSkills())()
+
+      const data = await cachedSkills
       skills.value = data
       return data
     } catch (err: any) {
@@ -349,6 +365,10 @@ export function useSkills() {
   const createSkill = async (data: Partial<Skill>) => {
     try {
       const newSkill = await skillService.createSkill(data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('skills')
+
       skills.value.push(newSkill)
       ElMessage.success('技能创建成功')
       return newSkill
@@ -361,6 +381,10 @@ export function useSkills() {
   const updateSkill = async (id: string, data: Partial<Skill>) => {
     try {
       const updatedSkill = await skillService.updateSkill(id, data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('skills')
+
       const index = skills.value.findIndex((s) => s.id === id)
       if (index !== -1) {
         skills.value[index] = updatedSkill
@@ -376,6 +400,10 @@ export function useSkills() {
   const deleteSkill = async (id: string) => {
     try {
       await skillService.deleteSkill(id)
+
+      // 清除相关缓存
+      cache.clearByPrefix('skills')
+
       skills.value = skills.value.filter((s) => s.id !== id)
       ElMessage.success('技能删除成功')
     } catch (err: any) {
@@ -401,7 +429,13 @@ export function useSocialLinks() {
     error.value = null
 
     try {
-      const data = await socialLinkService.getSocialLinks()
+      // 使用缓存装饰器
+      const cacheKey = 'social-links'
+      const cachedSocialLinks = cache.withCache(cacheKey, () =>
+        socialLinkService.getSocialLinks(),
+      )()
+
+      const data = await cachedSocialLinks
       socialLinks.value = data
       return data
     } catch (err: any) {
@@ -416,6 +450,10 @@ export function useSocialLinks() {
   const createSocialLink = async (data: Partial<SocialLink>) => {
     try {
       const newLink = await socialLinkService.createSocialLink(data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('social-links')
+
       socialLinks.value.push(newLink)
       ElMessage.success('社交链接创建成功')
       return newLink
@@ -428,6 +466,10 @@ export function useSocialLinks() {
   const updateSocialLink = async (id: string, data: Partial<SocialLink>) => {
     try {
       const updatedLink = await socialLinkService.updateSocialLink(id, data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('social-links')
+
       const index = socialLinks.value.findIndex((l) => l.id === id)
       if (index !== -1) {
         socialLinks.value[index] = updatedLink
@@ -443,6 +485,10 @@ export function useSocialLinks() {
   const deleteSocialLink = async (id: string) => {
     try {
       await socialLinkService.deleteSocialLink(id)
+
+      // 清除相关缓存
+      cache.clearByPrefix('social-links')
+
       socialLinks.value = socialLinks.value.filter((l) => l.id !== id)
       ElMessage.success('社交链接删除成功')
     } catch (err: any) {
@@ -468,7 +514,11 @@ export function useProfile() {
     error.value = null
 
     try {
-      const data = await profileService.getProfile(userId)
+      // 使用缓存装饰器
+      const cacheKey = `profile:${userId}`
+      const cachedProfile = cache.withCache(cacheKey, () => profileService.getProfile(userId))()
+
+      const data = await cachedProfile
       currentProfile.value = data
       return data
     } catch (err: any) {
@@ -483,6 +533,10 @@ export function useProfile() {
   const updateProfile = async (userId: string, data: Partial<Profile>) => {
     try {
       const updatedProfile = await profileService.updateProfile(userId, data)
+
+      // 清除相关缓存
+      cache.clearByPrefix(`profile:${userId}`)
+
       currentProfile.value = updatedProfile
       ElMessage.success('档案更新成功')
       return updatedProfile
@@ -495,6 +549,10 @@ export function useProfile() {
   const createProfile = async (data: Partial<Profile>) => {
     try {
       const newProfile = await profileService.createProfile(data)
+
+      // 清除相关缓存
+      cache.clearByPrefix('profile:')
+
       currentProfile.value = newProfile
       ElMessage.success('档案创建成功')
       return newProfile
@@ -532,6 +590,8 @@ export function useData() {
   }
 
   const refreshData = async () => {
+    // 清除所有数据缓存
+    cache.clearAll()
     await loadAllData()
   }
 
@@ -556,7 +616,11 @@ export function useSystemSettings() {
     error.value = null
 
     try {
-      const data = await systemSettingsService.getSettings()
+      // 使用缓存装饰器
+      const cacheKey = 'system-settings'
+      const cachedSettings = cache.withCache(cacheKey, () => systemSettingsService.getSettings())()
+
+      const data = await cachedSettings
       systemSettings.value = data
       return data
     } catch (err: any) {
@@ -570,7 +634,11 @@ export function useSystemSettings() {
 
   const getSystemSetting = async (key: string) => {
     try {
-      return await systemSettingsService.getSetting(key)
+      // 使用缓存装饰器
+      const cacheKey = `system-setting:${key}`
+      const cachedSetting = cache.withCache(cacheKey, () => systemSettingsService.getSetting(key))()
+
+      return await cachedSetting
     } catch (err: any) {
       ElMessage.error('获取系统设置失败')
       throw err
@@ -580,6 +648,11 @@ export function useSystemSettings() {
   const updateSystemSetting = async (key: string, value: string, description?: string) => {
     try {
       const updatedSetting = await systemSettingsService.updateSetting(key, value, description)
+
+      // 清除相关缓存
+      cache.clearByPrefix('system-settings')
+      cache.clearByPrefix(`system-setting:${key}`)
+
       const index = systemSettings.value.findIndex((s) => s.key === key)
       if (index !== -1) {
         systemSettings.value[index] = updatedSetting
@@ -602,6 +675,9 @@ export function useSystemSettings() {
 
     try {
       const results = await systemSettingsService.batchUpdateSettings(settings)
+
+      // 清除相关缓存
+      cache.clearByPrefix('system-settings')
 
       // 更新本地状态
       for (const setting of results) {
@@ -627,6 +703,11 @@ export function useSystemSettings() {
   const deleteSystemSetting = async (key: string) => {
     try {
       await systemSettingsService.deleteSetting(key)
+
+      // 清除相关缓存
+      cache.clearByPrefix('system-settings')
+      cache.clearByPrefix(`system-setting:${key}`)
+
       systemSettings.value = systemSettings.value.filter((s) => s.key !== key)
       ElMessage.success('设置删除成功')
     } catch (err: any) {

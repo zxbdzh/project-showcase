@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { minioClient } from '@/utils/minio'
+import minioService from '@/utils/minio'
 
 // 上传选项接口
 interface UploadOptions {
