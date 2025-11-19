@@ -66,42 +66,54 @@ export interface Database {
           title: string
           description: string | null
           content: string | null
+          cover_image: string | null
           demo_url: string | null
           github_url: string | null
-          featured: boolean
-          status: 'draft' | 'published' | 'archived'
-          sort_order: number
-          user_id: string
-          created_at: string
-          updated_at: string
+          tech_stack: string[] | null
+          category_id: string | null
+          featured: boolean | null
+          status: string | null
+          sort_order: number | null
+          view_count: number | null
+          user_id: string | null
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
           title: string
           description?: string | null
           content?: string | null
+          cover_image?: string | null
           demo_url?: string | null
           github_url?: string | null
-          featured?: boolean
-          status?: 'draft' | 'published' | 'archived'
-          sort_order?: number
-          user_id: string
-          created_at?: string
-          updated_at?: string
+          tech_stack?: string[] | null
+          category_id?: string | null
+          featured?: boolean | null
+          status?: string | null
+          sort_order?: number | null
+          view_count?: number | null
+          user_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
           title?: string
           description?: string | null
           content?: string | null
+          cover_image?: string | null
           demo_url?: string | null
           github_url?: string | null
-          featured?: boolean
-          status?: 'draft' | 'published' | 'archived'
-          sort_order?: number
-          user_id?: string
-          created_at?: string
-          updated_at?: string
+          tech_stack?: string[] | null
+          category_id?: string | null
+          featured?: boolean | null
+          status?: string | null
+          sort_order?: number | null
+          view_count?: number | null
+          user_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
         }
       }
       categories: {
@@ -197,38 +209,44 @@ export interface Database {
         Row: {
           id: string
           name: string
-          category: string
-          level: number
+          level: string | null
+          category: string | null
+          icon_url: string | null
+          proficiency: number | null
           years_experience: number | null
-          projects_count: number
-          icon: string | null
-          user_id: string
-          created_at: string
-          updated_at: string
+          sort_order: number | null
+          is_active: boolean | null
+          user_id: string | null
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
           name: string
-          category: string
-          level: number
+          level?: string | null
+          category?: string | null
+          icon_url?: string | null
+          proficiency?: number | null
           years_experience?: number | null
-          projects_count?: number
-          icon?: string | null
-          user_id: string
-          created_at?: string
-          updated_at?: string
+          sort_order?: number | null
+          is_active?: boolean | null
+          user_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
           name?: string
-          category?: string
-          level?: number
+          level?: string | null
+          category?: string | null
+          icon_url?: string | null
+          proficiency?: number | null
           years_experience?: number | null
-          projects_count?: number
-          icon?: string | null
-          user_id?: string
-          created_at?: string
-          updated_at?: string
+          sort_order?: number | null
+          is_active?: boolean | null
+          user_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
         }
       }
       social_links: {
