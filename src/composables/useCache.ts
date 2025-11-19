@@ -20,6 +20,11 @@ const cacheVersion = ref('1.0.0')
 const cacheEnabled = ref(true)
 const redisConnected = ref(false)
 
+// Redis重试配置
+const RETRY_ATTEMPTS = 3 // 最大重试次数
+const RETRY_DELAY = 1000 // 重试延迟（毫秒）
+const CONNECTION_TIMEOUT = 5000 // 连接超时（毫秒）
+
 // 路由缓存策略配置
 const routeCacheStrategies: Record<string, { enabled: boolean }> = {
   // 前台页面 - 启用缓存
@@ -67,8 +72,8 @@ const generateCacheKey = (key: string, config?: CacheConfig) => {
   return `${key}:${version}`
 }
 
-// 检查Redis连接状态
-const checkRedisConnection = async (): Promise<boolean> => {
+// 带重试的Redis连接检查
+const checkRedisConnectionWithRetry = async (attempt = 1): Promise<boolean> => {
   try {
     const status = redisService.getConnectionStatus()
     if (status === 'connected') {
@@ -77,24 +82,55 @@ const checkRedisConnection = async (): Promise<boolean> => {
     }
 
     if (status === 'disconnected' || status === 'error') {
-      const connected = await redisService.connect()
-      redisConnected.value = connected
-      return connected
+      console.log(`Redis连接尝试 ${attempt}/${RETRY_ATTEMPTS}`)
+      const connected = await Promise.race([
+        redisService.connect(),
+        new Promise<boolean>((_, reject) =>
+          setTimeout(() => reject(new Error('连接超时')), CONNECTION_TIMEOUT),
+        ),
+      ])
+
+      if (connected) {
+        redisConnected.value = true
+        console.log(`Redis连接成功，尝试次数: ${attempt}`)
+        return true
+      } else if (attempt < RETRY_ATTEMPTS) {
+        console.log(`Redis连接失败，${RETRY_DELAY}ms后重试...`)
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+        return checkRedisConnectionWithRetry(attempt + 1)
+      }
     }
 
     return false
   } catch (error) {
-    console.error('Redis连接检查失败:', error)
+    console.error(`Redis连接检查失败 (尝试 ${attempt}/${RETRY_ATTEMPTS}):`, error)
     redisConnected.value = false
+
+    if (attempt < RETRY_ATTEMPTS) {
+      console.log(`${RETRY_DELAY}ms后重试Redis连接...`)
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+      return checkRedisConnectionWithRetry(attempt + 1)
+    }
+
     return false
   }
 }
 
-// 设置缓存
-const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<void> => {
+// 检查Redis连接状态（兼容性函数）
+const checkRedisConnection = (): Promise<boolean> => {
+  return checkRedisConnectionWithRetry()
+}
+
+// 带重试的缓存设置
+const setCacheWithRetry = async <T>(
+  key: string,
+  data: T,
+  config?: CacheConfig,
+  attempt = 1,
+): Promise<boolean> => {
   if (!cacheEnabled.value) {
     console.log(`缓存已禁用，跳过设置: ${key}`)
-    return
+    return false
   }
 
   const cacheKey = generateCacheKey(key, config)
@@ -111,24 +147,57 @@ const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<
   const isRedisAvailable = await checkRedisConnection()
 
   if (!isRedisAvailable) {
-    console.warn(`Redis不可用，缓存设置失败: ${key}`)
-    return
+    if (attempt < RETRY_ATTEMPTS) {
+      console.log(
+        `Redis不可用，${RETRY_DELAY}ms后重试设置缓存: ${key} (${attempt}/${RETRY_ATTEMPTS})`,
+      )
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+      return setCacheWithRetry(key, data, config, attempt + 1)
+    } else {
+      console.warn(`Redis不可用，缓存设置最终失败: ${key}`)
+      return false
+    }
   }
 
   try {
     const success = await redisService.set(cacheKey, cacheItem, ttl)
     if (success) {
       console.log(`Redis缓存设置成功: ${key}`)
+      return true
     } else {
-      console.warn(`Redis缓存设置失败: ${key}`)
+      if (attempt < RETRY_ATTEMPTS) {
+        console.log(
+          `Redis缓存设置失败，${RETRY_DELAY}ms后重试: ${key} (${attempt}/${RETRY_ATTEMPTS})`,
+        )
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+        return setCacheWithRetry(key, data, config, attempt + 1)
+      } else {
+        console.warn(`Redis缓存设置最终失败: ${key}`)
+        return false
+      }
     }
   } catch (error) {
-    console.error(`Redis缓存设置异常: ${key}`, error)
+    console.error(`Redis缓存设置异常 (${attempt}/${RETRY_ATTEMPTS}): ${key}`, error)
+    if (attempt < RETRY_ATTEMPTS) {
+      console.log(`${RETRY_DELAY}ms后重试缓存设置: ${key}`)
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+      return setCacheWithRetry(key, data, config, attempt + 1)
+    }
+    return false
   }
 }
 
-// 获取缓存
-const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null> => {
+// 设置缓存（兼容性函数）
+const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<void> => {
+  await setCacheWithRetry(key, data, config)
+}
+
+// 带重试的缓存获取
+const getCacheWithRetry = async <T>(
+  key: string,
+  config?: CacheConfig,
+  attempt = 1,
+): Promise<T | null> => {
   if (!cacheEnabled.value) {
     console.log(`缓存已禁用，跳过获取: ${key}`)
     return null
@@ -140,8 +209,16 @@ const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null>
   const isRedisAvailable = await checkRedisConnection()
 
   if (!isRedisAvailable) {
-    console.warn(`Redis不可用，缓存获取失败: ${key}`)
-    return null
+    if (attempt < RETRY_ATTEMPTS) {
+      console.log(
+        `Redis不可用，${RETRY_DELAY}ms后重试获取缓存: ${key} (${attempt}/${RETRY_ATTEMPTS})`,
+      )
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+      return getCacheWithRetry(key, config, attempt + 1)
+    } else {
+      console.warn(`Redis不可用，缓存获取最终失败: ${key}`)
+      return null
+    }
   }
 
   try {
@@ -154,9 +231,19 @@ const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null>
       return null
     }
   } catch (error) {
-    console.error(`Redis缓存获取异常: ${key}`, error)
+    console.error(`Redis缓存获取异常 (${attempt}/${RETRY_ATTEMPTS}): ${key}`, error)
+    if (attempt < RETRY_ATTEMPTS) {
+      console.log(`${RETRY_DELAY}ms后重试缓存获取: ${key}`)
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY))
+      return getCacheWithRetry(key, config, attempt + 1)
+    }
     return null
   }
+}
+
+// 获取缓存（兼容性函数）
+const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null> => {
+  return getCacheWithRetry(key, config)
 }
 
 // 删除缓存
