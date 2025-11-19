@@ -158,31 +158,139 @@ const handleSwitchMode = (mode: string) => {
   console.log('Switch to mode:', mode)
 }
 
-// 设置网页标题
+// 设置网页标题（参考favicon更新方法）
 const updatePageTitle = (title: string) => {
-  document.title = title || 'Geek Portfolio'
+  if (title && title !== document.title) {
+    document.title = title
+    console.log('Page title updated:', title)
+  }
+}
+
+// 更新favicon（使用博客园推荐的方法）
+const updateFavicon = () => {
+  const favicon = getSettingValue('site_favicon', '')
+  if (favicon) {
+    // 使用博客园推荐的方法：直接查找并更新现有的favicon
+    let $favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
+
+    if ($favicon !== null) {
+      // 如果存在现有的favicon，直接更新href
+      $favicon.href = favicon
+      console.log('Layout favicon updated:', favicon)
+    } else {
+      // 如果不存在，创建新的favicon元素
+      $favicon = document.createElement('link')
+      $favicon.rel = 'icon'
+      $favicon.type = 'image/x-icon'
+      $favicon.href = favicon
+      document.head.appendChild($favicon)
+      console.log('Layout new favicon created:', favicon)
+    }
+
+    // 同时处理shortcut icon
+    let $shortcutIcon = document.querySelector('link[rel="shortcut icon"]') as HTMLLinkElement
+    if ($shortcutIcon !== null) {
+      $shortcutIcon.href = favicon
+      console.log('Layout shortcut icon updated:', favicon)
+    } else {
+      $shortcutIcon = document.createElement('link')
+      $shortcutIcon.rel = 'shortcut icon'
+      $shortcutIcon.type = 'image/x-icon'
+      $shortcutIcon.href = favicon
+      document.head.appendChild($shortcutIcon)
+      console.log('Layout new shortcut icon created:', favicon)
+    }
+
+    // 额外的强制刷新技术
+    setTimeout(() => {
+      // 使用Image对象预加载强制浏览器重新下载
+      const img = new Image()
+      img.onload = () => {
+        console.log('Layout favicon preloaded successfully')
+      }
+      img.onerror = () => {
+        console.log('Layout favicon preload failed')
+      }
+      img.src = favicon
+
+      // iframe隐藏加载技术强制刷新缓存
+      const iframe = document.createElement('iframe')
+      iframe.style.display = 'none'
+      iframe.src = favicon
+      document.body.appendChild(iframe)
+
+      // 短暂延迟后移除iframe
+      setTimeout(() => {
+        if (iframe.parentNode) {
+          document.body.removeChild(iframe)
+        }
+      }, 100)
+    }, 50)
+  }
+}
+
+// 应用所有页面设置（标题、favicon、meta等）
+const applyPageSettings = () => {
+  // 更新页面标题
+  const siteTitle = getSettingValue('site_title', 'Geek Portfolio')
+  updatePageTitle(siteTitle)
+
+  // 更新favicon
+  updateFavicon()
+
+  // 更新meta标签
+  const description = getSettingValue('site_description', '')
+  if (description) {
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'description'
+      document.head.appendChild(meta)
+    }
+    meta.content = description
+  }
+
+  const keywords = getSettingValue('seo_keywords', '')
+  if (keywords) {
+    let meta = document.querySelector('meta[name="keywords"]') as HTMLMetaElement
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'keywords'
+      document.head.appendChild(meta)
+    }
+    meta.content = keywords
+  }
+
+  const author = getSettingValue('seo_author', '')
+  if (author) {
+    let meta = document.querySelector('meta[name="author"]') as HTMLMetaElement
+    if (!meta) {
+      meta = document.createElement('meta')
+      meta.name = 'author'
+      document.head.appendChild(meta)
+    }
+    meta.content = author
+  }
+
+  console.log('Layout page settings applied')
 }
 
 // 初始化系统设置
 const initializeSettings = async () => {
   try {
     await loadSystemSettings()
-    // 设置网页标题
-    const siteTitle = getSettingValue('site_title', 'Geek Portfolio')
-    console.log(siteTitle)
-
-    updatePageTitle(siteTitle)
+    // 应用所有页面设置
+    applyPageSettings()
   } catch (error) {
     console.error('Failed to load system settings:', error)
   }
 }
 
-// 监听系统设置变化，更新标题
+// 监听系统设置变化，更新页面设置
 watch(
   () => systemSettings.value,
   () => {
-    const siteTitle = getSettingValue('site_title', 'Geek Portfolio')
-    updatePageTitle(siteTitle)
+    applyPageSettings()
   },
   { deep: true },
 )

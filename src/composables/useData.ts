@@ -671,6 +671,7 @@ export function initializeData() {
 
       // 应用favicon（使用博客园推荐的方法）
       const favicon = getSettingValue('site_favicon', '')
+
       if (favicon) {
         // 使用博客园推荐的方法：直接查找并更新现有的favicon
         let $favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
