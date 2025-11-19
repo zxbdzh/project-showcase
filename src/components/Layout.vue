@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
@@ -109,6 +109,20 @@ const handleSwitchMode = (mode: string) => {
   // 这里可以切换到注册表单
   console.log('Switch to mode:', mode)
 }
+
+// 初始化系统设置
+const initializeSettings = async () => {
+  try {
+    await useSystemSettings().loadSystemSettings()
+  } catch (error) {
+    console.error('Failed to load system settings:', error)
+  }
+}
+
+// 组件挂载时初始化设置
+onMounted(() => {
+  initializeSettings()
+})
 </script>
 
 <style scoped>
