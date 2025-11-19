@@ -76,9 +76,16 @@
           <el-form-item label="封面图片" prop="cover_image">
             <file-upload
               v-model="formData.cover_image"
+              :multiple="false"
               :limit="1"
-              accept="image/*"
-              list-type="picture-card"
+              accept=".png,.jpg,.jpeg"
+              :drag="false"
+              :show-file-list="true"
+              bucket="project-showcase"
+              folder="covers"
+              @success="handleCoverUploadSuccess"
+              @error="handleCoverUploadError"
+              @remove="handleCoverRemove"
             />
           </el-form-item>
         </el-col>
@@ -293,6 +300,24 @@ const handleSubmit = async () => {
   } finally {
     submitting.value = false
   }
+}
+
+// 处理封面图片上传成功
+const handleCoverUploadSuccess = (response: unknown, file: any) => {
+  console.log('Cover upload success:', response, file)
+  // v-model会自动更新formData.cover_image
+}
+
+// 处理封面图片上传失败
+const handleCoverUploadError = (error: Error, file: any) => {
+  console.error('Cover upload error:', error, file)
+  ElMessage.error('封面图片上传失败')
+}
+
+// 处理封面图片删除
+const handleCoverRemove = (file: any) => {
+  console.log('Cover removed:', file)
+  // v-model会自动更新formData.cover_image为空字符串
 }
 
 // 处理取消

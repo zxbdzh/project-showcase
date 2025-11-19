@@ -9,7 +9,6 @@
       :on-progress="onProgress"
       :on-success="onSuccess"
       :on-error="onError"
-      :on-remove="onRemove"
       :file-list="fileList"
       :multiple="multiple"
       :accept="accept"
@@ -116,6 +115,7 @@ interface ExtendedUploadFile {
 
 // Props
 interface Props {
+  modelValue?: string | string[] // 支持v-model绑定
   multiple?: boolean
   accept?: string
   limit?: number
@@ -143,6 +143,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 interface Emits {
+  (e: 'update:modelValue', value: string | string[]): void
   (e: 'update:fileList', files: UploadUserFile[]): void
   (e: 'success', response: unknown, file: UploadUserFile): void
   (e: 'error', error: Error, file: UploadUserFile): void
@@ -193,7 +194,49 @@ const hasUploading = computed(() => {
 // 监听文件列表变化
 watch(fileList, (newFiles) => {
   emit('update:fileList', newFiles as UploadUserFile[])
+
+  // 更新v-model值
+  if (props.multiple) {
+    const urls = newFiles.filter((f) => f.url).map((f) => f.url!)
+    emit('update:modelValue', urls)
+  } else {
+    const firstFile = newFiles.find((f) => f.url)
+    emit('update:modelValue', firstFile?.url || '')
+  }
 })
+
+// 监听v-model变化，初始化文件列表
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue) {
+      if (props.multiple && Array.isArray(newValue)) {
+        // 多文件模式
+        fileList.value = newValue.map((url, index) => ({
+          uid: Date.now() + index,
+          name: url.split('/').pop() || `file-${index}`,
+          url,
+          status: 'success' as const,
+          percentage: 100,
+        }))
+      } else if (!props.multiple && typeof newValue === 'string') {
+        // 单文件模式
+        fileList.value = [
+          {
+            uid: Date.now(),
+            name: newValue.split('/').pop() || 'file',
+            url: newValue,
+            status: 'success' as const,
+            percentage: 100,
+          },
+        ]
+      }
+    } else {
+      fileList.value = []
+    }
+  },
+  { immediate: true },
+)
 
 // 上传前检查和实际上传
 const beforeUpload = async (file: UploadUserFile) => {
@@ -327,37 +370,6 @@ const onError = (error: Error, file: UploadUserFile) => {
   }
 
   emit('error', error, file)
-}
-
-// 移除文件
-const onRemove = async (file: UploadUserFile) => {
-  try {
-    await ElMessageBox.confirm(`确定要删除文件 "${file.name}" 吗？`, '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    })
-
-    // 从MinIO删除文件
-    const extendedFile = file as ExtendedUploadFile
-    if (extendedFile.key) {
-      const deleteSuccess = await MinIOService.deleteFile(props.bucket, extendedFile.key)
-      if (!deleteSuccess) {
-        ElMessage.warning('文件删除失败，但已从列表中移除')
-      }
-    }
-
-    // 从文件列表中移除
-    const index = fileList.value.findIndex((f) => f.uid === file.uid)
-    if (index !== -1) {
-      fileList.value.splice(index, 1)
-    }
-
-    emit('remove', file)
-    ElMessage.success('文件删除成功')
-  } catch {
-    // 用户取消删除
-  }
 }
 
 // 格式化文件大小
