@@ -7,7 +7,7 @@
     <header class="layout__header">
       <nav class="layout__nav">
         <div class="layout__nav-brand">
-          <router-link to="/" class="brand-link">
+          <router-link to="/" class="brand-link" :class="brandTextClass">
             <glitch-text :text="brandText" :color="isDark ? '#00ff41' : '#0066cc'" />
           </router-link>
         </div>
@@ -70,13 +70,27 @@ import LoginForm from '@/components/Auth/LoginForm.vue'
 const router = useRouter()
 const { isAuthenticated, profile, userInitials, signOut } = useAuth()
 const { isDark } = useTheme()
-const { getSettingValue } = useSystemSettings()
+const {
+  getSettingValue,
+  loadSystemSettings,
+  systemSettings,
+  loading: settingsLoading,
+} = useSystemSettings()
 
 // 模态框状态
 const showLoginModal = ref(false)
 
+// 加载状态
+const isSettingsLoading = settingsLoading
+
 // 动态品牌文字
 const brandText = computed(() => getSettingValue('brand_text', 'GEEK'))
+
+// 品牌文字动画类
+const brandTextClass = computed(() => ({
+  'brand-text--loading': isSettingsLoading.value,
+  'brand-text--loaded': !isSettingsLoading.value,
+}))
 
 // 处理用户操作
 const handleUserAction = async (command: string) => {
@@ -113,7 +127,7 @@ const handleSwitchMode = (mode: string) => {
 // 初始化系统设置
 const initializeSettings = async () => {
   try {
-    await useSystemSettings().loadSystemSettings()
+    await loadSystemSettings()
   } catch (error) {
     console.error('Failed to load system settings:', error)
   }
@@ -161,6 +175,25 @@ onMounted(() => {
 .brand-link {
   text-decoration: none;
   color: inherit;
+  transition: all 0.3s ease;
+}
+
+/* 品牌文字加载动画 */
+.brand-text--loading {
+  opacity: 0.6;
+  transform: scale(0.95);
+  transition: all 0.3s ease;
+}
+
+.brand-text--loaded {
+  opacity: 1;
+  transform: scale(1);
+  transition: all 0.3s ease;
+}
+
+.brand-text--loading:hover {
+  opacity: 0.8;
+  transform: scale(0.98);
 }
 
 .layout__nav-actions {
