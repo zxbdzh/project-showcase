@@ -39,10 +39,9 @@
 
         <div class="admin-projects__filter-controls">
           <el-select v-model="statusFilter" placeholder="项目状态" clearable @change="handleFilter">
-            <el-option label="全部" value="" />
-            <el-option label="进行中" value="active" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="暂停" value="paused" />
+            <el-option label="草稿" value="draft" />
+            <el-option label="已发布" value="published" />
+            <el-option label="已归档" value="archived" />
           </el-select>
 
           <el-select
@@ -112,7 +111,7 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="排序" width="100">
+          <el-table-column label="排序" width="150">
             <template #default="{ row }">
               <el-input-number
                 v-model="row.sort_order"

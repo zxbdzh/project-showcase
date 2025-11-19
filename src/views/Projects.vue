@@ -176,14 +176,8 @@ const handleCategoryFilter = (categoryId: string) => {
 }
 
 const openProject = (project: Project) => {
-  // 优先使用 demo_url，其次使用 github_url
-  const url = project.demo_url || project.github_url
-  if (url) {
-    window.open(url, '_blank')
-  } else {
-    // 如果没有外部链接，跳转到项目详情页
-    router.push(`/project/${project.id}`)
-  }
+  // 直接跳转到项目详情页
+  router.push(`/project/${project.id}`)
 }
 
 const formatDate = (dateString: string) => {
