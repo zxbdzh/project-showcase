@@ -145,7 +145,11 @@ export const minioClient = {
   // 直接构建公共URL（适用于公共读取的存储桶）
   getPublicUrl: (bucket: string, objectName: string): string => {
     const protocol = s3Config.useSSL ? 'https' : 'http'
-    return `${protocol}://${s3Config.endPoint}/${bucket}/${objectName}`
+    // 确保endpoint格式正确
+    const endpoint = s3Config.endPoint.startsWith('http')
+      ? s3Config.endPoint.replace(/^https?:\/\//, '')
+      : s3Config.endPoint
+    return `${protocol}://${endpoint}/${bucket}/${objectName}`
   },
 
   // 上传文件到S3兼容存储
@@ -159,16 +163,25 @@ export const minioClient = {
     const url = minioClient.getPublicUrl(bucket, objectName)
 
     try {
+      // 添加基本认证头
+      const headers: Record<string, string> = {
+        'Content-Type': metaData['Content-Type'] || 'application/octet-stream',
+        'Content-Length': size.toString(),
+        'X-Amz-Meta-Original-Name': metaData['X-Amz-Meta-Original-Name'] || '',
+        'X-Amz-Meta-Upload-Time': metaData['X-Amz-Meta-Upload-Time'] || '',
+        'X-Amz-Meta-File-Type': metaData['X-Amz-Meta-File-Type'] || '',
+      }
+
+      // 如果有认证信息，添加认证头
+      if (s3Config.accessKey) {
+        const auth = btoa(`${s3Config.accessKey}:${s3Config.secretKey}`)
+        headers['Authorization'] = `Basic ${auth}`
+      }
+
       const response = await fetch(url, {
         method: 'PUT',
         body: buffer,
-        headers: {
-          'Content-Type': metaData['Content-Type'] || 'application/octet-stream',
-          'Content-Length': size.toString(),
-          'X-Amz-Meta-Original-Name': metaData['X-Amz-Meta-Original-Name'] || '',
-          'X-Amz-Meta-Upload-Time': metaData['X-Amz-Meta-Upload-Time'] || '',
-          'X-Amz-Meta-File-Type': metaData['X-Amz-Meta-File-Type'] || '',
-        },
+        headers,
       })
 
       if (!response.ok) {
