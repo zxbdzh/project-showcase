@@ -154,7 +154,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { UploadUserFile } from 'element-plus'
 import { ArrowLeft, Check, Setting, Picture, Search } from '@element-plus/icons-vue'
@@ -218,15 +218,7 @@ const applySettingsToPage = () => {
   }
 
   // 更新favicon
-  if (settings.value.site_favicon) {
-    let favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-    if (!favicon) {
-      favicon = document.createElement('link')
-      favicon.rel = 'icon'
-      document.head.appendChild(favicon)
-    }
-    favicon.href = settings.value.site_favicon
-  }
+  updateFavicon()
 
   // 应用自定义CSS
   const customStyleElement = document.getElementById('custom-css')
@@ -256,6 +248,26 @@ const updateMetaTag = (name: string, content: string) => {
     document.head.appendChild(meta)
   }
   meta.content = content
+}
+
+// 更新favicon的独立函数
+const updateFavicon = () => {
+  if (settings.value.site_favicon) {
+    let favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
+    if (!favicon) {
+      favicon = document.createElement('link')
+      favicon.rel = 'icon'
+      document.head.appendChild(favicon)
+    }
+    favicon.href = settings.value.site_favicon
+    console.log('Favicon updated to:', settings.value.site_favicon)
+  } else {
+    // 如果favicon为空，移除现有的favicon
+    const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
+    if (favicon) {
+      favicon.remove()
+    }
+  }
 }
 
 // 保存设置
@@ -312,6 +324,8 @@ const handleLogoRemove = (file: UploadUserFile) => {
 const handleFaviconUploadSuccess = (response: unknown, file: UploadUserFile) => {
   console.log('Favicon upload success:', response, file)
   // v-model会自动更新settings.site_favicon
+  // 立即应用favicon到页面
+  updateFavicon()
 }
 
 // 处理Favicon上传失败
@@ -324,12 +338,23 @@ const handleFaviconUploadError = (error: Error, file: UploadUserFile) => {
 const handleFaviconRemove = (file: UploadUserFile) => {
   console.log('Favicon removed:', file)
   // v-model会自动更新settings.site_favicon为空字符串
+  // 立即更新favicon
+  updateFavicon()
 }
 
 // 返回
 const goBack = () => {
   router.back()
 }
+
+// 监听favicon变化，实时更新
+watch(
+  () => settings.value.site_favicon,
+  () => {
+    updateFavicon()
+  },
+  { immediate: false },
+)
 
 // 组件挂载时加载设置
 onMounted(() => {
