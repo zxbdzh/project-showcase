@@ -18,7 +18,7 @@ import {
 } from '@/services/database'
 
 // 全局数据状态
-const projects = ref<Project[]>([])
+const projects = ref<(Project & { categories: Category[]; tags: Tag[] })[]>([])
 const categories = ref<Category[]>([])
 const tags = ref<Tag[]>([])
 const skills = ref<Skill[]>([])
@@ -120,7 +120,7 @@ export function useProjects() {
     error.value = null
 
     try {
-      const data = await projectService.getProjects(options)
+      const data = await projectService.getProjectsWithRelations(options)
       projects.value = data
       return data
     } catch (err: any) {
@@ -135,7 +135,8 @@ export function useProjects() {
   const createProject = async (data: Partial<Project>) => {
     try {
       const newProject = await projectService.createProject(data)
-      projects.value.push(newProject)
+      // 重新加载项目数据以获取关联的分类和标签
+      await loadProjects()
       ElMessage.success('项目创建成功')
       return newProject
     } catch (err: any) {
@@ -147,10 +148,8 @@ export function useProjects() {
   const updateProject = async (id: string, data: Partial<Project>) => {
     try {
       const updatedProject = await projectService.updateProject(id, data)
-      const index = projects.value.findIndex((p) => p.id === id)
-      if (index !== -1) {
-        projects.value[index] = updatedProject
-      }
+      // 重新加载项目数据以获取关联的分类和标签
+      await loadProjects()
       ElMessage.success('项目更新成功')
       return updatedProject
     } catch (err: any) {

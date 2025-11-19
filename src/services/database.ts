@@ -145,6 +145,87 @@ export class ProfileService extends DatabaseService {
 
 // 项目服务
 export class ProjectService extends DatabaseService {
+  async getProjectsWithRelations(options?: {
+    featured?: boolean
+    status?: 'draft' | 'published' | 'archived'
+    limit?: number
+    orderBy?: { column: string; ascending?: boolean }
+  }): Promise<(Project & { categories: Category[]; tags: Tag[] })[]> {
+    try {
+      // 先获取项目列表
+      let projectsQuery = supabase.from('projects').select('*')
+
+      if (options?.featured !== undefined) {
+        projectsQuery = projectsQuery.eq('featured', options.featured)
+      }
+
+      if (options?.status) {
+        projectsQuery = projectsQuery.eq('status', options.status)
+      }
+
+      projectsQuery = projectsQuery.order(options?.orderBy?.column || 'sort_order', {
+        ascending: options?.orderBy?.ascending ?? true,
+      })
+
+      if (options?.limit) {
+        projectsQuery = projectsQuery.limit(options.limit)
+      }
+
+      const { data: projectsData, error: projectsError } = await projectsQuery
+
+      if (projectsError) throw projectsError
+
+      if (!projectsData || projectsData.length === 0) {
+        return []
+      }
+
+      // 获取所有项目ID
+      const projectIds = projectsData.map((p) => p.id)
+
+      // 获取项目分类关联
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('project_categories')
+        .select(
+          `
+          project_id,
+          categories:category_id(*)
+        `,
+        )
+        .in('project_id', projectIds)
+
+      if (categoriesError) throw categoriesError
+
+      // 获取项目标签关联
+      const { data: tagsData, error: tagsError } = await supabase
+        .from('project_tags')
+        .select(
+          `
+          project_id,
+          tags:tag_id(*)
+        `,
+        )
+        .in('project_id', projectIds)
+
+      if (tagsError) throw tagsError
+
+      // 组合数据
+      return projectsData.map((project) => ({
+        ...project,
+        categories: categoriesData
+          .filter((pc) => pc.project_id === project.id)
+          .map((pc) => pc.categories)
+          .filter(Boolean),
+        tags: tagsData
+          .filter((pt) => pt.project_id === project.id)
+          .map((pt) => pt.tags)
+          .filter(Boolean),
+      }))
+    } catch (error) {
+      this.handleError(error, 'get projects with relations')
+      throw error
+    }
+  }
+
   async getProjects(options?: {
     featured?: boolean
     status?: 'draft' | 'published' | 'archived'
@@ -476,6 +557,14 @@ export class SystemSettingsService extends DatabaseService {
       }
 
       // 如果更新失败（记录不存在），则创建新记录
+      // 获取当前用户ID
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        throw new Error('用户未登录')
+      }
+
       const { data: insertData, error: insertError } = await supabase
         .from('system_settings')
         .insert({
@@ -483,6 +572,7 @@ export class SystemSettingsService extends DatabaseService {
           value,
           description: description || key,
           type: 'string',
+          user_id: user.id,
         })
         .select()
         .single()
