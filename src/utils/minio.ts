@@ -178,7 +178,10 @@ export const minioClient = {
         const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, '')
         const dateStamp = amzDate.substr(0, 8)
 
-        // 简化的签名过程（生产环境建议使用AWS SDK）
+        // 计算payload hash
+        const payloadHash = await minioClient.sha256(buffer)
+
+        // 构建规范请求
         const canonicalRequest = [
           'PUT',
           `/${bucket}/${objectName}`,
@@ -194,20 +197,29 @@ export const minioClient = {
           'content-type;content-length;host;x-amz-date;x-amz-meta-original-name;x-amz-meta-upload-time;x-amz-meta-file-type',
         ].join('\n')
 
+        const canonicalRequestHash = await minioClient.sha256(canonicalRequest)
+
+        // 构建待签名字符串
         const stringToSign = [
           'AWS4-HMAC-SHA256',
           amzDate,
           `${dateStamp}/${s3Config.region}/s3/aws4_request`,
-          minioClient.sha256(canonicalRequest),
+          canonicalRequestHash,
         ].join('\n')
 
-        // 简化的签名计算（实际应该使用HMAC-SHA256）
-        const signature = 'placeholder-signature'
+        // 计算签名
+        const signingKey = await minioClient.getSigningKey(
+          s3Config.secretKey,
+          dateStamp,
+          s3Config.region,
+          's3',
+        )
+        const signature = await minioClient.hmacSha256(signingKey, stringToSign)
 
         headers['Authorization'] =
           `AWS4-HMAC-SHA256 Credential=${s3Config.accessKey}/${dateStamp}/${s3Config.region}/s3/aws4_request, SignedHeaders=content-type;content-length;host;x-amz-date;x-amz-meta-original-name;x-amz-meta-upload-time;x-amz-meta-file-type, Signature=${signature}`
         headers['X-Amz-Date'] = amzDate
-        headers['X-Amz-Content-Sha256'] = minioClient.sha256(buffer)
+        headers['X-Amz-Content-Sha256'] = payloadHash
       }
 
       const response = await fetch(url, {
@@ -229,11 +241,46 @@ export const minioClient = {
     }
   },
 
-  // 简化的SHA256函数
-  sha256: (data: string | ArrayBuffer): string => {
-    // 在实际应用中，这里应该使用Web Crypto API计算SHA256
-    // 现在返回一个占位符值
-    return 'UNSIGNED-PAYLOAD'
+  // 获取签名密钥
+  getSigningKey: async (
+    key: string,
+    dateStamp: string,
+    regionName: string,
+    serviceName: string,
+  ): Promise<string> => {
+    const kDate = await minioClient.hmacSha256('AWS4' + key, dateStamp)
+    const kRegion = await minioClient.hmacSha256(kDate, regionName)
+    const kService = await minioClient.hmacSha256(kRegion, serviceName)
+    const kSigning = await minioClient.hmacSha256(kService, 'aws4_request')
+    return kSigning
+  },
+
+  // 使用Web Crypto API计算SHA256
+  sha256: async (data: string | ArrayBuffer): Promise<string> => {
+    const encoder = new TextEncoder()
+    const dataArray = typeof data === 'string' ? encoder.encode(data) : data
+    const hashBuffer = await crypto.subtle.digest('SHA-256', dataArray)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+  },
+
+  // 计算HMAC-SHA256
+  hmacSha256: async (key: string, data: string): Promise<string> => {
+    const encoder = new TextEncoder()
+    const keyData = encoder.encode(key)
+    const dataData = encoder.encode(data)
+
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    )
+
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataData)
+    const hashArray = Array.from(new Uint8Array(signature))
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
   },
 
   // 删除文件
