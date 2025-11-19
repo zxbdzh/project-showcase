@@ -221,49 +221,49 @@ class RealtimeManager {
     channelName: string,
     callback: (event: BroadcastMessage) => void,
   ): string {
-    const channelNameToUse = `broadcast:${channelName}`
+    const fullChannelName = `broadcast:${channelName}`
 
     // 如果频道已存在，添加新的回调
-    if (this.channels.has(channelNameToUse)) {
-      const callbacks = this.broadcastCallbacks.get(channelNameToUse) || new Set()
+    if (this.channels.has(fullChannelName)) {
+      const callbacks = this.broadcastCallbacks.get(fullChannelName) || new Set()
       callbacks.add(callback)
-      this.broadcastCallbacks.set(channelNameToUse, callbacks)
-      return channelNameToUse
+      this.broadcastCallbacks.set(fullChannelName, callbacks)
+      return fullChannelName
     }
 
     // 创建新频道并订阅
-    const channelNameToUse = this.subscribeBroadcast(channelName, callback)
+    const createdChannelName = this.subscribeBroadcast(channelName, callback)
 
     // 保存频道和订阅
-    this.channels.set(channelNameToUse, channelNameToUse)
-    const callbacks = this.broadcastCallbacks.get(channelNameToUse) || new Set()
+    this.channels.set(createdChannelName, createdChannelName)
+    const callbacks = this.broadcastCallbacks.get(createdChannelName) || new Set()
     callbacks.add(callback)
-    this.broadcastCallbacks.set(channelNameToUse, callbacks)
+    this.broadcastCallbacks.set(createdChannelName, callbacks)
 
-    return channelNameToUse
+    return createdChannelName
   }
 
   public subscribePresence(channelName: string, callback: (event: any) => void): string {
-    const channelNameToUse = `presence:${channelName}`
+    const fullChannelName = `presence:${channelName}`
 
     // 如果频道已存在，添加新的回调
-    if (this.channels.has(channelNameToUse)) {
-      const callbacks = this.presenceCallbacks.get(channelNameToUse) || new Set()
+    if (this.channels.has(fullChannelName)) {
+      const callbacks = this.presenceCallbacks.get(fullChannelName) || new Set()
       callbacks.add(callback)
-      this.presenceCallbacks.set(channelNameToUse, callbacks)
-      return channelNameToUse
+      this.presenceCallbacks.set(fullChannelName, callbacks)
+      return fullChannelName
     }
 
     // 创建新频道并订阅
-    const channelNameToUse = this.subscribePresence(channelName, callback)
+    const createdChannelName = this.subscribePresence(channelName, callback)
 
     // 保存频道和订阅
-    this.channels.set(channelNameToUse, channelNameToUse)
-    const callbacks = this.presenceCallbacks.get(channelNameToUse) || new Set()
+    this.channels.set(createdChannelName, createdChannelName)
+    const callbacks = this.presenceCallbacks.get(createdChannelName) || new Set()
     callbacks.add(callback)
-    this.presenceCallbacks.set(channelNameToUse, callbacks)
+    this.presenceCallbacks.set(createdChannelName, callbacks)
 
-    return channelNameToUse
+    return createdChannelName
   }
 
   public unsubscribe(channelName: string, callback?: (event: RealtimeChangeEvent) => void) {
