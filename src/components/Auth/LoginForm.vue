@@ -58,15 +58,6 @@
       </el-form-item>
     </el-form>
 
-    <div class="login-form__footer">
-      <p class="login-form__change-password">
-        需要修改密码？
-        <el-button type="text" :disabled="loading" @click="handleChangePassword">
-          修改密码
-        </el-button>
-      </p>
-    </div>
-
     <!-- 错误提示 -->
     <el-alert
       v-if="error"
@@ -75,13 +66,6 @@
       :closable="false"
       show-icon
       class="login-form__error"
-    />
-
-    <!-- 修改密码对话框 -->
-    <change-password-dialog
-      v-model="showChangePasswordDialog"
-      :email="form.email"
-      @success="handlePasswordChanged"
     />
   </div>
 </template>
@@ -173,22 +157,6 @@ const handleResetPassword = async () => {
   } catch (err) {
     console.error('Reset password error:', err)
   }
-}
-
-// 处理修改密码
-const handleChangePassword = () => {
-  if (!form.email) {
-    ElMessage.warning('请先输入邮箱地址')
-    return
-  }
-
-  showChangePasswordDialog.value = true
-}
-
-// 处理密码修改成功
-const handlePasswordChanged = () => {
-  ElMessage.success('密码修改成功，请使用新密码登录')
-  showChangePasswordDialog.value = false
 }
 
 // 初始化时检查记住的邮箱

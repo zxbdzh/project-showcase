@@ -80,7 +80,7 @@
                   <file-upload
                     v-model="settings.site_logo"
                     :limit="1"
-                    accept="image/*"
+                    accept=".png,.jpg,.jpeg"
                     list-type="picture-card"
                     placeholder="上传网站Logo"
                   />
@@ -173,10 +173,11 @@ const settings = ref({ ...defaultSettings })
 // 加载设置
 const loadSettings = async () => {
   try {
+    // 先加载系统设置数据
     await loadSystemSettings()
 
-    // 从数据库加载设置
-    settings.value = {
+    // 然后更新本地设置状态，避免响应式循环
+    const newSettings = {
       site_title: getSettingValue('site_title', defaultSettings.site_title),
       site_subtitle: getSettingValue('site_subtitle', defaultSettings.site_subtitle),
       brand_text: getSettingValue('brand_text', defaultSettings.brand_text),
@@ -187,6 +188,9 @@ const loadSettings = async () => {
       seo_author: getSettingValue('seo_author', defaultSettings.seo_author),
       custom_css: getSettingValue('custom_css', defaultSettings.custom_css),
     }
+
+    // 使用Object.assign避免触发不必要的响应式更新
+    Object.assign(settings.value, newSettings)
   } catch (error) {
     console.error('Failed to load settings:', error)
     ElMessage.error('加载设置失败')

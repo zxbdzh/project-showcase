@@ -637,8 +637,6 @@ export function useSystemSettings() {
   // 获取设置值的便捷方法
   const getSettingValue = (key: string, defaultValue: string = ''): string => {
     const setting = systemSettings.value.find((s) => s.key === key)
-    console.log('systemSettings: ' + systemSettings.value)
-
     return setting?.value || defaultValue
   }
 

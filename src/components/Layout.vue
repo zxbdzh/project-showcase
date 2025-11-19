@@ -8,7 +8,15 @@
       <nav class="layout__nav">
         <div class="layout__nav-brand">
           <router-link to="/" class="brand-link" :class="brandTextClass">
-            <glitch-text :text="brandText" :color="isDark ? '#00ff41' : '#0066cc'" />
+            <!-- 如果有logo，显示logo；否则显示文字 -->
+            <img
+              v-if="siteLogo"
+              :src="siteLogo"
+              :alt="brandText"
+              class="brand-logo"
+              @error="handleLogoError"
+            />
+            <glitch-text v-else :text="brandText" :color="isDark ? '#00ff41' : '#0066cc'" />
           </router-link>
         </div>
 
@@ -53,12 +61,10 @@
     </el-dialog>
 
     <!-- 修改密码模态框 -->
-    <el-dialog v-model="showChangePasswordModal" title="修改密码" width="400px" center>
-      <change-password-dialog
-        v-model="showChangePasswordModal"
-        @success="handleChangePasswordSuccess"
-      />
-    </el-dialog>
+    <change-password-dialog
+      v-model="showChangePasswordModal"
+      @success="handleChangePasswordSuccess"
+    />
   </div>
 </template>
 
@@ -96,11 +102,20 @@ const isSettingsLoading = settingsLoading
 // 动态品牌文字
 const brandText = computed(() => getSettingValue('brand_text', 'GEEK'))
 
+// 网站Logo
+const siteLogo = computed(() => getSettingValue('site_logo', ''))
+
 // 品牌文字动画类
 const brandTextClass = computed(() => ({
   'brand-text--loading': isSettingsLoading.value,
   'brand-text--loaded': !isSettingsLoading.value,
 }))
+
+// 处理Logo加载错误
+const handleLogoError = (event: Event) => {
+  console.warn('Logo failed to load:', event)
+  // 可以在这里设置一个默认logo或者回退到文字显示
+}
 
 // 处理用户操作
 const handleUserAction = async (command: string) => {
@@ -215,6 +230,20 @@ onMounted(() => {
   text-decoration: none;
   color: inherit;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.brand-logo {
+  height: 40px;
+  max-width: 200px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.brand-logo:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
 }
 
 /* 品牌文字加载动画 */
