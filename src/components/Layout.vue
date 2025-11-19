@@ -148,10 +148,122 @@ watch(
     const siteTitle = getSettingValue('site_title', 'Geek Portfolio')
     updatePageTitle(siteTitle)
   },
-  { deep: true }
+  { deep: true },
 )
 
 // 组件挂载时初始化设置
 onMounted(() => {
   initializeSettings()
 })
+</script>
+
+<style scoped>
+.layout {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout__header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--bg-primary);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.layout__nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.layout__nav-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.brand-link {
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+/* 品牌文字加载动画 */
+.brand-text--loading {
+  opacity: 0.6;
+  transform: scale(0.95);
+  transition: all 0.3s ease;
+}
+
+.brand-text--loaded {
+  opacity: 1;
+  transform: scale(1);
+  transition: all 0.3s ease;
+}
+
+.brand-text--loading:hover {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+.layout__nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.layout__main {
+  flex: 1;
+  padding-top: 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout__footer {
+  text-align: center;
+  padding: 2rem;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  margin-top: auto;
+}
+
+/* 页面切换动画 */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .layout__nav {
+    padding: 1rem;
+  }
+
+  .layout__nav-brand {
+    font-size: 1.2rem;
+  }
+
+  .layout__nav-actions {
+    gap: 0.5rem;
+  }
+}
+</style>
