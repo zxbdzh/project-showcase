@@ -84,7 +84,7 @@
         <template #header>
           <h3>项目详情</h3>
         </template>
-        <div class="project-content-text" v-html="project.content"></div>
+        <div class="project-content-text" v-html="renderedContent"></div>
       </el-card>
 
       <!-- 项目链接 -->
@@ -122,14 +122,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowLeft, Edit } from '@element-plus/icons-vue'
+import MarkdownIt from 'markdown-it'
 import { useAuth } from '@/composables/useAuth'
 import { useProjects } from '@/composables/useData'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import type { Project } from '@/utils/supabase'
+
+// 初始化 markdown-it
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  breaks: true,
+})
 
 // 路由相关
 const route = useRoute()
@@ -146,6 +155,12 @@ const loading = ref(true)
 const project = ref<Project | null>(null)
 const imagePreviewVisible = ref(false)
 const previewImageUrl = ref('')
+
+// 计算属性：解析后的 markdown 内容
+const renderedContent = computed(() => {
+  if (!project.value?.content) return ''
+  return md.render(project.value.content)
+})
 
 // 获取项目详情
 const fetchProject = async () => {
@@ -436,6 +451,7 @@ onMounted(() => {
   font-size: 16px;
 }
 
+/* Markdown 样式 */
 .project-content-text :deep(h1),
 .project-content-text :deep(h2),
 .project-content-text :deep(h3),
@@ -445,33 +461,156 @@ onMounted(() => {
   margin-top: 24px;
   margin-bottom: 16px;
   color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.project-content-text :deep(h1) {
+  font-size: 2em;
+  border-bottom: 2px solid var(--border-primary);
+  padding-bottom: 8px;
+}
+
+.project-content-text :deep(h2) {
+  font-size: 1.5em;
+  border-bottom: 1px solid var(--border-secondary);
+  padding-bottom: 6px;
+}
+
+.project-content-text :deep(h3) {
+  font-size: 1.25em;
+}
+
+.project-content-text :deep(h4) {
+  font-size: 1.1em;
+}
+
+.project-content-text :deep(h5) {
+  font-size: 1em;
+}
+
+.project-content-text :deep(h6) {
+  font-size: 0.9em;
+  color: var(--text-secondary);
 }
 
 .project-content-text :deep(p) {
   margin-bottom: 16px;
+  text-align: justify;
+}
+
+.project-content-text :deep(ul),
+.project-content-text :deep(ol) {
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+.project-content-text :deep(li) {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.project-content-text :deep(blockquote) {
+  border-left: 4px solid var(--accent-primary);
+  padding: 16px 20px;
+  margin: 16px 0;
+  background: var(--bg-secondary);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .project-content-text :deep(code) {
   background: var(--bg-secondary);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 0.9em;
+  color: var(--accent-primary);
+  border: 1px solid var(--border-secondary);
 }
 
 .project-content-text :deep(pre) {
   background: var(--bg-secondary);
-  padding: 16px;
+  padding: 20px;
   border-radius: 8px;
   overflow-x: auto;
-  margin-bottom: 16px;
+  margin: 16px 0;
+  border: 1px solid var(--border-secondary);
+  position: relative;
 }
 
-.project-content-text :deep(blockquote) {
-  border-left: 4px solid var(--accent-primary);
-  padding-left: 16px;
+.project-content-text :deep(pre code) {
+  background: none;
+  padding: 0;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.project-content-text :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
   margin: 16px 0;
+  background: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.project-content-text :deep(th),
+.project-content-text :deep(td) {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.project-content-text :deep(th) {
+  background: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.project-content-text :deep(tr:hover) {
+  background: var(--bg-secondary);
+}
+
+.project-content-text :deep(a) {
+  color: var(--accent-primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.project-content-text :deep(a:hover) {
+  border-bottom-color: var(--accent-primary);
+}
+
+.project-content-text :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.project-content-text :deep(hr) {
+  border: none;
+  height: 2px;
+  background: var(--border-secondary);
+  margin: 24px 0;
+  border-radius: 1px;
+}
+
+.project-content-text :deep(strong) {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.project-content-text :deep(em) {
   color: var(--text-secondary);
+  font-style: italic;
 }
 
 .image-preview {
@@ -521,6 +660,20 @@ onMounted(() => {
   .file-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .project-content-text :deep(table) {
+    font-size: 14px;
+  }
+
+  .project-content-text :deep(th),
+  .project-content-text :deep(td) {
+    padding: 8px 12px;
+  }
+
+  .project-content-text :deep(pre) {
+    padding: 16px;
+    overflow-x: scroll;
   }
 }
 </style>

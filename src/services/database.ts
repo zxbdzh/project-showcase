@@ -529,14 +529,6 @@ export class SystemSettingsService extends DatabaseService {
       }
 
       // 如果更新失败（记录不存在），则创建新记录
-      // 获取当前用户ID
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) {
-        throw new Error('用户未登录')
-      }
-
       const { data: insertData, error: insertError } = await supabase
         .from('system_settings')
         .insert({
@@ -544,7 +536,6 @@ export class SystemSettingsService extends DatabaseService {
           value,
           description: description || key,
           type: 'string',
-          user_id: user.id,
         })
         .select()
         .single()
