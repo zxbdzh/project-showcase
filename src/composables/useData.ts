@@ -16,6 +16,7 @@ import {
   type Profile,
   type SystemSetting,
 } from '@/services/database'
+import { useCache, cacheKeys, withCache } from '@/composables/useCache'
 
 // 全局数据状态
 const projects = ref<(Project & { categories: Category[]; tags: Tag[] })[]>([])
