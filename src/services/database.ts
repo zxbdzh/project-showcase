@@ -483,7 +483,6 @@ export class SystemSettingsService extends DatabaseService {
           value,
           description: description || key,
           type: 'string',
-          // 移除user_id字段，因为系统设置不需要用户ID
         })
         .select()
         .single()
