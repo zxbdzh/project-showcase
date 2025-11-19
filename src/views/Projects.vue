@@ -138,7 +138,14 @@ const isLoading = ref(true)
 const loadingError = ref<string | null>(null)
 
 // 计算属性 - 添加"全部"分类选项
-const categoriesWithAll = computed(() => [{ id: 'all', name: '全部' }, ...categories.value])
+const categoriesWithAll = computed(() => {
+  // 确保categories.value是数组
+  if (!Array.isArray(categories.value)) {
+    console.warn('categories.value is not an array:', categories.value)
+    return [{ id: 'all', name: '全部' }]
+  }
+  return [{ id: 'all', name: '全部' }, ...categories.value]
+})
 
 // 计算属性
 const filteredProjects = computed(() => {

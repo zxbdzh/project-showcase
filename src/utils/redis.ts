@@ -1,5 +1,3 @@
-import { createClient, type RedisClientType } from 'redis'
-
 // Redis配置接口
 interface RedisConfig {
   host: string
@@ -13,35 +11,50 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'er
 
 // Redis服务类
 class RedisService {
-  private client: RedisClientType | null = null
+  private client: any = null
   private config: RedisConfig | null = null
   private connectionStatus: ConnectionStatus = 'disconnected'
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000 // 1秒
-  private healthCheckInterval: NodeJS.Timeout | null = null
+  private healthCheckInterval: any = null
 
   // 初始化Redis客户端
-  private initClient(): RedisClientType {
+  private initClient(): any {
     if (!this.config) {
       throw new Error('Redis配置未设置')
     }
 
-    return createClient({
-      socket: {
-        host: this.config.host,
-        port: this.config.port,
-        reconnectStrategy: (retries) => {
-          if (retries > this.maxReconnectAttempts) {
-            console.error('Redis重连次数超过限制，停止重连')
-            return false
-          }
-          return Math.min(retries * this.reconnectDelay, 5000)
+    // 在浏览器环境中，不创建真实的Redis客户端
+    if (typeof window !== 'undefined') {
+      console.warn('浏览器环境不支持Redis客户端，缓存功能将不可用')
+      return null
+    }
+
+    // 动态导入Redis客户端（仅在服务器端）
+    try {
+      // 使用Function构造器替代eval，更安全
+      const requireRedis = new Function('return require')('redis')
+      const { createClient } = requireRedis
+      return createClient({
+        socket: {
+          host: this.config.host,
+          port: this.config.port,
+          reconnectStrategy: (retries: number) => {
+            if (retries > this.maxReconnectAttempts) {
+              console.error('Redis重连次数超过限制，停止重连')
+              return false
+            }
+            return Math.min(retries * this.reconnectDelay, 5000)
+          },
         },
-      },
-      password: this.config.password,
-      database: this.config.database || 0,
-    })
+        password: this.config.password,
+        database: this.config.database || 0,
+      })
+    } catch (error: any) {
+      console.error('Redis客户端初始化失败:', error)
+      return null
+    }
   }
 
   // 设置配置
@@ -58,6 +71,12 @@ class RedisService {
   // 连接Redis
   async connect(): Promise<boolean> {
     try {
+      if (typeof window !== 'undefined') {
+        console.warn('浏览器环境不支持Redis连接')
+        this.connectionStatus = 'error'
+        return false
+      }
+
       if (!this.client) {
         throw new Error('Redis客户端未初始化')
       }
@@ -66,7 +85,7 @@ class RedisService {
       console.log('正在连接Redis...')
 
       // 设置事件监听器
-      this.client.on('error', (error) => {
+      this.client.on('error', (error: any) => {
         console.error('Redis连接错误:', error)
         this.connectionStatus = 'error'
       })
@@ -97,7 +116,7 @@ class RedisService {
       console.log('Redis连接测试成功')
 
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis连接失败:', error)
       this.connectionStatus = 'error'
       return false
@@ -114,7 +133,7 @@ class RedisService {
       this.connectionStatus = 'disconnected'
       this.stopHealthCheck()
       console.log('Redis连接已断开')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis断开连接失败:', error)
     }
   }
@@ -127,12 +146,16 @@ class RedisService {
   // 检查连接是否可用
   async isHealthy(): Promise<boolean> {
     try {
+      if (typeof window !== 'undefined') {
+        return false // 浏览器环境不支持Redis
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return false
       }
       await this.client.ping()
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis健康检查失败:', error)
       this.connectionStatus = 'error'
       return false
@@ -162,6 +185,11 @@ class RedisService {
   // 设置缓存
   async set(key: string, value: any, ttl?: number): Promise<boolean> {
     try {
+      if (typeof window !== 'undefined') {
+        console.warn('浏览器环境不支持Redis缓存设置')
+        return false
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         throw new Error('Redis未连接')
       }
@@ -179,7 +207,7 @@ class RedisService {
 
       console.log(`Redis缓存设置成功: ${key}`)
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis设置缓存失败:', error)
       return false
     }
@@ -188,6 +216,11 @@ class RedisService {
   // 获取缓存
   async get<T = any>(key: string): Promise<T | null> {
     try {
+      if (typeof window !== 'undefined') {
+        console.warn('浏览器环境不支持Redis缓存获取')
+        return null
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         throw new Error('Redis未连接')
       }
@@ -201,7 +234,7 @@ class RedisService {
       const parsed = JSON.parse(value)
       console.log(`Redis缓存命中: ${key}`)
       return parsed.data
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis获取缓存失败:', error)
       return null
     }
@@ -210,6 +243,11 @@ class RedisService {
   // 删除缓存
   async del(key: string): Promise<boolean> {
     try {
+      if (typeof window !== 'undefined') {
+        console.warn('浏览器环境不支持Redis缓存删除')
+        return false
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         throw new Error('Redis未连接')
       }
@@ -217,7 +255,7 @@ class RedisService {
       const result = await this.client.del(key)
       console.log(`Redis缓存删除: ${key}, 结果: ${result}`)
       return result > 0
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis删除缓存失败:', error)
       return false
     }
@@ -226,13 +264,17 @@ class RedisService {
   // 检查键是否存在
   async exists(key: string): Promise<boolean> {
     try {
+      if (typeof window !== 'undefined') {
+        return false
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return false
       }
 
       const result = await this.client.exists(key)
       return result > 0
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis检查键存在失败:', error)
       return false
     }
@@ -241,13 +283,18 @@ class RedisService {
   // 设置过期时间
   async expire(key: string, ttl: number): Promise<boolean> {
     try {
+      if (typeof window !== 'undefined') {
+        console.warn('浏览器环境不支持Redis设置过期时间')
+        return false
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return false
       }
 
       const result = await this.client.expire(key, ttl)
       return result > 0
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis设置过期时间失败:', error)
       return false
     }
@@ -256,12 +303,16 @@ class RedisService {
   // 获取剩余过期时间
   async ttl(key: string): Promise<number> {
     try {
+      if (typeof window !== 'undefined') {
+        return -1
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return -1
       }
 
       return await this.client.ttl(key)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis获取TTL失败:', error)
       return -1
     }
@@ -270,6 +321,11 @@ class RedisService {
   // 批量删除（通过模式匹配）
   async delPattern(pattern: string): Promise<number> {
     try {
+      if (typeof window !== 'undefined') {
+        console.warn('浏览器环境不支持Redis批量删除')
+        return 0
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return 0
       }
@@ -282,7 +338,7 @@ class RedisService {
       const result = await this.client.del(keys)
       console.log(`Redis批量删除模式: ${pattern}, 删除数量: ${result}`)
       return result
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis批量删除失败:', error)
       return 0
     }
@@ -291,12 +347,16 @@ class RedisService {
   // 获取所有匹配的键
   async keys(pattern: string): Promise<string[]> {
     try {
+      if (typeof window !== 'undefined') {
+        return []
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return []
       }
 
       return await this.client.keys(pattern)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis获取键列表失败:', error)
       return []
     }
@@ -305,6 +365,11 @@ class RedisService {
   // 清空数据库
   async flushDb(): Promise<boolean> {
     try {
+      if (typeof window !== 'undefined') {
+        console.warn('浏览器环境不支持Redis清空数据库')
+        return false
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return false
       }
@@ -312,7 +377,7 @@ class RedisService {
       await this.client.flushDb()
       console.log('Redis数据库已清空')
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis清空数据库失败:', error)
       return false
     }
@@ -321,12 +386,24 @@ class RedisService {
   // 获取连接信息
   async getInfo(): Promise<string | null> {
     try {
+      if (typeof window !== 'undefined') {
+        return JSON.stringify(
+          {
+            type: 'browser',
+            status: this.connectionStatus,
+            message: '浏览器环境不支持Redis',
+          },
+          null,
+          2,
+        )
+      }
+
       if (!this.client || this.connectionStatus !== 'connected') {
         return null
       }
 
       return await this.client.info()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Redis获取信息失败:', error)
       return null
     }
@@ -347,10 +424,12 @@ const redisConfig: RedisConfig = {
 // 设置配置
 redisService.setConfig(redisConfig)
 
-// 尝试自动连接
-redisService.connect().catch((error) => {
-  console.warn('Redis自动连接失败，将在需要时重试:', error)
-})
+// 尝试自动连接（仅在服务器端）
+if (typeof window === 'undefined') {
+  redisService.connect().catch((error: any) => {
+    console.warn('Redis自动连接失败，将在需要时重试:', error)
+  })
+}
 
 export default redisService
 

@@ -718,6 +718,12 @@ export function useSystemSettings() {
 
   // 获取设置值的便捷方法
   const getSettingValue = (key: string, defaultValue: string = ''): string => {
+    // 确保systemSettings.value是数组
+    if (!Array.isArray(systemSettings.value)) {
+      console.warn('systemSettings.value is not an array:', systemSettings.value)
+      return defaultValue
+    }
+
     const setting = systemSettings.value.find((s) => s.key === key)
     return setting?.value || defaultValue
   }

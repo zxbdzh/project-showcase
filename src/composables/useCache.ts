@@ -4,7 +4,7 @@ import redisService, { type ConnectionStatus } from '@/utils/redis'
 // 缓存配置
 interface CacheConfig {
   key: string
-  ttl?: number // 缓存时间（毫秒）
+  ttl?: number // 缓存时间（秒）
   version?: string // 缓存版本
 }
 
@@ -19,9 +19,6 @@ interface CacheItem<T = any> {
 const cacheVersion = ref('1.0.0')
 const cacheEnabled = ref(true)
 const redisConnected = ref(false)
-
-// 本地缓存降级存储（当Redis不可用时使用）
-const fallbackCache = new Map<string, CacheItem>()
 
 // 路由缓存策略配置
 const routeCacheStrategies: Record<string, { enabled: boolean }> = {
@@ -75,6 +72,7 @@ const checkRedisConnection = async (): Promise<boolean> => {
   try {
     const status = redisService.getConnectionStatus()
     if (status === 'connected') {
+      redisConnected.value = true
       return true
     }
 
@@ -94,10 +92,13 @@ const checkRedisConnection = async (): Promise<boolean> => {
 
 // 设置缓存
 const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<void> => {
-  if (!cacheEnabled.value) return
+  if (!cacheEnabled.value) {
+    console.log(`缓存已禁用，跳过设置: ${key}`)
+    return
+  }
 
   const cacheKey = generateCacheKey(key, config)
-  const ttl = config?.ttl || 5 * 60 * 1000 // 默认5分钟
+  const ttl = config?.ttl || 5 * 60 // 默认5分钟（秒）
   const version = config?.version || cacheVersion.value
 
   const cacheItem: CacheItem<T> = {
@@ -106,163 +107,121 @@ const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<
     version,
   }
 
-  // 尝试使用Redis
+  // 检查Redis连接
   const isRedisAvailable = await checkRedisConnection()
 
-  if (isRedisAvailable) {
-    try {
-      const success = await redisService.set(cacheKey, cacheItem, Math.floor(ttl / 1000))
-      if (success) {
-        console.log(`Redis缓存设置成功: ${key}`)
-        return
-      }
-    } catch (error) {
-      console.warn('Redis设置缓存失败，降级到本地缓存:', error)
-    }
+  if (!isRedisAvailable) {
+    console.warn(`Redis不可用，缓存设置失败: ${key}`)
+    return
   }
 
-  // 降级到本地缓存
-  fallbackCache.set(cacheKey, cacheItem)
-  console.log(`本地缓存设置成功: ${key}`)
+  try {
+    const success = await redisService.set(cacheKey, cacheItem, ttl)
+    if (success) {
+      console.log(`Redis缓存设置成功: ${key}`)
+    } else {
+      console.warn(`Redis缓存设置失败: ${key}`)
+    }
+  } catch (error) {
+    console.error(`Redis缓存设置异常: ${key}`, error)
+  }
 }
 
 // 获取缓存
 const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null> => {
-  if (!cacheEnabled.value) return null
+  if (!cacheEnabled.value) {
+    console.log(`缓存已禁用，跳过获取: ${key}`)
+    return null
+  }
 
   const cacheKey = generateCacheKey(key, config)
 
-  // 尝试从Redis获取
+  // 检查Redis连接
   const isRedisAvailable = await checkRedisConnection()
 
-  if (isRedisAvailable) {
-    try {
-      const data = await redisService.get<T>(cacheKey)
-      if (data !== null) {
-        console.log(`Redis缓存命中: ${key}`)
-        return data
-      }
-    } catch (error) {
-      console.warn('Redis获取缓存失败，尝试本地缓存:', error)
-    }
+  if (!isRedisAvailable) {
+    console.warn(`Redis不可用，缓存获取失败: ${key}`)
+    return null
   }
 
-  // 从本地缓存获取
-  const localItem = fallbackCache.get(cacheKey)
-  if (localItem) {
-    // 检查是否过期
-    const ttl = config?.ttl || 5 * 60 * 1000
-    if (Date.now() - localItem.timestamp <= ttl) {
-      console.log(`本地缓存命中: ${key}`)
-
-      // 如果Redis可用，同步到Redis
-      if (isRedisAvailable) {
-        try {
-          const remainingTtl = Math.floor((ttl - (Date.now() - localItem.timestamp)) / 1000)
-          if (remainingTtl > 0) {
-            await redisService.set(cacheKey, localItem, remainingTtl)
-          }
-        } catch (error) {
-          console.warn('同步本地缓存到Redis失败:', error)
-        }
-      }
-
-      return localItem.data
+  try {
+    const data = await redisService.get<T>(cacheKey)
+    if (data !== null) {
+      console.log(`Redis缓存命中: ${key}`)
+      return data
     } else {
-      // 删除过期的本地缓存
-      fallbackCache.delete(cacheKey)
+      console.log(`Redis缓存未命中: ${key}`)
+      return null
     }
+  } catch (error) {
+    console.error(`Redis缓存获取异常: ${key}`, error)
+    return null
   }
-
-  console.log(`缓存未命中: ${key}`)
-  return null
 }
 
 // 删除缓存
 const removeCache = async (key: string, config?: CacheConfig): Promise<void> => {
   const cacheKey = generateCacheKey(key, config)
 
-  // 从Redis删除
+  // 检查Redis连接
   const isRedisAvailable = await checkRedisConnection()
-  if (isRedisAvailable) {
-    try {
-      await redisService.del(cacheKey)
-      console.log(`Redis缓存删除成功: ${key}`)
-    } catch (error) {
-      console.warn('Redis删除缓存失败:', error)
-    }
+
+  if (!isRedisAvailable) {
+    console.warn(`Redis不可用，缓存删除失败: ${key}`)
+    return
   }
 
-  // 从本地缓存删除
-  fallbackCache.delete(cacheKey)
-  console.log(`本地缓存删除成功: ${key}`)
+  try {
+    const success = await redisService.del(cacheKey)
+    if (success) {
+      console.log(`Redis缓存删除成功: ${key}`)
+    } else {
+      console.warn(`Redis缓存删除失败: ${key}`)
+    }
+  } catch (error) {
+    console.error(`Redis缓存删除异常: ${key}`, error)
+  }
 }
 
 // 清除所有缓存
 const clearAllCache = async (): Promise<void> => {
-  // 清除Redis缓存
+  // 检查Redis连接
   const isRedisAvailable = await checkRedisConnection()
-  if (isRedisAvailable) {
-    try {
-      await redisService.flushDb()
+
+  if (!isRedisAvailable) {
+    console.warn('Redis不可用，清空缓存失败')
+    return
+  }
+
+  try {
+    const success = await redisService.flushDb()
+    if (success) {
       console.log('Redis缓存已清空')
-    } catch (error) {
-      console.warn('Redis清空缓存失败:', error)
+    } else {
+      console.warn('Redis清空缓存失败')
     }
+  } catch (error) {
+    console.error('Redis清空缓存异常:', error)
   }
-
-  // 清除本地缓存
-  fallbackCache.clear()
-  console.log('本地缓存已清空')
-}
-
-// 清除过期缓存
-const clearExpiredCache = async (): Promise<void> => {
-  // 清除本地过期缓存
-  const now = Date.now()
-  for (const [key, item] of fallbackCache.entries()) {
-    const ttl = 5 * 60 * 1000 // 默认5分钟
-    if (now - item.timestamp > ttl) {
-      fallbackCache.delete(key)
-    }
-  }
-
-  // Redis会自动处理过期键，但可以手动清理特定模式的键
-  const isRedisAvailable = await checkRedisConnection()
-  if (isRedisAvailable) {
-    try {
-      // 可以添加特定的清理逻辑，比如清理特定前缀的过期键
-      console.log('Redis过期缓存清理完成')
-    } catch (error) {
-      console.warn('Redis清理过期缓存失败:', error)
-    }
-  }
-
-  console.log('过期缓存清理完成')
 }
 
 // 清除特定前缀的缓存
 const clearCacheByPrefix = async (prefix: string): Promise<void> => {
-  // 清除Redis中的匹配键
+  // 检查Redis连接
   const isRedisAvailable = await checkRedisConnection()
-  if (isRedisAvailable) {
-    try {
-      const pattern = `${prefix}:*`
-      const deletedCount = await redisService.delPattern(pattern)
-      console.log(`Redis删除前缀缓存: ${prefix}, 删除数量: ${deletedCount}`)
-    } catch (error) {
-      console.warn('Redis删除前缀缓存失败:', error)
-    }
+
+  if (!isRedisAvailable) {
+    console.warn(`Redis不可用，清除前缀缓存失败: ${prefix}`)
+    return
   }
 
-  // 清除本地缓存中的匹配键
-  for (const key of fallbackCache.keys()) {
-    if (key && key.startsWith(prefix)) {
-      fallbackCache.delete(key)
-    }
+  try {
+    const pattern = `${prefix}:*`
+    const deletedCount = await redisService.delPattern(pattern)
+    console.log(`Redis删除前缀缓存: ${prefix}, 删除数量: ${deletedCount}`)
+  } catch (error) {
+    console.error(`Redis删除前缀缓存异常: ${prefix}`, error)
   }
-
-  console.log(`本地缓存前缀清理完成: ${prefix}`)
 }
 
 // 缓存装饰器函数
@@ -298,7 +257,6 @@ const withCache = <T>(key: string, fetchFn: () => Promise<T>, config?: CacheConf
 
 // 缓存统计
 const getCacheStats = async () => {
-  const localSize = fallbackCache.size
   let redisSize = 0
   let redisInfo = ''
 
@@ -317,9 +275,9 @@ const getCacheStats = async () => {
   }
 
   return {
-    local: localSize,
+    local: 0, // 不再使用本地缓存
     redis: redisSize,
-    total: localSize + redisSize,
+    total: redisSize,
     redisConnected: redisConnected.value,
     redisInfo,
   }
@@ -333,8 +291,9 @@ const monitorRedisConnection = () => {
     redisConnected.value = status === 'connected'
 
     if (!wasConnected && redisConnected.value) {
-      console.log('Redis连接恢复，开始同步本地缓存')
-      // 可以在这里添加本地缓存同步到Redis的逻辑
+      console.log('Redis连接恢复')
+    } else if (wasConnected && !redisConnected.value) {
+      console.warn('Redis连接断开')
     }
   }, 5000) // 每5秒检查一次
 }
@@ -354,7 +313,6 @@ export function useCache() {
 
     // 批量操作
     clearAll: clearAllCache,
-    clearExpired: clearExpiredCache,
     clearByPrefix: clearCacheByPrefix,
 
     // 装饰器
@@ -387,9 +345,4 @@ export function useCache() {
     checkRedisConnection,
     getRedisStatus: () => redisService.getConnectionStatus(),
   }
-}
-
-// 自动清理过期缓存（每5分钟）
-if (typeof window !== 'undefined') {
-  setInterval(clearExpiredCache, 5 * 60 * 1000)
 }
