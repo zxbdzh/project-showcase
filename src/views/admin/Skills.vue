@@ -73,7 +73,7 @@
               <div class="skill-card__header">
                 <div class="skill-card__icon" :style="{ backgroundColor: '#409EFF' }">
                   <el-icon :size="24">
-                    <component :is="getSkillIcon(skill.icon || 'Tools')" />
+                    <component :is="getSkillIcon(skill.icon_url || 'Tools')" />
                   </el-icon>
                 </div>
                 <div class="skill-card__actions">
@@ -101,7 +101,7 @@
                 <h3 class="skill-card__title">{{ skill.name }}</h3>
                 <div class="skill-card__category">
                   <el-tag size="small" type="info">
-                    {{ getCategoryText(skill.category) }}
+                    {{ getCategoryText(skill.category || '') }}
                   </el-tag>
                 </div>
 
@@ -111,12 +111,12 @@
                     <div
                       class="level-progress"
                       :style="{
-                        width: `${getLevelPercentage(skill.level)}%`,
+                        width: `${getLevelPercentage(Number(skill.level) || 1)}%`,
                         backgroundColor: '#409EFF',
                       }"
                     ></div>
                   </div>
-                  <div class="level-text">{{ getLevelText(skill.level) }}</div>
+                  <div class="level-text">{{ getLevelText(Number(skill.level) || 1) }}</div>
                 </div>
 
                 <div class="skill-card__stats">
@@ -126,7 +126,7 @@
                   </div>
                   <div class="stat-item">
                     <span class="stat-label">项目数量</span>
-                    <span class="stat-value">{{ skill.projects_count || 0 }}</span>
+                    <span class="stat-value">0</span>
                   </div>
                 </div>
 
@@ -411,10 +411,10 @@ const editSkillItem = (skill: any) => {
   editingSkill.value = skill
   Object.assign(formData, {
     name: skill.name,
-    category: skill.category,
-    level: skill.level,
-    years_experience: skill.years_experience,
-    icon: skill.icon,
+    category: skill.category || '',
+    level: Number(skill.level) || 1,
+    years_experience: skill.years_experience || 0,
+    icon: skill.icon_url || '',
     color: '#409EFF',
     sort_order: skill.sort_order || 0,
   })
@@ -474,12 +474,28 @@ const handleSubmit = async () => {
     submitting.value = true
 
     if (editingSkill.value) {
-      // 更新技能
-      await updateSkill(editingSkill.value.id, formData)
+      // 更新技能 - 转换数据类型以匹配数据库
+      const updateData = {
+        name: formData.name,
+        category: formData.category,
+        level: formData.level.toString(),
+        years_experience: formData.years_experience,
+        icon_url: formData.icon,
+        sort_order: formData.sort_order,
+      }
+      await updateSkill(editingSkill.value.id, updateData)
       ElMessage.success('技能更新成功')
     } else {
-      // 创建技能
-      await createSkill(formData)
+      // 创建技能 - 转换数据类型以匹配数据库
+      const createData = {
+        name: formData.name,
+        category: formData.category,
+        level: formData.level.toString(),
+        years_experience: formData.years_experience,
+        icon_url: formData.icon,
+        sort_order: formData.sort_order,
+      }
+      await createSkill(createData)
       ElMessage.success('技能创建成功')
     }
 

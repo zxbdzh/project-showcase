@@ -64,17 +64,17 @@
           </div>
           <div class="info-item">
             <label>项目状态:</label>
-            <el-tag :type="getStatusType(project.status)" size="small">
-              {{ getStatusText(project.status) }}
+            <el-tag :type="getStatusType(project.status || '')" size="small">
+              {{ getStatusText(project.status || '') }}
             </el-tag>
           </div>
           <div class="info-item">
             <label>创建时间:</label>
-            <span>{{ formatDate(project.created_at) }}</span>
+            <span>{{ formatDate(project.created_at || '') }}</span>
           </div>
           <div class="info-item">
             <label>更新时间:</label>
-            <span>{{ formatDate(project.updated_at) }}</span>
+            <span>{{ formatDate(project.updated_at || '') }}</span>
           </div>
         </div>
       </el-card>

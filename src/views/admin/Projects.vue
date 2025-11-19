@@ -371,13 +371,13 @@ const handleProjectSubmit = async (data: any) => {
       // 更新项目基本信息
       await updateProject(editingProject.value.id, project)
 
-      // 更新分类和标签关联
-      if (categories !== undefined) {
-        await projectService.updateProjectCategories(editingProject.value.id, categories)
+      // 更新项目数据
+      const projectData = {
+        ...project,
+        category_id: categories && categories.length > 0 ? categories[0] : null,
+        tech_stack: tags || [],
       }
-      if (tags !== undefined) {
-        await projectService.updateProjectTags(editingProject.value.id, tags)
-      }
+      await updateProject(editingProject.value.id, projectData)
 
       ElMessage.success('项目更新成功')
     } else {

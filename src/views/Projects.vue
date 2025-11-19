@@ -91,7 +91,7 @@
 
                 <div class="projects__card-stats">
                   <span class="projects__card-date">
-                    {{ formatDate(project.created_at) }}
+                    {{ formatDate(project.created_at || '') }}
                   </span>
                 </div>
               </div>

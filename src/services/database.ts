@@ -267,8 +267,47 @@ export class ProjectService extends DatabaseService {
   }
 
   async deleteProject(id: string): Promise<void> {
-    // 再删除项目
     return this.delete('projects', id)
+  }
+
+  // 更新项目分类关联
+  async updateProjectCategories(projectId: string, categoryIds: string[]): Promise<void> {
+    // 先删除现有关联
+    const { error: deleteError } = await supabase
+      .from('project_categories')
+      .delete()
+      .eq('project_id', projectId)
+    if (deleteError) throw deleteError
+
+    // 添加新关联
+    if (categoryIds.length > 0) {
+      const relations = categoryIds.map((categoryId) => ({
+        project_id: projectId,
+        category_id: categoryId,
+      }))
+      const { error: insertError } = await supabase.from('project_categories').insert(relations)
+      if (insertError) throw insertError
+    }
+  }
+
+  // 更新项目标签关联
+  async updateProjectTags(projectId: string, tagIds: string[]): Promise<void> {
+    // 先删除现有关联
+    const { error: deleteError } = await supabase
+      .from('project_tags')
+      .delete()
+      .eq('project_id', projectId)
+    if (deleteError) throw deleteError
+
+    // 添加新关联
+    if (tagIds.length > 0) {
+      const relations = tagIds.map((tagId) => ({
+        project_id: projectId,
+        tag_id: tagId,
+      }))
+      const { error: insertError } = await supabase.from('project_tags').insert(relations)
+      if (insertError) throw insertError
+    }
   }
 }
 

@@ -273,7 +273,7 @@ const skillsWithIcons = computed(() => {
     return skills.value.map((skill) => ({
       ...skill,
       icon: getIconComponent(skill.name),
-      level: convertSkillLevelToNumber(skill.level),
+      level: convertSkillLevelToNumber(skill.level || '1'),
     }))
   }
 
