@@ -8,7 +8,7 @@
       <nav class="layout__nav">
         <div class="layout__nav-brand">
           <router-link to="/" class="brand-link">
-            <glitch-text text="GEEK" :color="isDark ? '#00ff41' : '#0066cc'" />
+            <glitch-text :text="brandText" :color="isDark ? '#00ff41' : '#0066cc'" />
           </router-link>
         </div>
 
@@ -55,12 +55,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
+import { useSystemSettings } from '@/composables/useData'
 import MatrixRain from '@/components/MatrixRain.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import GlitchText from '@/components/GlitchText.vue'
@@ -69,9 +70,13 @@ import LoginForm from '@/components/Auth/LoginForm.vue'
 const router = useRouter()
 const { isAuthenticated, profile, userInitials, signOut } = useAuth()
 const { isDark } = useTheme()
+const { getSettingValue } = useSystemSettings()
 
 // 模态框状态
 const showLoginModal = ref(false)
+
+// 动态品牌文字
+const brandText = computed(() => getSettingValue('brand_text', 'GEEK'))
 
 // 处理用户操作
 const handleUserAction = async (command: string) => {

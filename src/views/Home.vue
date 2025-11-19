@@ -67,7 +67,11 @@
             @click="openProject(project)"
           >
             <div class="home__project-image">
-              <img src="/placeholder-project.svg" :alt="project.title" loading="lazy" />
+              <img
+                :src="project.cover_image || '/placeholder-project.svg'"
+                :alt="project.title"
+                loading="lazy"
+              />
               <div class="home__project-overlay">
                 <el-button type="primary" size="small"> 查看详情 </el-button>
               </div>
@@ -79,12 +83,12 @@
 
               <div class="home__project-tags">
                 <el-tag
-                  v-for="tag in ['Vue.js', 'TypeScript', 'Supabase']"
-                  :key="tag"
+                  v-for="tag in getProjectTags(project)"
+                  :key="tag.id"
                   size="small"
                   effect="plain"
                 >
-                  {{ tag }}
+                  {{ tag.name }}
                 </el-tag>
               </div>
             </div>
@@ -380,6 +384,11 @@ const openProject = (project: Project) => {
 // 查看所有项目
 const viewAllProjects = () => {
   router.push('/projects')
+}
+
+// 获取项目标签
+const getProjectTags = (project: any) => {
+  return (project as any).tags || []
 }
 </script>
 
