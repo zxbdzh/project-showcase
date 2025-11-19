@@ -234,6 +234,7 @@ export interface Database {
       social_links: {
         Row: {
           id: string
+          name: string
           url: string
           icon: string | null
           sort_order: number
@@ -243,6 +244,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          name: string
           url: string
           icon?: string | null
           sort_order?: number
@@ -252,6 +254,7 @@ export interface Database {
         }
         Update: {
           id?: string
+          name?: string
           url?: string
           icon?: string | null
           sort_order?: number

@@ -318,17 +318,6 @@ const skillsWithIcons = computed(() => {
   ]
 })
 
-// 从URL提取名称的辅助函数
-const getLinkName = (url: string) => {
-  try {
-    const urlObj = new URL(url)
-    const hostname = urlObj.hostname.replace('www.', '')
-    return hostname.charAt(0).toUpperCase() + hostname.slice(1)
-  } catch {
-    return url
-  }
-}
-
 // 处理社交链接图标
 const socialLinksWithIcons = computed(() => {
   // 始终返回默认的社交链接，避免闪烁
@@ -363,8 +352,7 @@ const socialLinksWithIcons = computed(() => {
   if (socialLinks.value && socialLinks.value.length > 0) {
     return socialLinks.value.map((link) => ({
       ...link,
-      name: getLinkName(link.url),
-      icon: getIconComponent(getLinkName(link.url)),
+      icon: getIconComponent(link.name),
     }))
   }
 
