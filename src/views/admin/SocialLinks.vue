@@ -124,8 +124,8 @@
           <el-input v-model="formData.url" placeholder="https://example.com" />
         </el-form-item>
 
-        <el-form-item label="链接图标" prop="icon">
-          <el-select v-model="formData.icon" placeholder="请选择图标">
+        <el-form-item label="链接图标" prop="icon_url">
+          <el-select v-model="formData.icon_url" placeholder="请选择图标">
             <el-option
               v-for="icon in iconOptions"
               :key="icon.value"
@@ -199,7 +199,7 @@ const formRef = ref<FormInstance>()
 const formData = reactive({
   platform: '',
   url: '',
-  icon: '',
+  icon_url: '',
   sort_order: 0,
 })
 
@@ -213,7 +213,7 @@ const formRules: FormRules = {
     { required: true, message: '请输入链接URL', trigger: 'blur' },
     { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' },
   ],
-  icon: [{ required: true, message: '请选择链接图标', trigger: 'change' }],
+  icon_url: [{ required: true, message: '请选择链接图标', trigger: 'change' }],
 }
 
 // 图标选项
@@ -267,7 +267,7 @@ const editLink = (link: any) => {
   Object.assign(formData, {
     platform: link.platform,
     url: link.url,
-    icon: link.icon,
+    icon_url: link.icon_url || link.icon,
     sort_order: link.sort_order,
   })
   showCreateDialog.value = true
@@ -313,7 +313,7 @@ const resetForm = () => {
   Object.assign(formData, {
     platform: '',
     url: '',
-    icon: '',
+    icon_url: '',
     sort_order: 0,
   })
   formRef.value?.clearValidate()

@@ -299,7 +299,7 @@ const formRules: FormRules = {
   category: [{ required: true, message: '请选择技能分类', trigger: 'change' }],
   level: [{ required: true, message: '请选择技能水平', trigger: 'change' }],
   years_experience: [{ required: true, message: '请输入经验年限', trigger: 'blur' }],
-  icon: [{ required: true, message: '请选择技能图标', trigger: 'change' }],
+  icon_url: [{ required: true, message: '请选择技能图标', trigger: 'change' }],
   color: [{ required: true, message: '请选择技能颜色', trigger: 'change' }],
 }
 
