@@ -182,29 +182,36 @@ export class ProjectService extends DatabaseService {
       // 获取所有项目ID
       const projectIds = projectsData.map((p) => p.id)
 
-      // 获取项目分类关联
+      // 获取项目分类（直接关联，不是中间表）
       const { data: categoriesData, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
         .in('id', projectsData.map((p) => p.category_id).filter(Boolean))
 
-      // 获取项目标签关联
+      // 获取项目标签关联（通过中间表）
+      const { data: projectTagsData, error: projectTagsError } = await supabase
+        .from('project_tags')
+        .select('project_id, tag_id')
+        .in('project_id', projectIds)
+
+      // 获取标签详情
+      const tagIds = projectTagsData?.map((pt) => pt.tag_id) || []
       const { data: tagsData, error: tagsError } = await supabase
         .from('tags')
         .select('*')
-        .in(
-          'id',
-          projectsData.flatMap((p) => p.tech_stack || []).filter((id) => typeof id === 'string'),
-        )
+        .in('id', tagIds)
 
       // 组合数据
       return projectsData.map((project) => {
+        // 获取项目分类（直接关联）
         const projectCategories =
           categoriesData?.filter((cat) => cat.id === project.category_id) || []
-        const projectTags =
-          tagsData?.filter(
-            (tag) => Array.isArray(project.tech_stack) && project.tech_stack.includes(tag.id),
-          ) || []
+
+        // 获取项目标签（通过中间表）
+        const projectTagIds =
+          projectTagsData?.filter((pt) => pt.project_id === project.id)?.map((pt) => pt.tag_id) ||
+          []
+        const projectTags = tagsData?.filter((tag) => projectTagIds.includes(tag.id)) || []
 
         return {
           ...project,
@@ -277,26 +284,6 @@ export class ProjectService extends DatabaseService {
 
   async deleteProject(id: string): Promise<void> {
     return this.delete('projects', id)
-  }
-
-  // 更新项目分类关联
-  async updateProjectCategories(projectId: string, categoryIds: string[]): Promise<void> {
-    // 先删除现有关联
-    const { error: deleteError } = await supabase
-      .from('project_categories')
-      .delete()
-      .eq('project_id', projectId)
-    if (deleteError) throw deleteError
-
-    // 添加新关联
-    if (categoryIds.length > 0) {
-      const relations = categoryIds.map((categoryId) => ({
-        project_id: projectId,
-        category_id: categoryId,
-      }))
-      const { error: insertError } = await supabase.from('project_categories').insert(relations)
-      if (insertError) throw insertError
-    }
   }
 
   // 更新项目标签关联
@@ -413,7 +400,7 @@ export class SkillService extends DatabaseService {
       const { data, error } = await supabase
         .from('skills')
         .select('*')
-        .order('level', { ascending: false })
+        .order('created_at', { ascending: false })
 
       if (error) throw error
       return data as Skill[]
