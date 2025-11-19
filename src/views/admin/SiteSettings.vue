@@ -357,8 +357,10 @@ watch(
 )
 
 // 组件挂载时加载设置
-onMounted(() => {
-  loadSettings()
+onMounted(async () => {
+  await loadSettings()
+  // 加载完成后立即应用设置到页面
+  applySettingsToPage()
 })
 </script>
 

@@ -665,6 +665,73 @@ export function initializeData() {
         useSocialLinks().loadSocialLinks(),
         useSystemSettings().loadSystemSettings(),
       ])
+
+      // 系统设置加载完成后，应用设置到页面
+      const { getSettingValue } = useSystemSettings()
+
+      // 应用favicon
+      const favicon = getSettingValue('site_favicon', '')
+      if (favicon) {
+        let faviconElement = document.querySelector('link[rel="icon"]') as HTMLLinkElement
+        if (!faviconElement) {
+          faviconElement = document.createElement('link')
+          faviconElement.rel = 'icon'
+          document.head.appendChild(faviconElement)
+        }
+        faviconElement.href = favicon
+        console.log('Initial favicon applied:', favicon)
+      }
+
+      // 应用页面标题
+      const siteTitle = getSettingValue('site_title', '项目展示系统')
+      if (siteTitle) {
+        document.title = siteTitle
+        console.log('Initial title applied:', siteTitle)
+      }
+
+      // 应用自定义CSS
+      const customCSS = getSettingValue('custom_css', '')
+      if (customCSS) {
+        const style = document.createElement('style')
+        style.id = 'custom-css'
+        style.textContent = customCSS
+        document.head.appendChild(style)
+        console.log('Initial custom CSS applied')
+      }
+
+      // 应用meta标签
+      const description = getSettingValue('site_description', '')
+      if (description) {
+        let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement
+        if (!meta) {
+          meta = document.createElement('meta')
+          meta.name = 'description'
+          document.head.appendChild(meta)
+        }
+        meta.content = description
+      }
+
+      const keywords = getSettingValue('seo_keywords', '')
+      if (keywords) {
+        let meta = document.querySelector('meta[name="keywords"]') as HTMLMetaElement
+        if (!meta) {
+          meta = document.createElement('meta')
+          meta.name = 'keywords'
+          document.head.appendChild(meta)
+        }
+        meta.content = keywords
+      }
+
+      const author = getSettingValue('seo_author', '')
+      if (author) {
+        let meta = document.querySelector('meta[name="author"]') as HTMLMetaElement
+        if (!meta) {
+          meta = document.createElement('meta')
+          meta.name = 'author'
+          document.head.appendChild(meta)
+        }
+        meta.content = author
+      }
     } catch (error) {
       console.error('Failed to initialize data:', error)
     }
