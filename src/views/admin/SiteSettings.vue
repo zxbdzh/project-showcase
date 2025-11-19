@@ -252,21 +252,40 @@ const updateMetaTag = (name: string, content: string) => {
 
 // 更新favicon的独立函数
 const updateFavicon = () => {
+  // 移除所有现有的favicon相关链接
+  const existingFavicons = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')
+  existingFavicons.forEach((favicon) => favicon.remove())
+
   if (settings.value.site_favicon) {
-    let favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-    if (!favicon) {
-      favicon = document.createElement('link')
-      favicon.rel = 'icon'
-      document.head.appendChild(favicon)
-    }
-    favicon.href = settings.value.site_favicon
-    console.log('Favicon updated to:', settings.value.site_favicon)
+    // 创建新的favicon链接，使用缓存破坏技术
+    const favicon = document.createElement('link')
+    favicon.rel = 'icon'
+    favicon.type = 'image/x-icon'
+
+    // 添加时间戳来强制浏览器重新加载
+    const timestamp = Date.now()
+    const separator = settings.value.site_favicon.includes('?') ? '&' : '?'
+    favicon.href = `${settings.value.site_favicon}${separator}_t=${timestamp}`
+
+    document.head.appendChild(favicon)
+
+    // 同时创建shortcut icon
+    const shortcutIcon = document.createElement('link')
+    shortcutIcon.rel = 'shortcut icon'
+    shortcutIcon.type = 'image/x-icon'
+    shortcutIcon.href = favicon.href
+    document.head.appendChild(shortcutIcon)
+
+    console.log('Favicon updated with cache busting:', favicon.href)
   } else {
-    // 如果favicon为空，移除现有的favicon
-    const favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-    if (favicon) {
-      favicon.remove()
-    }
+    // 如果favicon为空，创建默认的favicon
+    const defaultFavicon = document.createElement('link')
+    defaultFavicon.rel = 'icon'
+    defaultFavicon.type = 'image/x-icon'
+    defaultFavicon.href = '/favicon.ico'
+    document.head.appendChild(defaultFavicon)
+
+    console.log('Default favicon applied')
   }
 }
 

@@ -669,17 +669,35 @@ export function initializeData() {
       // 系统设置加载完成后，应用设置到页面
       const { getSettingValue } = useSystemSettings()
 
-      // 应用favicon
+      // 应用favicon（使用缓存破坏技术）
       const favicon = getSettingValue('site_favicon', '')
       if (favicon) {
-        let faviconElement = document.querySelector('link[rel="icon"]') as HTMLLinkElement
-        if (!faviconElement) {
-          faviconElement = document.createElement('link')
-          faviconElement.rel = 'icon'
-          document.head.appendChild(faviconElement)
-        }
-        faviconElement.href = favicon
-        console.log('Initial favicon applied:', favicon)
+        // 移除所有现有的favicon相关链接
+        const existingFavicons = document.querySelectorAll(
+          'link[rel="icon"], link[rel="shortcut icon"]',
+        )
+        existingFavicons.forEach((favicon) => favicon.remove())
+
+        // 创建新的favicon链接，使用缓存破坏技术
+        const faviconElement = document.createElement('link')
+        faviconElement.rel = 'icon'
+        faviconElement.type = 'image/x-icon'
+
+        // 添加时间戳来强制浏览器重新加载
+        const timestamp = Date.now()
+        const separator = favicon.includes('?') ? '&' : '?'
+        faviconElement.href = `${favicon}${separator}_t=${timestamp}`
+
+        document.head.appendChild(faviconElement)
+
+        // 同时创建shortcut icon
+        const shortcutIcon = document.createElement('link')
+        shortcutIcon.rel = 'shortcut icon'
+        shortcutIcon.type = 'image/x-icon'
+        shortcutIcon.href = faviconElement.href
+        document.head.appendChild(shortcutIcon)
+
+        console.log('Initial favicon applied with cache busting:', faviconElement.href)
       }
 
       // 应用页面标题
