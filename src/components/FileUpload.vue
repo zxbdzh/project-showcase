@@ -200,8 +200,10 @@ watch(fileList, (newFiles) => {
     const urls = newFiles.filter((f) => f.url).map((f) => f.url!)
     emit('update:modelValue', urls)
   } else {
-    const firstFile = newFiles.find((f) => f.url)
-    emit('update:modelValue', firstFile?.url || '')
+    // 单文件模式：只取最后一个成功上传的文件
+    const successFiles = newFiles.filter((f) => f.status === 'success' && f.url)
+    const lastFile = successFiles[successFiles.length - 1]
+    emit('update:modelValue', lastFile?.url || '')
   }
 })
 
@@ -316,7 +318,15 @@ const beforeUpload = async (file: UploadUserFile) => {
         type: (file as any).raw?.type || (file as any).type,
         raw: (file as any).raw,
       }
-      fileList.value.push(fileToAdd)
+
+      // 单文件模式：替换现有文件
+      if (!props.multiple) {
+        // 移除所有现有文件，只保留新上传的文件
+        fileList.value = [fileToAdd]
+      } else {
+        // 多文件模式：添加到列表
+        fileList.value.push(fileToAdd)
+      }
 
       emit('success', { url: result.url, fileName: result.key }, file)
       ElMessage.success('文件上传成功!')
