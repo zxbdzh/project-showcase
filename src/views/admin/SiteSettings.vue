@@ -79,10 +79,16 @@
                 <el-form-item label="网站Logo">
                   <file-upload
                     v-model="settings.site_logo"
+                    :multiple="false"
                     :limit="1"
                     accept=".png,.jpg,.jpeg"
-                    list-type="picture-card"
-                    placeholder="上传网站Logo"
+                    :drag="false"
+                    :show-file-list="true"
+                    bucket="project-showcase"
+                    folder="logos"
+                    @success="handleLogoUploadSuccess"
+                    @error="handleLogoUploadError"
+                    @remove="handleLogoRemove"
                   />
                 </el-form-item>
               </el-col>
@@ -90,10 +96,16 @@
                 <el-form-item label="网站Favicon">
                   <file-upload
                     v-model="settings.site_favicon"
+                    :multiple="false"
                     :limit="1"
                     accept=".ico,.png,.jpg,.jpeg"
-                    list-type="picture-card"
-                    placeholder="上传Favicon (推荐: 32x32px)"
+                    :drag="false"
+                    :show-file-list="true"
+                    bucket="project-showcase"
+                    folder="favicons"
+                    @success="handleFaviconUploadSuccess"
+                    @error="handleFaviconUploadError"
+                    @remove="handleFaviconRemove"
                   />
                 </el-form-item>
               </el-col>
@@ -144,6 +156,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { UploadUserFile } from 'element-plus'
 import { ArrowLeft, Check, Setting, Picture, Search } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
@@ -275,6 +288,42 @@ const saveSettings = async () => {
   } finally {
     saving.value = false
   }
+}
+
+// 处理Logo上传成功
+const handleLogoUploadSuccess = (response: unknown, file: UploadUserFile) => {
+  console.log('Logo upload success:', response, file)
+  // v-model会自动更新settings.site_logo
+}
+
+// 处理Logo上传失败
+const handleLogoUploadError = (error: Error, file: UploadUserFile) => {
+  console.error('Logo upload error:', error, file)
+  ElMessage.error('Logo上传失败')
+}
+
+// 处理Logo删除
+const handleLogoRemove = (file: UploadUserFile) => {
+  console.log('Logo removed:', file)
+  // v-model会自动更新settings.site_logo为空字符串
+}
+
+// 处理Favicon上传成功
+const handleFaviconUploadSuccess = (response: unknown, file: UploadUserFile) => {
+  console.log('Favicon upload success:', response, file)
+  // v-model会自动更新settings.site_favicon
+}
+
+// 处理Favicon上传失败
+const handleFaviconUploadError = (error: Error, file: UploadUserFile) => {
+  console.error('Favicon upload error:', error, file)
+  ElMessage.error('Favicon上传失败')
+}
+
+// 处理Favicon删除
+const handleFaviconRemove = (file: UploadUserFile) => {
+  console.log('Favicon removed:', file)
+  // v-model会自动更新settings.site_favicon为空字符串
 }
 
 // 返回
