@@ -95,7 +95,7 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled, Upload, InfoFilled, Document } from '@element-plus/icons-vue'
 import type { UploadUserFile } from 'element-plus'
-import MinIOService from '../../utils/minio'
+import MinIOService from '@/utils/minio'
 
 // 扩展UploadUserFile接口
 interface ExtendedUploadFile {
@@ -222,7 +222,9 @@ const beforeUpload = async (file: UploadUserFile) => {
 
   // 使用MinIO进行实际上传
   try {
-    if (!file.raw) {
+    // Element Plus的UploadUserFile中，文件可能在raw属性中，也可能直接是file对象
+    const fileObj = file.raw || file
+    if (!fileObj || !(fileObj instanceof File)) {
       throw new Error('文件对象无效')
     }
 
@@ -247,11 +249,11 @@ const beforeUpload = async (file: UploadUserFile) => {
     const result = await MinIOService.uploadFile({
       bucket: props.bucket,
       objectName,
-      file: file.raw,
+      file: fileObj,
       metadata: {
         'X-Amz-Meta-Original-Name': file.name,
         'X-Amz-Meta-Upload-Time': new Date().toISOString(),
-        'X-Amz-Meta-File-Type': file.raw.type,
+        'X-Amz-Meta-File-Type': fileObj.type,
       },
       onProgress: (progress) => {
         // 更新上传进度
