@@ -242,20 +242,12 @@ const beforeUpload = async (file: UploadUserFile) => {
     uploadingFiles.value.push(uploadFile)
     progressVisible.value = true
 
-    // 生成唯一文件名
-    const objectName = MinIOService.generateFileName(file.name, props.folder)
-
     // 使用MinIO上传文件
-    const result = await MinIOService.uploadFile({
-      bucket: props.bucket,
-      objectName,
-      file: fileObj,
-      metadata: {
-        'X-Amz-Meta-Original-Name': file.name,
-        'X-Amz-Meta-Upload-Time': new Date().toISOString(),
-        'X-Amz-Meta-File-Type': fileObj.type,
-      },
-      onProgress: (progress) => {
+    const result = await MinIOService.uploadFile(
+      fileObj,
+      props.bucket,
+      props.folder,
+      (progress: number) => {
         // 更新上传进度
         uploadFile.percentage = Math.round(progress)
         const index = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
@@ -263,19 +255,19 @@ const beforeUpload = async (file: UploadUserFile) => {
           uploadingFiles.value[index] = { ...uploadFile }
         }
       },
-    })
+    )
 
     if (result.success && result.url) {
       // 上传成功
       uploadFile.status = 'success'
       uploadFile.percentage = 100
       uploadFile.url = result.url
-      uploadFile.key = result.fileName
+      uploadFile.key = result.key
 
       // 添加到文件列表
       fileList.value.push({ ...uploadFile })
 
-      emit('success', { url: result.url, fileName: result.fileName }, file)
+      emit('success', { url: result.url, fileName: result.key }, file)
       ElMessage.success('文件上传成功!')
 
       // 移除上传进度

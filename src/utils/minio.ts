@@ -1,590 +1,277 @@
-// 浏览器兼容的 S3/MinIO 实现
-// 使用环境变量中的S3配置直接与S3兼容服务通信
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+} from '@aws-sdk/client-s3'
 
-// S3/MinIO 配置
-const s3Config = {
-  endPoint: import.meta.env.VITE_S3_ENDPOINT || 'localhost',
-  accessKey: import.meta.env.VITE_S3_ACCESS_KEY || '',
-  secretKey: import.meta.env.VITE_S3_SECRET_KEY || '',
-  bucketName: import.meta.env.VITE_S3_BUCKET_NAME || 'uploads',
-  region: import.meta.env.VITE_S3_REGION || 'us-east-1',
-  useSSL: true, // 默认使用HTTPS
+// S3配置接口
+interface S3Config {
+  endPoint: string
+  accessKey: string
+  secretKey: string
+  bucketName: string
+  region: string
 }
 
-// 验证配置
-if (!s3Config.accessKey || !s3Config.secretKey) {
-  console.warn('S3/MinIO credentials not found in environment variables')
-}
-
-console.log('S3/MinIO Config:', {
-  endPoint: s3Config.endPoint,
-  bucketName: s3Config.bucketName,
-  region: s3Config.region,
-  hasCredentials: !!(s3Config.accessKey && s3Config.secretKey),
-})
-
-// 存储桶配置
-export const BUCKETS = {
-  AVATARS: 'avatars',
-  PROJECTS: 'projects',
-  UPLOADS: 'uploads',
-  TEMP: 'temp',
-} as const
-
-// 文件类型配置
-export const FILE_TYPES = {
-  IMAGE: {
-    extensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'],
-    maxSize: 5 * 1024 * 1024, // 5MB
-    mimeType: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'] as const,
-  },
-  DOCUMENT: {
-    extensions: ['.pdf', '.doc', '.docx', '.txt', '.md'],
-    maxSize: 10 * 1024 * 1024, // 10MB
-    mimeType: [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain',
-      'text/markdown',
-    ] as const,
-  },
-  VIDEO: {
-    extensions: ['.mp4', '.avi', '.mov', '.wmv', '.flv'],
-    maxSize: 100 * 1024 * 1024, // 100MB
-    mimeType: [
-      'video/mp4',
-      'video/avi',
-      'video/quicktime',
-      'video/x-ms-wmv',
-      'video/x-flv',
-    ] as const,
-  },
-  ARCHIVE: {
-    extensions: ['.zip', '.rar', '.7z', '.tar', '.gz'],
-    maxSize: 50 * 1024 * 1024, // 50MB
-    mimeType: [
-      'application/zip',
-      'application/x-rar-compressed',
-      'application/x-7z-compressed',
-      'application/x-tar',
-      'application/gzip',
-    ] as const,
-  },
-} as const
-
-// 文件上传接口
-export interface UploadOptions {
-  bucket: string
-  objectName: string
-  file: File
-  metadata?: Record<string, string>
-  onProgress?: (progress: number) => void
+// 文件上传结果接口
+export interface UploadResult {
+  success: boolean
+  url?: string
+  key?: string
+  error?: string
 }
 
 // 文件信息接口
 export interface FileInfo {
-  name: string
+  key: string
   size: number
-  type: string
   lastModified: Date
-  etag?: string
-  metadata?: Record<string, string>
+  contentType: string
+  etag: string
 }
 
-// 上传结果接口
-export interface UploadResult {
-  success: boolean
-  url?: string
-  error?: string
-  fileName?: string
-}
+// MinIO服务类
+class MinIOService {
+  private client: S3Client | null = null
+  private config: S3Config | null = null
 
-// S3签名工具函数
-class S3Signer {
-  private static accessKey: string
-  private static secretKey: string
-  private static region: string
-
-  static init(accessKey: string, secretKey: string, region: string) {
-    this.accessKey = accessKey
-    this.secretKey = secretKey
-    this.region = region
-  }
-
-  // 简化的签名实现（用于演示，生产环境建议使用AWS SDK）
-  static async signRequest(
-    method: string,
-    path: string,
-    headers: Record<string, string> = {},
-    body?: string,
-  ): Promise<Record<string, string>> {
-    const now = new Date()
-    const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, '')
-    const dateStamp = amzDate.substr(0, 8)
-
-    // 简化实现 - 直接返回基本认证头
-    return {
-      Authorization: `AWS4-HMAC-SHA256 Credential=${this.accessKey}/${dateStamp}/${this.region}/s3/aws4_request, SignedHeaders=host;x-amz-date, Signature=placeholder`,
-      'X-Amz-Date': amzDate,
-      'X-Amz-Content-Sha256': body ? this.sha256(body) : this.sha256(''),
+  // 初始化S3客户端
+  private initClient(): S3Client {
+    if (!this.config) {
+      throw new Error('MinIO配置未设置')
     }
+
+    return new S3Client({
+      region: this.config.region,
+      endpoint: this.config.endPoint,
+      credentials: {
+        accessKeyId: this.config.accessKey,
+        secretAccessKey: this.config.secretKey,
+      },
+      forcePathStyle: true, // 重要：MinIO需要这个设置
+    })
   }
 
-  private static sha256(string: string): string {
-    // 简化实现 - 返回固定哈希值
-    return 'UNSIGNED-PAYLOAD'
+  // 设置配置
+  setConfig(config: S3Config): void {
+    this.config = config
+    this.client = this.initClient()
   }
-}
 
-// 初始化签名器
-S3Signer.init(s3Config.accessKey, s3Config.secretKey, s3Config.region)
+  // 获取配置
+  getConfig(): S3Config | null {
+    return this.config
+  }
 
-// S3兼容客户端
-export const minioClient = {
-  // 直接构建公共URL（适用于公共读取的存储桶）
-  getPublicUrl: (bucket: string, objectName: string): string => {
-    const protocol = s3Config.useSSL ? 'https' : 'http'
-    // 确保endpoint格式正确
-    const endpoint = s3Config.endPoint.startsWith('http')
-      ? s3Config.endPoint.replace(/^https?:\/\//, '')
-      : s3Config.endPoint
-    return `${protocol}://${endpoint}/${bucket}/${objectName}`
-  },
-
-  // 上传文件到S3兼容存储
-  putObject: async (
-    bucket: string,
-    objectName: string,
-    buffer: ArrayBuffer,
-    size: number,
-    metaData: Record<string, string>,
-  ) => {
-    const url = minioClient.getPublicUrl(bucket, objectName)
-
+  // 测试连接
+  async testConnection(): Promise<boolean> {
     try {
-      // 准备请求头
-      const headers: Record<string, string> = {
-        'Content-Type': metaData['Content-Type'] || 'application/octet-stream',
-        'Content-Length': size.toString(),
-        'X-Amz-Meta-Original-Name': metaData['X-Amz-Meta-Original-Name'] || '',
-        'X-Amz-Meta-Upload-Time': metaData['X-Amz-Meta-Upload-Time'] || '',
-        'X-Amz-Meta-File-Type': metaData['X-Amz-Meta-File-Type'] || '',
+      if (!this.client) {
+        throw new Error('S3客户端未初始化')
       }
 
-      // 对于MinIO，尝试使用AWS签名v4
-      if (s3Config.accessKey && s3Config.secretKey) {
-        const now = new Date()
-        const amzDate = now.toISOString().replace(/[:\-]|\.\d{3}/g, '')
-        const dateStamp = amzDate.substr(0, 8)
+      const testKey = `test-${Date.now()}.txt`
 
-        // 计算payload hash
-        const payloadHash = await minioClient.sha256(buffer)
-
-        // 构建规范请求
-        const canonicalRequest = [
-          'PUT',
-          `/${bucket}/${objectName}`,
-          '',
-          'content-type:' + headers['Content-Type'],
-          'content-length:' + headers['Content-Length'],
-          'host:' + s3Config.endPoint,
-          'x-amz-date:' + amzDate,
-          'x-amz-meta-original-name:' + headers['X-Amz-Meta-Original-Name'],
-          'x-amz-meta-upload-time:' + headers['X-Amz-Meta-Upload-Time'],
-          'x-amz-meta-file-type:' + headers['X-Amz-Meta-File-Type'],
-          '',
-          'content-type;content-length;host;x-amz-date;x-amz-meta-original-name;x-amz-meta-upload-time;x-amz-meta-file-type',
-        ].join('\n')
-
-        const canonicalRequestHash = await minioClient.sha256(canonicalRequest)
-
-        // 构建待签名字符串
-        const stringToSign = [
-          'AWS4-HMAC-SHA256',
-          amzDate,
-          `${dateStamp}/${s3Config.region}/s3/aws4_request`,
-          canonicalRequestHash,
-        ].join('\n')
-
-        // 计算签名
-        const signingKey = await minioClient.getSigningKey(
-          s3Config.secretKey,
-          dateStamp,
-          s3Config.region,
-          's3',
-        )
-        const signature = await minioClient.hmacSha256(signingKey, stringToSign)
-
-        headers['Authorization'] =
-          `AWS4-HMAC-SHA256 Credential=${s3Config.accessKey}/${dateStamp}/${s3Config.region}/s3/aws4_request, SignedHeaders=content-type;content-length;host;x-amz-date;x-amz-meta-original-name;x-amz-meta-upload-time;x-amz-meta-file-type, Signature=${signature}`
-        headers['X-Amz-Date'] = amzDate
-        headers['X-Amz-Content-Sha256'] = payloadHash
-      }
-
-      const response = await fetch(url, {
-        method: 'PUT',
-        body: buffer,
-        headers,
+      // 上传测试文件
+      const putCommand = new PutObjectCommand({
+        Bucket: this.config!.bucketName,
+        Key: testKey,
+        Body: 'test',
+        ContentType: 'text/plain',
       })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Upload response error:', errorText)
-        throw new Error(`Upload failed: ${response.status} ${response.statusText} - ${errorText}`)
+      const putResponse = await this.client.send(putCommand)
+
+      if (putResponse.$metadata.httpStatusCode !== 200) {
+        return false
       }
 
-      return { success: true }
-    } catch (error) {
-      console.error('Direct upload error:', error)
-      throw error
-    }
-  },
+      // 删除测试文件
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: this.config!.bucketName,
+        Key: testKey,
+      })
 
-  // 获取签名密钥
-  getSigningKey: async (
-    key: string,
-    dateStamp: string,
-    regionName: string,
-    serviceName: string,
-  ): Promise<string> => {
-    const kDate = await minioClient.hmacSha256('AWS4' + key, dateStamp)
-    const kRegion = await minioClient.hmacSha256(kDate, regionName)
-    const kService = await minioClient.hmacSha256(kRegion, serviceName)
-    const kSigning = await minioClient.hmacSha256(kService, 'aws4_request')
-    return kSigning
-  },
+      await this.client.send(deleteCommand)
 
-  // 使用Web Crypto API计算SHA256
-  sha256: async (data: string | ArrayBuffer): Promise<string> => {
-    const encoder = new TextEncoder()
-    const dataArray = typeof data === 'string' ? encoder.encode(data) : data
-    const hashBuffer = await crypto.subtle.digest('SHA-256', dataArray)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-  },
-
-  // 计算HMAC-SHA256
-  hmacSha256: async (key: string, data: string): Promise<string> => {
-    const encoder = new TextEncoder()
-    const keyData = encoder.encode(key)
-    const dataData = encoder.encode(data)
-
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign'],
-    )
-
-    const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataData)
-    const hashArray = Array.from(new Uint8Array(signature))
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-  },
-
-  // 删除文件
-  removeObject: async (bucket: string, objectName: string) => {
-    const url = minioClient.getPublicUrl(bucket, objectName)
-
-    try {
-      const response = await fetch(url, { method: 'DELETE' })
-
-      if (!response.ok && response.status !== 404) {
-        throw new Error(`Delete failed: ${response.status} ${response.statusText}`)
-      }
-
-      return { success: true }
-    } catch (error) {
-      console.error('Delete error:', error)
-      throw error
-    }
-  },
-
-  // 获取文件URL（公共访问）
-  presignedGetObject: async (bucket: string, objectName: string, expiry = 3600) => {
-    // 对于公共存储桶，直接返回公共URL
-    return minioClient.getPublicUrl(bucket, objectName)
-  },
-
-  // 获取上传URL（公共存储桶不需要预签名）
-  presignedPutObject: async (bucket: string, objectName: string, expiry = 3600) => {
-    // 对于公共存储桶，直接返回公共URL
-    return minioClient.getPublicUrl(bucket, objectName)
-  },
-
-  // 检查存储桶是否存在（简化实现）
-  bucketExists: async (bucketName: string) => {
-    try {
-      const url = `${s3Config.useSSL ? 'https' : 'http'}://${s3Config.endPoint}/${bucketName}`
-      const response = await fetch(url, { method: 'HEAD' })
-      return response.ok
-    } catch {
-      return false
-    }
-  },
-
-  // 创建存储桶（简化实现，通常需要管理权限）
-  makeBucket: async (bucketName: string, region: string) => {
-    console.log(`Bucket creation not implemented in browser: ${bucketName}`)
-    return { success: true }
-  },
-
-  // 设置存储桶策略（简化实现）
-  setBucketPolicy: async (bucketName: string, policy: string) => {
-    console.log(`Bucket policy setting not implemented in browser: ${bucketName}`)
-    return { success: true }
-  },
-
-  // 获取文件信息（简化实现）
-  statObject: async (bucket: string, objectName: string) => {
-    try {
-      const url = minioClient.getPublicUrl(bucket, objectName)
-      const response = await fetch(url, { method: 'HEAD' })
-
-      if (!response.ok) {
-        throw new Error(`File not found: ${response.status}`)
-      }
-
-      return {
-        size: parseInt(response.headers.get('Content-Length') || '0'),
-        lastModified: new Date(response.headers.get('Last-Modified') || Date.now()),
-        etag: response.headers.get('ETag') || '',
-        metaData: {
-          'content-type': response.headers.get('Content-Type') || 'application/octet-stream',
-        },
-      }
-    } catch (error) {
-      console.error('Stat error:', error)
-      throw error
-    }
-  },
-
-  // 列出对象（简化实现）
-  listObjects: (bucket: string, prefix: string, recursive: boolean) => {
-    return {
-      on: (event: string, callback: (data: any) => void) => {
-        if (event === 'data') {
-          // 模拟数据事件
-          setTimeout(() => {
-            callback({ name: 'example.txt', size: 1024, lastModified: new Date() })
-          }, 100)
-        } else if (event === 'end') {
-          // 模拟结束事件
-          setTimeout(() => callback(null), 200)
-        } else if (event === 'error') {
-          // 模拟错误事件
-          setTimeout(() => callback(new Error('Not implemented in browser')), 300)
-        }
-      },
-    }
-  },
-}
-
-// MinIO 工具类
-export class MinIOService {
-  /**
-   * 初始化存储桶
-   */
-  static async initBuckets(): Promise<void> {
-    try {
-      for (const bucketName of Object.values(BUCKETS)) {
-        const exists = await minioClient.bucketExists(bucketName)
-        if (!exists) {
-          console.log(`Bucket ${bucketName} does not exist, please create it manually`)
-        }
-      }
-    } catch (error) {
-      console.error('Error initializing buckets:', error)
-      throw error
-    }
-  }
-
-  /**
-   * 上传文件
-   */
-  static async uploadFile(options: UploadOptions): Promise<UploadResult> {
-    try {
-      const { bucket, objectName, file, metadata, onProgress } = options
-
-      // 验证文件类型和大小
-      const validation = this.validateFile(file)
-      if (!validation.valid) {
-        return { success: false, error: validation.error }
-      }
-
-      // 准备元数据
-      const metaData = {
-        'Content-Type': file.type,
-        'X-Amz-Meta-Original-Name': file.name,
-        'X-Amz-Meta-Upload-Time': new Date().toISOString(),
-        'X-Amz-Meta-File-Type': file.type,
-        ...metadata,
-      }
-
-      // 将File转换为ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer()
-
-      // 模拟进度更新
-      if (onProgress) {
-        const progressInterval = setInterval(() => {
-          const progress = Math.random() * 90 + 10 // 10-100%
-          onProgress(Math.min(progress, 100))
-        }, 100)
-
-        setTimeout(() => clearInterval(progressInterval), 1000)
-      }
-
-      // 上传文件
-      await minioClient.putObject(bucket, objectName, arrayBuffer, file.size, metaData)
-
-      // 生成文件URL
-      const url = await this.getFileUrl(bucket, objectName)
-
-      return {
-        success: true,
-        url,
-        fileName: objectName,
-      }
-    } catch (error) {
-      console.error('Upload error:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Upload failed',
-      }
-    }
-  }
-
-  /**
-   * 删除文件
-   */
-  static async deleteFile(bucket: string, objectName: string): Promise<boolean> {
-    try {
-      await minioClient.removeObject(bucket, objectName)
       return true
     } catch (error) {
-      console.error('Delete error:', error)
+      console.error('MinIO连接测试失败:', error)
       return false
     }
   }
 
-  /**
-   * 获取文件URL
-   */
-  static async getFileUrl(
-    bucket: string,
-    objectName: string,
-    expiry = 24 * 60 * 60,
-  ): Promise<string> {
+  // 上传文件
+  async uploadFile(
+    file: File,
+    bucket: string = this.config?.bucketName || '',
+    folder: string = '',
+    onProgress?: (progress: number) => void,
+  ): Promise<UploadResult> {
     try {
-      return await minioClient.presignedGetObject(bucket, objectName, expiry)
+      if (!this.client) {
+        throw new Error('S3客户端未初始化')
+      }
+
+      // 生成文件名
+      const fileExtension = file.name.split('.').pop() || ''
+      const timestamp = Date.now()
+      const randomString = Math.random().toString(36).substring(2, 8)
+      const fileName = `${timestamp}-${randomString}.${fileExtension}`
+
+      // 构建对象键
+      const objectKey = folder ? `${folder}/${fileName}` : fileName
+
+      // 创建上传命令
+      const command = new PutObjectCommand({
+        Bucket: bucket,
+        Key: objectKey,
+        Body: file,
+        ContentType: file.type || 'application/octet-stream',
+        Metadata: {
+          originalName: file.name,
+          uploadTime: new Date().toISOString(),
+        },
+      })
+
+      // 执行上传
+      const response = await this.client.send(command)
+
+      if (response.$metadata.httpStatusCode === 200) {
+        // 构建文件URL
+        const url = this.getFileUrl(objectKey)
+
+        return {
+          success: true,
+          url,
+          key: objectKey,
+        }
+      } else {
+        throw new Error(`上传失败，状态码: ${response.$metadata.httpStatusCode}`)
+      }
     } catch (error) {
-      console.error('Get URL error:', error)
-      throw error
+      console.error('文件上传失败:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '上传失败',
+      }
     }
   }
 
-  /**
-   * 获取文件信息
-   */
-  static async getFileInfo(bucket: string, objectName: string): Promise<FileInfo | null> {
+  // 删除文件
+  async deleteFile(key: string, bucket: string = this.config?.bucketName || ''): Promise<boolean> {
     try {
-      const stat = await minioClient.statObject(bucket, objectName)
-      return {
-        name: objectName,
-        size: stat.size,
-        type: stat.metaData?.['content-type'] || 'application/octet-stream',
-        lastModified: stat.lastModified,
-        etag: stat.etag,
-        metadata: stat.metaData,
+      if (!this.client) {
+        throw new Error('S3客户端未初始化')
       }
+
+      const command = new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      })
+
+      const response = await this.client.send(command)
+      return response.$metadata.httpStatusCode === 200
     } catch (error) {
-      console.error('Get file info error:', error)
+      console.error('文件删除失败:', error)
+      return false
+    }
+  }
+
+  // 获取文件信息
+  async getFileInfo(
+    key: string,
+    bucket: string = this.config?.bucketName || '',
+  ): Promise<FileInfo | null> {
+    try {
+      if (!this.client) {
+        throw new Error('S3客户端未初始化')
+      }
+
+      const command = new HeadObjectCommand({
+        Bucket: bucket,
+        Key: key,
+      })
+
+      const response = await this.client.send(command)
+
+      if (response.$metadata.httpStatusCode === 200) {
+        return {
+          key,
+          size: response.ContentLength || 0,
+          lastModified: response.LastModified || new Date(),
+          contentType: response.ContentType || 'application/octet-stream',
+          etag: response.ETag || '',
+        }
+      }
+
+      return null
+    } catch (error) {
+      console.error('获取文件信息失败:', error)
       return null
     }
   }
 
-  /**
-   * 列出存储桶中的文件
-   */
-  static async listFiles(bucket: string, prefix = ''): Promise<FileInfo[]> {
-    try {
-      const files: FileInfo[] = []
-      const stream = minioClient.listObjects(bucket, prefix, true)
-
-      return new Promise((resolve, reject) => {
-        stream.on('data', (obj) => {
-          files.push({
-            name: obj.name || '',
-            size: obj.size || 0,
-            type: 'application/octet-stream',
-            lastModified: obj.lastModified || new Date(),
-            etag: obj.etag,
-          })
-        })
-
-        stream.on('error', (error) => {
-          reject(error)
-        })
-
-        stream.on('end', () => {
-          resolve(files)
-        })
-      })
-    } catch (error) {
-      console.error('List files error:', error)
-      return []
-    }
-  }
-
-  /**
-   * 验证文件
-   */
-  static validateFile(file: File): { valid: boolean; error?: string } {
-    // 检查文件大小
-    const maxSize = 50 * 1024 * 1024 // 默认50MB
-    if (file.size > maxSize) {
-      return { valid: false, error: `File size exceeds ${maxSize / (1024 * 1024)}MB limit` }
+  // 获取文件URL
+  getFileUrl(key: string, bucket: string = this.config?.bucketName || ''): string {
+    if (!this.config) {
+      throw new Error('MinIO配置未设置')
     }
 
-    // 检查文件类型
-    const isImage = FILE_TYPES.IMAGE.mimeType.includes(file.type as any)
-    const isDocument = FILE_TYPES.DOCUMENT.mimeType.includes(file.type as any)
-    const isVideo = FILE_TYPES.VIDEO.mimeType.includes(file.type as any)
-    const isArchive = FILE_TYPES.ARCHIVE.mimeType.includes(file.type as any)
+    // 使用path style格式: http://endpoint/bucket/key
+    const baseUrl = this.config.endPoint.replace(/\/$/, '')
+    return `${baseUrl}/${bucket}/${key}`
+  }
 
-    if (!isImage && !isDocument && !isVideo && !isArchive) {
-      return { valid: false, error: 'Unsupported file type' }
+  // 检查文件是否存在
+  async fileExists(key: string, bucket: string = this.config?.bucketName || ''): Promise<boolean> {
+    const fileInfo = await this.getFileInfo(key, bucket)
+    return fileInfo !== null
+  }
+
+  // 批量删除文件
+  async deleteFiles(
+    keys: string[],
+    bucket: string = this.config?.bucketName || '',
+  ): Promise<{ success: string[]; failed: string[] }> {
+    const results = { success: [], failed: [] } as { success: string[]; failed: string[] }
+
+    for (const key of keys) {
+      try {
+        const success = await this.deleteFile(key, bucket)
+        if (success) {
+          results.success.push(key)
+        } else {
+          results.failed.push(key)
+        }
+      } catch (error) {
+        results.failed.push(key)
+      }
     }
 
-    return { valid: true }
-  }
-
-  /**
-   * 生成唯一文件名
-   */
-  static generateFileName(originalName: string, prefix = ''): string {
-    const timestamp = Date.now()
-    const random = Math.random().toString(36).substring(2, 8)
-    const extension = originalName.split('.').pop()
-    const baseName = originalName.split('.').slice(0, -1).join('.')
-
-    return prefix
-      ? `${prefix}/${timestamp}_${random}_${baseName}.${extension}`
-      : `${timestamp}_${random}_${baseName}.${extension}`
-  }
-
-  /**
-   * 获取文件类型
-   */
-  static getFileType(file: File): 'image' | 'document' | 'video' | 'archive' | 'unknown' {
-    if (FILE_TYPES.IMAGE.mimeType.includes(file.type as any)) return 'image'
-    if (FILE_TYPES.DOCUMENT.mimeType.includes(file.type as any)) return 'document'
-    if (FILE_TYPES.VIDEO.mimeType.includes(file.type as any)) return 'video'
-    if (FILE_TYPES.ARCHIVE.mimeType.includes(file.type as any)) return 'archive'
-    return 'unknown'
+    return results
   }
 }
 
-// 导出默认实例
-export default MinIOService
+// 创建单例实例
+const minioService = new MinIOService()
+
+// 从环境变量初始化配置
+const s3Config: S3Config = {
+  endPoint: import.meta.env.VITE_S3_ENDPOINT || '',
+  accessKey: import.meta.env.VITE_S3_ACCESS_KEY || '',
+  secretKey: import.meta.env.VITE_S3_SECRET_KEY || '',
+  bucketName: import.meta.env.VITE_S3_BUCKET_NAME || '',
+  region: import.meta.env.VITE_S3_REGION || 'us-east-1',
+}
+
+// 如果配置完整，初始化客户端
+if (s3Config.endPoint && s3Config.accessKey && s3Config.secretKey && s3Config.bucketName) {
+  minioService.setConfig(s3Config)
+}
+
+export default minioService
+
+// 导出类型
+export type { S3Config }
