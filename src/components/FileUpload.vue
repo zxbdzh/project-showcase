@@ -237,7 +237,8 @@ const beforeUpload = async (file: UploadUserFile) => {
 
     // 模拟上传过程
     const simulateUpload = async () => {
-      for (let progressValue = 0; progressValue <= 100; progressValue += 10) {
+      let progressValue = 0
+      for (progressValue = 0; progressValue <= 100; progressValue += 10) {
         await new Promise((resolve) => setTimeout(resolve, 50))
         uploadFile.percentage = progressValue
 
@@ -248,28 +249,27 @@ const beforeUpload = async (file: UploadUserFile) => {
         }
       }
 
-      if (progressValue === 100) {
-        uploadFile.status = 'success'
-        uploadFile.percentage = 100
+      // 上传完成处理
+      uploadFile.status = 'success'
+      uploadFile.percentage = 100
 
-        // 生成模拟的文件URL
-        const fileUrl = `https://placeholder.com/files/${file.name}`
-        uploadFile.url = fileUrl
+      // 生成模拟的文件URL
+      const fileUrl = `https://placeholder.com/files/${file.name}`
+      uploadFile.url = fileUrl
 
-        // 添加到文件列表
-        fileList.value.push({ ...uploadFile })
+      // 添加到文件列表
+      fileList.value.push({ ...uploadFile })
 
-        emit('success', { url: fileUrl }, file)
-        ElMessage.success('文件上传成功!')
+      emit('success', { url: fileUrl }, file)
+      ElMessage.success('文件上传成功!')
 
-        // 移除上传进度
-        setTimeout(() => {
-          const uploadIndex = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
-          if (uploadIndex !== -1) {
-            uploadingFiles.value.splice(uploadIndex, 1)
-          }
-        }, 1000)
-      }
+      // 移除上传进度
+      setTimeout(() => {
+        const uploadIndex = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
+        if (uploadIndex !== -1) {
+          uploadingFiles.value.splice(uploadIndex, 1)
+        }
+      }, 1000)
     }
 
     simulateUpload()
