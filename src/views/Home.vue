@@ -352,7 +352,8 @@ const socialLinksWithIcons = computed(() => {
   if (socialLinks.value && socialLinks.value.length > 0) {
     return socialLinks.value.map((link) => ({
       ...link,
-      icon: getIconComponent(link.name),
+      name: link.platform,
+      icon: getIconComponent(link.platform),
     }))
   }
 

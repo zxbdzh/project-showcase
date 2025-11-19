@@ -234,33 +234,36 @@ export interface Database {
       social_links: {
         Row: {
           id: string
-          name: string
+          platform: string
           url: string
           icon: string | null
-          sort_order: number
-          user_id: string
-          created_at: string
-          updated_at: string
+          is_active: boolean | null
+          sort_order: number | null
+          user_id: string | null
+          created_at: string | null
+          updated_at: string | null
         }
         Insert: {
           id?: string
-          name: string
+          platform: string
           url: string
           icon?: string | null
-          sort_order?: number
-          user_id: string
-          created_at?: string
-          updated_at?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          user_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
         }
         Update: {
           id?: string
-          name?: string
+          platform?: string
           url?: string
           icon?: string | null
-          sort_order?: number
-          user_id?: string
-          created_at?: string
-          updated_at?: string
+          is_active?: boolean | null
+          sort_order?: number | null
+          user_id?: string | null
+          created_at?: string | null
+          updated_at?: string | null
         }
       }
       system_settings: {
