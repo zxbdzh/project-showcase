@@ -202,7 +202,6 @@ export interface Database {
           years_experience: number | null
           projects_count: number
           icon: string | null
-          color: string | null
           user_id: string
           created_at: string
           updated_at: string
@@ -215,7 +214,6 @@ export interface Database {
           years_experience?: number | null
           projects_count?: number
           icon?: string | null
-          color?: string | null
           user_id: string
           created_at?: string
           updated_at?: string
@@ -228,7 +226,6 @@ export interface Database {
           years_experience?: number | null
           projects_count?: number
           icon?: string | null
-          color?: string | null
           user_id?: string
           created_at?: string
           updated_at?: string
@@ -237,7 +234,6 @@ export interface Database {
       social_links: {
         Row: {
           id: string
-          name: string
           url: string
           icon: string | null
           sort_order: number
@@ -247,7 +243,6 @@ export interface Database {
         }
         Insert: {
           id?: string
-          name: string
           url: string
           icon?: string | null
           sort_order?: number
@@ -257,7 +252,6 @@ export interface Database {
         }
         Update: {
           id?: string
-          name?: string
           url?: string
           icon?: string | null
           sort_order?: number

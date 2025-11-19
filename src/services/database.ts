@@ -182,31 +182,45 @@ export class ProjectService extends DatabaseService {
       // 获取所有项目ID
       const projectIds = projectsData.map((p) => p.id)
 
-      // 获取项目分类关联
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('project_categories')
-        .select(
-          `
-          project_id,
-          categories:category_id(*)
-        `,
-        )
-        .in('project_id', projectIds)
+      // 尝试获取项目分类关联，如果表不存在则返回空数组
+      let categoriesData: any[] = []
+      try {
+        const { data: catData, error: categoriesError } = await supabase
+          .from('project_categories')
+          .select(
+            `
+            project_id,
+            categories:category_id(*)
+          `,
+          )
+          .in('project_id', projectIds)
 
-      if (categoriesError) throw categoriesError
+        if (!categoriesError) {
+          categoriesData = catData || []
+        }
+      } catch (catError) {
+        console.warn('project_categories table not found or inaccessible:', catError)
+      }
 
-      // 获取项目标签关联
-      const { data: tagsData, error: tagsError } = await supabase
-        .from('project_tags')
-        .select(
-          `
-          project_id,
-          tags:tag_id(*)
-        `,
-        )
-        .in('project_id', projectIds)
+      // 尝试获取项目标签关联，如果表不存在则返回空数组
+      let tagsData: any[] = []
+      try {
+        const { data: tagData, error: tagsError } = await supabase
+          .from('project_tags')
+          .select(
+            `
+            project_id,
+            tags:tag_id(*)
+          `,
+          )
+          .in('project_id', projectIds)
 
-      if (tagsError) throw tagsError
+        if (!tagsError) {
+          tagsData = tagData || []
+        }
+      } catch (tagError) {
+        console.warn('project_tags table not found or inaccessible:', tagError)
+      }
 
       // 组合数据
       return projectsData.map((project) => ({

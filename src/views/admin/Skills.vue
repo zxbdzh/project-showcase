@@ -71,10 +71,7 @@
           <el-col v-for="skill in filteredSkills" :key="skill.id" :xs="24" :sm="12" :md="8" :lg="6">
             <el-card class="skill-card" shadow="hover">
               <div class="skill-card__header">
-                <div
-                  class="skill-card__icon"
-                  :style="{ backgroundColor: skill.color || '#409EFF' }"
-                >
+                <div class="skill-card__icon" :style="{ backgroundColor: '#409EFF' }">
                   <el-icon :size="24">
                     <component :is="getSkillIcon(skill.icon || 'Tools')" />
                   </el-icon>
@@ -115,7 +112,7 @@
                       class="level-progress"
                       :style="{
                         width: `${getLevelPercentage(skill.level)}%`,
-                        backgroundColor: skill.color || '#409EFF',
+                        backgroundColor: '#409EFF',
                       }"
                     ></div>
                   </div>
@@ -418,7 +415,7 @@ const editSkillItem = (skill: any) => {
     level: skill.level,
     years_experience: skill.years_experience,
     icon: skill.icon,
-    color: skill.color,
+    color: '#409EFF',
     sort_order: skill.sort_order || 0,
   })
   showCreateDialog.value = true

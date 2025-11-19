@@ -74,7 +74,7 @@
                 </div>
 
                 <div class="social-link-card__body">
-                  <h3 class="social-link-card__title">{{ link.name }}</h3>
+                  <h3 class="social-link-card__title">{{ getLinkName(link.url) }}</h3>
                   <p class="social-link-card__url">{{ link.url }}</p>
 
                   <div class="social-link-card__stats">
@@ -233,7 +233,8 @@ const filteredLinks = computed(() => {
 
   const query = searchQuery.value.toLowerCase()
   return socialLinks.value.filter(
-    (link) => link.name.toLowerCase().includes(query) || link.url.toLowerCase().includes(query),
+    (link) =>
+      getLinkName(link.url).toLowerCase().includes(query) || link.url.toLowerCase().includes(query),
   )
 })
 
@@ -251,6 +252,16 @@ const getLinkIcon = (iconName: string) => {
   return icon ? icon.component : markRaw(Link)
 }
 
+const getLinkName = (url: string) => {
+  try {
+    const urlObj = new URL(url)
+    const hostname = urlObj.hostname.replace('www.', '')
+    return hostname.charAt(0).toUpperCase() + hostname.slice(1)
+  } catch {
+    return url
+  }
+}
+
 const handleLinkAction = async ({ action, link }: { action: string; link: any }) => {
   switch (action) {
     case 'edit':
@@ -265,7 +276,7 @@ const handleLinkAction = async ({ action, link }: { action: string; link: any })
 const editLink = (link: any) => {
   editingLink.value = link
   Object.assign(formData, {
-    name: link.name,
+    name: getLinkName(link.url),
     url: link.url,
     icon: link.icon,
     sort_order: link.sort_order,
@@ -276,7 +287,7 @@ const editLink = (link: any) => {
 const deleteLink = async (link: any) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除社交链接 "${link.name}" 吗？此操作不可恢复。`,
+      `确定要删除社交链接 "${getLinkName(link.url)}" 吗？此操作不可恢复。`,
       '确认删除',
       {
         confirmButtonText: '确定',
