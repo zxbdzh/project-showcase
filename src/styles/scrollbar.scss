@@ -1,0 +1,298 @@
+/* 自定义滚动条样式 */
+
+/* 基础滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  margin: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 4px;
+  border: 2px solid var(--bg-secondary);
+  min-height: 20px;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+  border-color: var(--bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--accent-tertiary);
+}
+
+/* Firefox 滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+}
+
+/* 深色主题滚动条 */
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-color: var(--bg-tertiary);
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.3);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+  box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+}
+
+[data-theme='dark'] {
+  scrollbar-color: var(--accent-primary) var(--bg-tertiary);
+}
+
+/* 浅色主题滚动条 */
+[data-theme='light'] ::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-color: var(--bg-secondary);
+  box-shadow: 0 0 4px rgba(0, 102, 204, 0.2);
+}
+
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+  box-shadow: 0 0 6px rgba(0, 102, 204, 0.3);
+}
+
+[data-theme='light'] {
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+}
+
+/* 霓虹滚动条 */
+.scrollbar-neon ::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border: none;
+  box-shadow:
+    0 0 10px var(--accent-primary),
+    0 0 20px var(--accent-primary);
+  animation: scrollbarPulse 2s ease-in-out infinite;
+}
+
+.scrollbar-neon ::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+  box-shadow:
+    0 0 15px var(--accent-secondary),
+    0 0 30px var(--accent-secondary);
+}
+
+@keyframes scrollbarPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* 渐变滚动条 */
+.scrollbar-gradient ::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+}
+
+.scrollbar-gradient ::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  border: none;
+  border-radius: 8px;
+}
+
+.scrollbar-gradient ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--accent-secondary) 0%, var(--accent-tertiary) 100%);
+}
+
+/* 最小化滚动条 */
+.scrollbar-minimal ::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-minimal ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-minimal ::-webkit-scrollbar-thumb {
+  background: var(--text-secondary);
+  border: none;
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.scrollbar-minimal ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-primary);
+  opacity: 0.8;
+}
+
+/* 隐藏滚动条但保持功能 */
+.scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* 特定区域滚动条 */
+.scrollbar-custom-area {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+}
+
+.scrollbar-custom-area::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-custom-area::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.scrollbar-custom-area::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 3px;
+  border: none;
+}
+
+.scrollbar-custom-area::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+}
+
+/* 响应式滚动条 */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    min-height: 16px;
+    border-width: 1px;
+  }
+}
+
+@media (max-width: 480px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    min-height: 12px;
+    border-width: 1px;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  ::-webkit-scrollbar-thumb {
+    background: var(--text-primary);
+    border: 2px solid var(--border-primary);
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+  }
+}
+
+/* 减少动画模式 */
+@media (prefers-reduced-motion: reduce) {
+  .scrollbar-neon ::-webkit-scrollbar-thumb {
+    animation: none;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    min-height: 24px;
+    border-radius: 6px;
+  }
+}
+
+/* 特定组件滚动条 */
+.el-scrollbar__wrap {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+}
+
+.el-scrollbar__wrap::-webkit-scrollbar {
+  width: 6px;
+}
+
+.el-scrollbar__wrap::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.el-scrollbar__wrap::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 3px;
+  border: none;
+}
+
+/* 模态框滚动条 */
+.el-dialog__body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+}
+
+.el-dialog__body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.el-dialog__body::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.el-dialog__body::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 3px;
+  border: none;
+}
+
+/* 下拉菜单滚动条 */
+.el-dropdown-menu {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) var(--bg-secondary);
+}
+
+.el-dropdown-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.el-dropdown-menu::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.el-dropdown-menu::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 2px;
+  border: none;
+}

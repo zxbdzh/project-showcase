@@ -55,8 +55,8 @@
     <!-- 修改密码模态框 -->
     <el-dialog v-model="showChangePasswordModal" title="修改密码" width="400px" center>
       <change-password-dialog
+        v-model="showChangePasswordModal"
         @success="handleChangePasswordSuccess"
-        @cancel="showChangePasswordModal = false"
       />
     </el-dialog>
   </div>
@@ -258,19 +258,64 @@ onMounted(() => {
 }
 
 /* 页面切换动画 */
-.page-enter-active,
+.page-enter-active {
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
 .page-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);
 }
 
 .page-enter-from {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateX(50px) scale(0.95);
+  filter: blur(2px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateX(-30px);
+  transform: translateX(-50px) scale(1.05);
+  filter: blur(1px);
+}
+
+/* 页面切换时的内容动画 */
+.page-enter-active {
+  animation: pageSlideIn 0.4s ease-out;
+}
+
+.page-leave-active {
+  animation: pageSlideOut 0.3s ease-in;
+}
+
+@keyframes pageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(50px) translateY(20px) scale(0.95);
+    filter: blur(4px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(10px) translateY(5px) scale(0.98);
+    filter: blur(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes pageSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50px) translateY(-20px) scale(1.05);
+    filter: blur(3px);
+  }
 }
 
 /* 响应式设计 */

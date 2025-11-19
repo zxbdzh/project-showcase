@@ -14,27 +14,6 @@
       label-width="80px"
       @submit.prevent="handleSubmit"
     >
-      <el-form-item label="邮箱" prop="email">
-        <el-input
-          v-model="form.email"
-          type="email"
-          placeholder="请输入邮箱地址"
-          :prefix-icon="Message"
-          :disabled="loading"
-        />
-      </el-form-item>
-
-      <el-form-item label="当前密码" prop="currentPassword">
-        <el-input
-          v-model="form.currentPassword"
-          type="password"
-          placeholder="请输入当前密码"
-          :prefix-icon="Lock"
-          :disabled="loading"
-          show-password
-        />
-      </el-form-item>
-
       <el-form-item label="新密码" prop="newPassword">
         <el-input
           v-model="form.newPassword"
@@ -43,6 +22,7 @@
           :prefix-icon="Lock"
           :disabled="loading"
           show-password
+          autofocus
         />
       </el-form-item>
 
@@ -95,29 +75,33 @@ const formRef = ref<FormInstance>()
 const visible = ref(false)
 
 const form = reactive({
-  email: '',
-  currentPassword: '',
   newPassword: '',
   confirmPassword: '',
 })
 
 // 表单验证规则
 const rules: FormRules = {
-  email: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' },
-  ],
-  currentPassword: [
-    { required: true, message: '请输入当前密码', trigger: 'blur' },
-    { min: 6, message: '密码长度至少6位', trigger: 'blur' },
-  ],
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
     { min: 6, message: '密码长度至少6位', trigger: 'blur' },
     {
       validator: (rule, value, callback) => {
-        if (value && value === form.currentPassword) {
-          callback(new Error('新密码不能与当前密码相同'))
+        // 密码强度验证
+        if (value) {
+          const hasUpperCase = /[A-Z]/.test(value)
+          const hasLowerCase = /[a-z]/.test(value)
+          const hasNumbers = /\d/.test(value)
+          const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value)
+
+          const strength = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar].filter(
+            Boolean,
+          ).length
+
+          if (strength < 3) {
+            callback(new Error('密码强度不足，请包含大小写字母、数字和特殊字符中的至少3种'))
+          } else {
+            callback()
+          }
         } else {
           callback()
         }
@@ -147,8 +131,6 @@ watch(
     visible.value = newVal
     if (newVal) {
       // 重置表单
-      form.email = props.email || ''
-      form.currentPassword = ''
       form.newPassword = ''
       form.confirmPassword = ''
       clearError()
@@ -169,7 +151,7 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     clearError()
 
-    const result = await updatePassword(form.currentPassword, form.newPassword)
+    const result = await updatePassword(form.newPassword)
 
     if (result.success) {
       ElMessage.success('密码修改成功！')

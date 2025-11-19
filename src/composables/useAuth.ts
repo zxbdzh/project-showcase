@@ -211,28 +211,12 @@ const updateProfile = async (updates: Partial<Profile>) => {
 }
 
 // 更新密码
-const updatePassword = async (currentPassword: string, newPassword: string) => {
+const updatePassword = async (newPassword: string) => {
   try {
     loading.value = true
     error.value = null
 
-    // 首先验证当前密码
-    const { data: userData } = await supabase.auth.getUser()
-    if (!userData.user?.email) {
-      throw new Error('用户未登录')
-    }
-
-    // 重新验证用户身份
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: userData.user.email,
-      password: currentPassword,
-    })
-
-    if (signInError) {
-      throw new Error('当前密码错误')
-    }
-
-    // 更新密码
+    // 更新密码 - 使用Supabase内置的updateUser方法
     const { error: updateError } = await supabase.auth.updateUser({
       password: newPassword,
     })

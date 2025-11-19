@@ -53,29 +53,77 @@ const generateGlitch = () => {
 
   const before = textRef.value?.querySelector('.glitch-text__before') as HTMLElement
   const after = textRef.value?.querySelector('.glitch-text__after') as HTMLElement
+  const main = textRef.value?.querySelector('.glitch-text__main') as HTMLElement
 
-  if (before && after) {
-    // 随机位移和裁剪
-    const beforeTransform = `translate(${Math.random() * props.intensity - props.intensity / 2}px, ${Math.random() * props.intensity - props.intensity / 2}px)`
-    const afterTransform = `translate(${Math.random() * props.intensity - props.intensity / 2}px, ${Math.random() * props.intensity - props.intensity / 2}px)`
+  if (before && after && main) {
+    // 随机故障类型
+    const glitchType = Math.floor(Math.random() * 4)
 
-    const beforeClip = `rect(${Math.random() * 100}%, ${Math.random() * 100}%, ${Math.random() * 100}%, ${Math.random() * 100}%)`
-    const afterClip = `rect(${Math.random() * 100}%, ${Math.random() * 100}%, ${Math.random() * 100}%, ${Math.random() * 100}%)`
+    switch (glitchType) {
+      case 0: // 水平位移
+        {
+          const beforeTransform = `translateX(${Math.random() * props.intensity - props.intensity / 2}px)`
+          const afterTransform = `translateX(${Math.random() * props.intensity - props.intensity / 2}px)`
 
-    before.style.transform = beforeTransform
-    before.style.clipPath = beforeClip
-    after.style.transform = afterTransform
-    after.style.clipPath = afterClip
+          before.style.transform = beforeTransform
+          after.style.transform = afterTransform
+          before.style.opacity = '0.8'
+          after.style.opacity = '0.6'
+        }
+        break
+
+      case 1: // 垂直位移
+        {
+          const beforeTransform = `translateY(${Math.random() * props.intensity - props.intensity / 2}px)`
+          const afterTransform = `translateY(${Math.random() * props.intensity - props.intensity / 2}px)`
+
+          before.style.transform = beforeTransform
+          after.style.transform = afterTransform
+          before.style.opacity = '0.7'
+          after.style.opacity = '0.9'
+        }
+        break
+
+      case 2: // 裁剪效果
+        {
+          const beforeClip = `polygon(${Math.random() * 30}% 0, ${Math.random() * 30 + 70}% 0, ${Math.random() * 30 + 70}% 100%, ${Math.random() * 30}% 100%)`
+          const afterClip = `polygon(${Math.random() * 30 + 70}% 0, 100% 0, 100% 100%, ${Math.random() * 30 + 70}% 100%)`
+
+          before.style.clipPath = beforeClip
+          after.style.clipPath = afterClip
+          before.style.opacity = '0.9'
+          after.style.opacity = '0.8'
+        }
+        break
+
+      case 3: // 颜色故障
+        {
+          const hue = Math.random() * 360
+          before.style.color = `hsl(${hue}, 100%, 50%)`
+          after.style.color = `hsl(${hue + 180}, 100%, 50%)`
+          before.style.opacity = '0.7'
+          after.style.opacity = '0.7'
+        }
+        break
+    }
+
+    // 添加闪烁效果
+    main.style.textShadow = `0 0 ${Math.random() * 20}px ${props.color}`
 
     // 短暂后重置
     setTimeout(
       () => {
         before.style.transform = ''
         before.style.clipPath = ''
+        before.style.opacity = ''
+        before.style.color = ''
         after.style.transform = ''
         after.style.clipPath = ''
+        after.style.opacity = ''
+        after.style.color = ''
+        main.style.textShadow = ''
       },
-      Math.random() * 200 + 100,
+      Math.random() * 150 + 50,
     )
   }
 }

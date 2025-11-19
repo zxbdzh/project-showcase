@@ -56,6 +56,11 @@ const initCanvas = () => {
   }
 }
 
+// 性能优化：使用时间戳控制帧率
+let lastFrameTime = 0
+const targetFPS = 30 // 降低到30fps以提高性能
+const frameInterval = 1000 / targetFPS
+
 // 绘制矩阵雨
 const drawMatrix = () => {
   if (!ctx || !canvasRef.value) return
@@ -68,13 +73,26 @@ const drawMatrix = () => {
   ctx.fillStyle = props.color || '#00ff41'
   ctx.font = `${props.fontSize}px monospace`
 
-  // 绘制字符
+  // 批量绘制优化
+  const batchSize = 5 // 每帧最多绘制5个字符
+  let drawn = 0
+
   columns.forEach((y, index) => {
+    if (drawn >= batchSize) return
+
     const char = matrixChars[Math.floor(Math.random() * matrixChars.length)]
     const x = index * props.fontSize
 
     if (char && ctx && canvasRef.value) {
+      // 添加渐变效果
+      const gradient = ctx.createLinearGradient(0, y * props.fontSize - 20, 0, y * props.fontSize)
+      gradient.addColorStop(0, 'transparent')
+      gradient.addColorStop(0.5, props.color || '#00ff41')
+      gradient.addColorStop(1, props.color || '#00ff41')
+      ctx.fillStyle = gradient
+
       ctx.fillText(char, x, y * props.fontSize)
+      drawn++
     }
 
     // 随机重置列
@@ -93,10 +111,17 @@ const drawMatrix = () => {
   })
 }
 
-// 动画循环
-const animate = () => {
+// 动画循环（带性能优化）
+const animate = (currentTime: number) => {
   if (!props.isActive) return
 
+  // 帧率控制
+  if (currentTime - lastFrameTime < frameInterval) {
+    animationId = requestAnimationFrame(animate)
+    return
+  }
+
+  lastFrameTime = currentTime
   drawMatrix()
   animationId = requestAnimationFrame(animate)
 }
@@ -104,7 +129,7 @@ const animate = () => {
 // 开始动画
 const startAnimation = () => {
   if (animationId) return
-  animate()
+  animationId = requestAnimationFrame(animate)
 }
 
 // 停止动画
