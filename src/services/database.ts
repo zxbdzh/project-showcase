@@ -182,57 +182,26 @@ export class ProjectService extends DatabaseService {
       // 获取所有项目ID
       const projectIds = projectsData.map((p) => p.id)
 
-      // 尝试获取项目分类关联，如果表不存在则返回空数组
-      let categoriesData: any[] = []
-      try {
-        const { data: catData, error: categoriesError } = await supabase
-          .from('project_categories')
-          .select(
-            `
-            project_id,
-            categories:category_id(*)
-          `,
-          )
-          .in('project_id', projectIds)
+      // 获取项目分类关联
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .in('id', projectsData.map((p) => p.category_id).filter(Boolean))
 
-        if (!categoriesError) {
-          categoriesData = catData || []
-        }
-      } catch (catError) {
-        console.warn('project_categories table not found or inaccessible:', catError)
-      }
-
-      // 尝试获取项目标签关联，如果表不存在则返回空数组
-      let tagsData: any[] = []
-      try {
-        const { data: tagData, error: tagsError } = await supabase
-          .from('project_tags')
-          .select(
-            `
-            project_id,
-            tags:tag_id(*)
-          `,
-          )
-          .in('project_id', projectIds)
-
-        if (!tagsError) {
-          tagsData = tagData || []
-        }
-      } catch (tagError) {
-        console.warn('project_tags table not found or inaccessible:', tagError)
-      }
+      // 获取项目标签关联
+      const { data: tagsData, error: tagsError } = await supabase
+        .from('tags')
+        .select('*')
+        .in(
+          'id',
+          projectsData.flatMap((p) => p.tech_stack || []),
+        )
 
       // 组合数据
       return projectsData.map((project) => ({
         ...project,
-        categories: categoriesData
-          .filter((pc) => pc.project_id === project.id)
-          .map((pc) => pc.categories)
-          .filter(Boolean),
-        tags: tagsData
-          .filter((pt) => pt.project_id === project.id)
-          .map((pt) => pt.tags)
-          .filter(Boolean),
+        categories: categoriesData?.filter((cat) => cat.id === project.category_id) || [],
+        tags: tagsData?.filter((tag) => project.tech_stack?.includes(tag.name)) || [],
       }))
     } catch (error) {
       this.handleError(error, 'get projects with relations')
@@ -298,54 +267,8 @@ export class ProjectService extends DatabaseService {
   }
 
   async deleteProject(id: string): Promise<void> {
-    // 先删除关联的分类和标签
-    await supabase.from('project_categories').delete().eq('project_id', id)
-    await supabase.from('project_tags').delete().eq('project_id', id)
-
     // 再删除项目
     return this.delete('projects', id)
-  }
-
-  async updateProjectCategories(projectId: string, categoryIds: string[]): Promise<void> {
-    try {
-      // 删除现有关联
-      await supabase.from('project_categories').delete().eq('project_id', projectId)
-
-      // 添加新关联
-      if (categoryIds.length > 0) {
-        const relations = categoryIds.map((categoryId) => ({
-          project_id: projectId,
-          category_id: categoryId,
-        }))
-
-        const { error } = await supabase.from('project_categories').insert(relations)
-        if (error) throw error
-      }
-    } catch (error) {
-      this.handleError(error, 'update project categories')
-      throw error
-    }
-  }
-
-  async updateProjectTags(projectId: string, tagIds: string[]): Promise<void> {
-    try {
-      // 删除现有关联
-      await supabase.from('project_tags').delete().eq('project_id', projectId)
-
-      // 添加新关联
-      if (tagIds.length > 0) {
-        const relations = tagIds.map((tagId) => ({
-          project_id: projectId,
-          tag_id: tagId,
-        }))
-
-        const { error } = await supabase.from('project_tags').insert(relations)
-        if (error) throw error
-      }
-    } catch (error) {
-      this.handleError(error, 'update project tags')
-      throw error
-    }
   }
 }
 
