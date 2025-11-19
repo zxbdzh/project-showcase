@@ -17,6 +17,7 @@
       :drag="drag"
       :show-file-list="showFileList"
       :auto-upload="autoUpload"
+      :on-preview="handlePreview"
       class="upload-container"
     >
       <div v-if="drag" class="upload-dragger">
@@ -374,6 +375,23 @@ const formatFileSize = (size: number): string => {
 const formatDate = (date?: string): string => {
   if (!date) return '-'
   return new Date(date).toLocaleString('zh-CN')
+}
+
+// 处理文件预览
+const handlePreview = (file: UploadUserFile) => {
+  const extendedFile = file as ExtendedUploadFile
+
+  if (extendedFile.url) {
+    // 如果是图片文件，显示预览
+    if (extendedFile.type?.startsWith('image/')) {
+      previewUrl.value = extendedFile.url
+      previewFileData.value = extendedFile
+      previewVisible.value = true
+    } else {
+      // 非图片文件，下载或在新窗口打开
+      window.open(extendedFile.url, '_blank')
+    }
+  }
 }
 
 // 清空上传列表
