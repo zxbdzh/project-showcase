@@ -24,6 +24,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="dashboard">管理后台</el-dropdown-item>
+                <el-dropdown-item command="change-password">修改密码</el-dropdown-item>
                 <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -50,6 +51,14 @@
     <el-dialog v-model="showLoginModal" title="用户登录" width="400px" :show-close="false" center>
       <login-form @success="handleLoginSuccess" @switch-mode="handleSwitchMode" />
     </el-dialog>
+
+    <!-- 修改密码模态框 -->
+    <el-dialog v-model="showChangePasswordModal" title="修改密码" width="400px" center>
+      <change-password-dialog
+        @success="handleChangePasswordSuccess"
+        @cancel="showChangePasswordModal = false"
+      />
+    </el-dialog>
   </div>
 </template>
 
@@ -65,6 +74,7 @@ import MatrixRain from '@/components/MatrixRain.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import GlitchText from '@/components/GlitchText.vue'
 import LoginForm from '@/components/Auth/LoginForm.vue'
+import ChangePasswordDialog from '@/components/Auth/ChangePasswordDialog.vue'
 
 const router = useRouter()
 const { isAuthenticated, profile, userInitials, signOut } = useAuth()
@@ -78,6 +88,7 @@ const {
 
 // 模态框状态
 const showLoginModal = ref(false)
+const showChangePasswordModal = ref(false)
 
 // 加载状态
 const isSettingsLoading = settingsLoading
@@ -100,6 +111,9 @@ const handleUserAction = async (command: string) => {
     case 'dashboard':
       router.push('/admin')
       break
+    case 'change-password':
+      showChangePasswordModal.value = true
+      break
     case 'logout':
       try {
         await signOut()
@@ -115,6 +129,12 @@ const handleUserAction = async (command: string) => {
 const handleLoginSuccess = () => {
   showLoginModal.value = false
   ElMessage.success('欢迎回来！')
+}
+
+// 处理修改密码成功
+const handleChangePasswordSuccess = () => {
+  showChangePasswordModal.value = false
+  ElMessage.success('密码修改成功！')
 }
 
 // 处理切换模式
@@ -134,6 +154,8 @@ const initializeSettings = async () => {
     await loadSystemSettings()
     // 设置网页标题
     const siteTitle = getSettingValue('site_title', 'Geek Portfolio')
+    console.log(siteTitle)
+
     updatePageTitle(siteTitle)
   } catch (error) {
     console.error('Failed to load system settings:', error)
