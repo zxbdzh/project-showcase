@@ -308,8 +308,15 @@ const beforeUpload = async (file: UploadUserFile) => {
       uploadFile.url = result.url
       uploadFile.key = result.key
 
-      // 添加到文件列表
-      fileList.value.push({ ...uploadFile })
+      // 添加到文件列表，确保格式符合Element Plus要求
+      const fileToAdd: ExtendedUploadFile = {
+        ...uploadFile,
+        name: file.name,
+        size: file.size,
+        type: (file as any).raw?.type || (file as any).type,
+        raw: (file as any).raw,
+      }
+      fileList.value.push(fileToAdd)
 
       emit('success', { url: result.url, fileName: result.key }, file)
       ElMessage.success('文件上传成功!')
