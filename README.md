@@ -17,6 +17,7 @@
 - 📊 **数据可视化面板**（统计图表、活动监控、系统状态）
 - ⚡ **高性能缓存机制**（多层缓存、智能失效、性能优化）
 - 🌐 **SEO优化**（动态meta标签、结构化数据、搜索引擎友好）
+- 📝 **Markdown支持**（项目详情页完整markdown渲染和样式）
 
 ### 技术栈
 
@@ -30,6 +31,7 @@
 - **实时同步**: Supabase Realtime
 - **样式方案**: SCSS + CSS Variables
 - **图表库**: ECharts + Vue-ECharts
+- **Markdown渲染**: markdown-it
 - **构建工具**: Vite
 - **代码规范**: ESLint + Prettier
 
@@ -66,6 +68,7 @@
 │ 🔄 状态管理 (Pinia)                     │
 │ 🌐 路由管理 (Vue Router)                │
 │ 📁 文件上传 (MinIO SDK)                 │
+│ 📝 Markdown渲染 (markdown-it)             │
 ├─────────────────────────────────────────┤
 │              API 接口层                  │
 │ 🔐 认证 (Supabase Auth)                 │
@@ -81,22 +84,23 @@
 项目展示系统
 ├── 🏠 前台展示
 │   ├── 首页 (Hero Section + 矩阵雨)
-│   ├── 项目展示 (筛选、搜索、详情)
+│   ├── 项目展示 (筛选、搜索、详情、Markdown)
 │   ├── 关于我 (技能雷达图、个人简介)
 │   ├── 联系方式 (表单、社交链接)
 │   └── 主题切换 (浅色/深色/系统)
 ├── 🎛️ 后台管理
 │   ├── Dashboard (数据统计、图表)
-│   ├── 项目管理 (CRUD、批量操作)
+│   ├── 项目管理 (CRUD、批量操作、Markdown编辑)
 │   ├── 内容管理 (分类、标签、技能)
 │   ├── 文件管理 (MinIO集成)
-│   ├── 用户管理 (权限、角色)
+│   ├── 用户管理 (权限、角色、密码更新)
 │   └── 系统设置 (主题、配置)
 └── 🔧 系统功能
-    ├── 用户认证 (注册/登录/权限)
+    ├── 用户认证 (注册/登录/权限/密码管理)
     ├── 文件上传 (拖拽、预览、进度)
     ├── 搜索筛选 (全局搜索、高级筛选)
     ├── 数据可视化 (图表、统计)
+    ├── Markdown渲染 (代码高亮、表格、引用)
     └── SEO优化 (meta标签、结构化数据)
 ```
 
@@ -130,7 +134,7 @@ skills (id, name, category, level, years_experience, projects_count, icon, color
 social_links (id, name, url, icon, sort_order, user_id, created_at, updated_at)
 
 -- 系统设置表
-system_settings (id, key, value, description, type, user_id, created_at, updated_at)
+system_settings (id, key, value, description, type, created_at, updated_at)
 ```
 
 ## 🎨 UI设计特色
@@ -149,6 +153,14 @@ system_settings (id, key, value, description, type, user_id, created_at, updated
 - **深色主题** - 经典的极客暗色风格
 - **系统主题** - 自动跟随系统主题设置
 - **平滑过渡** - 主题切换时的动画效果
+
+### Markdown渲染
+
+- **代码高亮** - 支持多种编程语言语法高亮
+- **表格样式** - 美观的表格展示和悬停效果
+- **引用样式** - 优雅的引用块设计
+- **链接样式** - 带下划线动画的链接效果
+- **响应式设计** - 移动端友好的markdown展示
 
 ### 响应式设计
 
@@ -268,6 +280,7 @@ src/
 - 虚拟滚动优化长列表
 - 缓存策略和智能失效
 - SEO优化和语义化HTML
+- Markdown渲染优化和缓存
 
 ### 后端优化
 
@@ -358,6 +371,9 @@ pnpm build
 - [x] 项目卡片点击逻辑修复
 - [x] 主题设置全局生效问题修复
 - [x] 文件上传功能重新启用和优化
+- [x] 系统设置表结构优化，移除user_id字段依赖
+- [x] 项目详情页Markdown渲染支持
+- [x] 密码更新AuthSessionMissingError修复
 
 ### 📋 待开始 (0%)
 
@@ -365,6 +381,16 @@ pnpm build
 - [ ] 部署配置和CI/CD
 
 ## 📝 更新日志
+
+### v1.0.9 (2025-01-19) - 关键功能修复和增强
+
+- ✅ 修复system_settings表结构，移除user_id字段依赖
+- ✅ 为项目详情页添加完整的markdown渲染支持
+- ✅ 修复密码更新时的AuthSessionMissingError问题
+- ✅ 添加markdown-it依赖和相关样式
+- ✅ 优化密码更新流程，增加当前密码验证
+- ✅ 完善markdown样式，支持代码高亮、表格、引用等
+- ✅ 提升项目详情页的内容展示能力
 
 ### v1.0.8 (2025-01-19) - 关键功能问题修复
 
