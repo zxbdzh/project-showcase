@@ -95,6 +95,7 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled, Upload, InfoFilled, Document } from '@element-plus/icons-vue'
 import type { UploadUserFile } from 'element-plus'
+import MinIOService from '../../utils/minio'
 
 // 扩展UploadUserFile接口
 interface ExtendedUploadFile {
@@ -193,7 +194,7 @@ watch(fileList, (newFiles) => {
   emit('update:fileList', newFiles as UploadUserFile[])
 })
 
-// 上传前检查
+// 上传前检查和实际上传
 const beforeUpload = async (file: UploadUserFile) => {
   // 文件大小检查
   const isLtMaxSize = (file.size || 0) / 1024 / 1024 < props.maxSize
@@ -219,9 +220,13 @@ const beforeUpload = async (file: UploadUserFile) => {
     }
   }
 
-  // 模拟文件上传 - 临时解决方案
+  // 使用MinIO进行实际上传
   try {
-    // 创建上传进度
+    if (!file.raw) {
+      throw new Error('文件对象无效')
+    }
+
+    // 创建上传进度跟踪
     const uploadFile: ExtendedUploadFile = {
       uid: file.uid || Date.now(),
       name: file.name,
@@ -235,32 +240,40 @@ const beforeUpload = async (file: UploadUserFile) => {
     uploadingFiles.value.push(uploadFile)
     progressVisible.value = true
 
-    // 模拟上传过程
-    const simulateUpload = async () => {
-      let progressValue = 0
-      for (progressValue = 0; progressValue <= 100; progressValue += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 50))
-        uploadFile.percentage = progressValue
+    // 生成唯一文件名
+    const objectName = MinIOService.generateFileName(file.name, props.folder)
 
-        // 更新上传文件列表中的进度
+    // 使用MinIO上传文件
+    const result = await MinIOService.uploadFile({
+      bucket: props.bucket,
+      objectName,
+      file: file.raw,
+      metadata: {
+        'X-Amz-Meta-Original-Name': file.name,
+        'X-Amz-Meta-Upload-Time': new Date().toISOString(),
+        'X-Amz-Meta-File-Type': file.raw.type,
+      },
+      onProgress: (progress) => {
+        // 更新上传进度
+        uploadFile.percentage = Math.round(progress)
         const index = uploadingFiles.value.findIndex((f) => f.uid === file.uid)
         if (index !== -1) {
           uploadingFiles.value[index] = { ...uploadFile }
         }
-      }
+      },
+    })
 
-      // 上传完成处理
+    if (result.success && result.url) {
+      // 上传成功
       uploadFile.status = 'success'
       uploadFile.percentage = 100
-
-      // 生成模拟的文件URL
-      const fileUrl = `https://placeholder.com/files/${file.name}`
-      uploadFile.url = fileUrl
+      uploadFile.url = result.url
+      uploadFile.key = result.fileName
 
       // 添加到文件列表
       fileList.value.push({ ...uploadFile })
 
-      emit('success', { url: fileUrl }, file)
+      emit('success', { url: result.url, fileName: result.fileName }, file)
       ElMessage.success('文件上传成功!')
 
       // 移除上传进度
@@ -270,21 +283,26 @@ const beforeUpload = async (file: UploadUserFile) => {
           uploadingFiles.value.splice(uploadIndex, 1)
         }
       }, 1000)
+    } else {
+      // 上传失败
+      uploadFile.status = 'fail'
+      uploadFile.errorMessage = result.error || '上传失败'
+      emit('error', new Error(result.error || '上传失败'), file)
     }
-
-    simulateUpload()
   } catch (error) {
     console.error('Upload error:', error)
+
+    // 创建失败记录
     const uploadFile: ExtendedUploadFile = {
       uid: file.uid || Date.now(),
       name: file.name,
       size: file.size,
       status: 'fail',
-      errorMessage: '上传失败，请重试',
+      errorMessage: error instanceof Error ? error.message : '上传失败，请重试',
       raw: file.raw,
     }
     uploadingFiles.value.push(uploadFile)
-    emit('error', new Error('上传失败'), file)
+    emit('error', error instanceof Error ? error : new Error('上传失败'), file)
   }
 
   // 阻止Element Plus的默认上传行为
@@ -324,6 +342,15 @@ const onRemove = async (file: UploadUserFile) => {
       cancelButtonText: '取消',
       type: 'warning',
     })
+
+    // 从MinIO删除文件
+    const extendedFile = file as ExtendedUploadFile
+    if (extendedFile.key) {
+      const deleteSuccess = await MinIOService.deleteFile(props.bucket, extendedFile.key)
+      if (!deleteSuccess) {
+        ElMessage.warning('文件删除失败，但已从列表中移除')
+      }
+    }
 
     // 从文件列表中移除
     const index = fileList.value.findIndex((f) => f.uid === file.uid)
