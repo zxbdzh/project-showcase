@@ -1,18 +1,12 @@
+// 缓存管理 - 按照CSDN文章实现
 import { ref, computed } from 'vue'
-import redisService, { type ConnectionStatus } from '@/utils/redis'
+import redis from '@/utils/redisClient'
 
 // 缓存配置
 interface CacheConfig {
   key: string
   ttl?: number // 缓存时间（秒）
   version?: string // 缓存版本
-}
-
-// 缓存项
-interface CacheItem<T = any> {
-  data: T
-  timestamp: number
-  version: string
 }
 
 // 全局缓存状态
@@ -67,7 +61,7 @@ const generateCacheKey = (key: string, config?: CacheConfig) => {
   return `${key}:${version}`
 }
 
-// 检查Redis连接状态（浏览器环境直接返回false）
+// 检查Redis连接状态
 const checkRedisConnection = async (): Promise<boolean> => {
   // 浏览器环境不支持Redis，直接返回false
   if (typeof window !== 'undefined') {
@@ -76,19 +70,10 @@ const checkRedisConnection = async (): Promise<boolean> => {
   }
 
   try {
-    const status = redisService.getConnectionStatus()
-    if (status === 'connected') {
-      redisConnected.value = true
-      return true
-    }
-
-    if (status === 'disconnected' || status === 'error') {
-      const connected = await redisService.connect()
-      redisConnected.value = connected
-      return connected
-    }
-
-    return false
+    // 尝试ping Redis
+    await redis.ping()
+    redisConnected.value = true
+    return true
   } catch (error) {
     console.error('Redis连接检查失败:', error)
     redisConnected.value = false
@@ -111,30 +96,19 @@ const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<
 
   const cacheKey = generateCacheKey(key, config)
   const ttl = config?.ttl || 5 * 60 // 默认5分钟（秒）
-  const version = config?.version || cacheVersion.value
-
-  const cacheItem: CacheItem<T> = {
-    data,
-    timestamp: Date.now(),
-    version,
-  }
-
-  // 检查Redis连接
-  const isRedisAvailable = await checkRedisConnection()
-  if (!isRedisAvailable) {
-    console.warn(`Redis不可用，缓存设置失败: ${key}`)
-    return false
-  }
 
   try {
-    const success = await redisService.set(cacheKey, cacheItem, ttl)
-    if (success) {
-      console.log(`Redis缓存设置成功: ${key}`)
-      return true
-    } else {
-      console.warn(`Redis缓存设置失败: ${key}`)
+    // 检查Redis连接
+    const isConnected = await checkRedisConnection()
+    if (!isConnected) {
+      console.warn(`Redis不可用，缓存设置失败: ${key}`)
       return false
     }
+
+    // 设置缓存，带过期时间
+    await redis.set(cacheKey, JSON.stringify(data), 'EX', ttl)
+    console.log(`Redis缓存设置成功: ${key}`)
+    return true
   } catch (error) {
     console.error(`Redis缓存设置异常: ${key}`, error)
     return false
@@ -156,18 +130,19 @@ const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null>
 
   const cacheKey = generateCacheKey(key, config)
 
-  // 检查Redis连接
-  const isRedisAvailable = await checkRedisConnection()
-  if (!isRedisAvailable) {
-    console.warn(`Redis不可用，缓存获取失败: ${key}`)
-    return null
-  }
-
   try {
-    const data = await redisService.get<T>(cacheKey)
+    // 检查Redis连接
+    const isConnected = await checkRedisConnection()
+    if (!isConnected) {
+      console.warn(`Redis不可用，缓存获取失败: ${key}`)
+      return null
+    }
+
+    // 获取缓存
+    const data = await redis.get(cacheKey)
     if (data !== null) {
       console.log(`Redis缓存命中: ${key}`)
-      return data
+      return JSON.parse(data)
     } else {
       console.log(`Redis缓存未命中: ${key}`)
       return null
@@ -188,20 +163,17 @@ const removeCache = async (key: string, config?: CacheConfig): Promise<void> => 
 
   const cacheKey = generateCacheKey(key, config)
 
-  // 检查Redis连接
-  const isRedisAvailable = await checkRedisConnection()
-  if (!isRedisAvailable) {
-    console.warn(`Redis不可用，缓存删除失败: ${key}`)
-    return
-  }
-
   try {
-    const success = await redisService.del(cacheKey)
-    if (success) {
-      console.log(`Redis缓存删除成功: ${key}`)
-    } else {
-      console.warn(`Redis缓存删除失败: ${key}`)
+    // 检查Redis连接
+    const isConnected = await checkRedisConnection()
+    if (!isConnected) {
+      console.warn(`Redis不可用，缓存删除失败: ${key}`)
+      return
     }
+
+    // 删除缓存
+    await redis.del(cacheKey)
+    console.log(`Redis缓存删除成功: ${key}`)
   } catch (error) {
     console.error(`Redis缓存删除异常: ${key}`, error)
   }
@@ -215,20 +187,17 @@ const clearAllCache = async (): Promise<void> => {
     return
   }
 
-  // 检查Redis连接
-  const isRedisAvailable = await checkRedisConnection()
-  if (!isRedisAvailable) {
-    console.warn('Redis不可用，清空缓存失败')
-    return
-  }
-
   try {
-    const success = await redisService.flushDb()
-    if (success) {
-      console.log('Redis缓存已清空')
-    } else {
-      console.warn('Redis清空缓存失败')
+    // 检查Redis连接
+    const isConnected = await checkRedisConnection()
+    if (!isConnected) {
+      console.warn('Redis不可用，清空缓存失败')
+      return
     }
+
+    // 清空数据库
+    await redis.flushdb()
+    console.log('Redis缓存已清空')
   } catch (error) {
     console.error('Redis清空缓存异常:', error)
   }
@@ -242,17 +211,25 @@ const clearCacheByPrefix = async (prefix: string): Promise<void> => {
     return
   }
 
-  // 检查Redis连接
-  const isRedisAvailable = await checkRedisConnection()
-  if (!isRedisAvailable) {
-    console.warn(`Redis不可用，清除前缀缓存失败: ${prefix}`)
-    return
-  }
-
   try {
+    // 检查Redis连接
+    const isConnected = await checkRedisConnection()
+    if (!isConnected) {
+      console.warn(`Redis不可用，清除前缀缓存失败: ${prefix}`)
+      return
+    }
+
+    // 获取匹配的键
     const pattern = `${prefix}:*`
-    const deletedCount = await redisService.delPattern(pattern)
-    console.log(`Redis删除前缀缓存: ${prefix}, 删除数量: ${deletedCount}`)
+    const keys = await redis.keys(pattern)
+
+    if (keys.length > 0) {
+      // 删除匹配的键
+      await redis.del(...keys)
+      console.log(`Redis删除前缀缓存: ${prefix}, 删除数量: ${keys.length}`)
+    } else {
+      console.log(`Redis前缀缓存为空: ${prefix}`)
+    }
   } catch (error) {
     console.error(`Redis删除前缀缓存异常: ${prefix}`, error)
   }
@@ -313,18 +290,19 @@ const getCacheStats = async () => {
     }
   }
 
-  const isRedisAvailable = await checkRedisConnection()
-  if (isRedisAvailable) {
-    try {
+  try {
+    // 检查Redis连接
+    const isConnected = await checkRedisConnection()
+    if (isConnected) {
       // 获取Redis信息
-      redisInfo = (await redisService.getInfo()) || ''
+      redisInfo = (await redis.info()) || ''
 
-      // 尝试获取键的数量（通过模式匹配）
-      const keys = await redisService.keys('*')
+      // 获取键的数量
+      const keys = await redis.keys('*')
       redisSize = keys.length
-    } catch (error) {
-      console.warn('获取Redis统计失败:', error)
     }
+  } catch (error) {
+    console.warn('获取Redis统计失败:', error)
   }
 
   return {
@@ -344,13 +322,12 @@ const monitorRedisConnection = () => {
   }
 
   setInterval(async () => {
-    const status = redisService.getConnectionStatus()
     const wasConnected = redisConnected.value
-    redisConnected.value = status === 'connected'
+    const isConnected = await checkRedisConnection()
 
-    if (!wasConnected && redisConnected.value) {
+    if (!wasConnected && isConnected) {
       console.log('Redis连接恢复')
-    } else if (wasConnected && !redisConnected.value) {
+    } else if (wasConnected && !isConnected) {
       console.warn('Redis连接断开')
     }
   }, 5000) // 每5秒检查一次
@@ -401,6 +378,6 @@ export function useCache() {
 
     // Redis相关
     checkRedisConnection,
-    getRedisStatus: () => redisService.getConnectionStatus(),
+    getRedisStatus: () => (redisConnected.value ? 'connected' : 'disconnected'),
   }
 }
