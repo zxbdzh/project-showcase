@@ -136,7 +136,7 @@ const props = withDefaults(defineProps<Props>(), {
   autoUpload: true,
   maxSize: 10, // 默认10MB
   tip: '支持jpg、png、gif、pdf、doc、docx等格式，单个文件不超过10MB',
-  bucket: 'uploads',
+  bucket: 'project-showcase',
   folder: '',
 })
 
