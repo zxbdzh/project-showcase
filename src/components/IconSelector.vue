@@ -4,7 +4,7 @@
       <el-popover placement="bottom" :width="500" trigger="click">
         <template #reference>
           <div class="icon-display" @click="showIconPicker = true">
-            <font-awesome-icon v-if="modelValue" :icon="modelValue" type="fas" />
+            <font-awesome-icon v-if="modelValue" :icon="modelValue" />
             <span v-else>选择图标</span>
           </div>
         </template>
@@ -18,7 +18,7 @@
               @input="handleSearch"
             >
               <template #prefix>
-                <font-awesome-icon icon="search" type="fas" />
+                <font-awesome-icon icon="search" />
               </template>
             </el-input>
           </div>
@@ -45,7 +45,7 @@
               @click="selectIcon(icon)"
               :title="icon"
             >
-              <font-awesome-icon :icon="icon" type="fas" />
+              <font-awesome-icon :icon="icon" />
             </div>
           </div>
 
@@ -68,15 +68,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { library } from '@fortawesome/fontawesome-svg-core'
-
-// 导入所有solid图标
 import { fas } from '@fortawesome/free-solid-svg-icons'
-// 导入所有brand图标
 import { fab } from '@fortawesome/free-brands-svg-icons'
-
-// 将所有图标添加到库中
-library.add(fas, fab)
 
 const props = defineProps<{
   modelValue: string
