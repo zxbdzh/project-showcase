@@ -67,7 +67,12 @@
             @click="openProject(project)"
           >
             <div class="projects__card-image">
-              <img src="/placeholder-project.svg" :alt="project.title" loading="lazy" />
+              <img
+                :src="project.cover_image || '/placeholder-project.svg'"
+                :alt="project.title"
+                loading="lazy"
+                @error="handleImageError"
+              />
               <div class="projects__card-overlay">
                 <el-button type="primary" size="small"> 查看详情 </el-button>
               </div>
@@ -80,12 +85,12 @@
               <div class="projects__card-meta">
                 <div class="projects__card-tags">
                   <el-tag
-                    v-for="tag in ['Vue.js', 'TypeScript', 'Node.js']"
-                    :key="tag"
+                    v-for="tag in project.tags || []"
+                    :key="tag.id"
                     size="small"
                     effect="plain"
                   >
-                    {{ tag }}
+                    {{ tag.name }}
                   </el-tag>
                 </div>
 
@@ -121,7 +126,13 @@ import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import { useProjects, useCategories } from '@/composables/useData'
-import type { Project, Category } from '@/utils/supabase'
+import type { Project, Category, Tag } from '@/utils/supabase'
+
+// 扩展Project类型以包含关联数据
+interface ProjectWithRelations extends Project {
+  categories?: Category[]
+  tags?: Tag[]
+}
 
 const router = useRouter()
 
@@ -149,12 +160,12 @@ const categoriesWithAll = computed(() => {
 
 // 计算属性
 const filteredProjects = computed(() => {
-  let filtered = publishedProjects.value
+  let filtered = publishedProjects.value as ProjectWithRelations[]
 
   // 按分类筛选
   if (selectedCategory.value && selectedCategory.value !== 'all') {
     filtered = filtered.filter((project) => {
-      const categoryIds = (project as any).categories?.map((cat: any) => cat.id) || []
+      const categoryIds = project.categories?.map((cat) => cat.id) || []
       return categoryIds.includes(selectedCategory.value)
     })
   }
@@ -166,7 +177,7 @@ const filteredProjects = computed(() => {
       (project) =>
         project.title.toLowerCase().includes(query) ||
         (project.description && project.description.toLowerCase().includes(query)) ||
-        (project as any).tags?.some((tag: any) => tag.name.toLowerCase().includes(query)),
+        project.tags?.some((tag) => tag.name.toLowerCase().includes(query)),
     )
   }
 
@@ -187,13 +198,21 @@ const openProject = (project: Project) => {
   router.push(`/project/${project.id}`)
 }
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return ''
   const date = new Date(dateString)
   return date.toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+}
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  if (img && img.src !== '/placeholder-project.svg') {
+    img.src = '/placeholder-project.svg'
+  }
 }
 
 const loadMore = async () => {
