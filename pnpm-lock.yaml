@@ -20,9 +20,6 @@ importers:
       '@types/markdown-it':
         specifier: ^14.1.2
         version: 14.1.2
-      '@types/redis':
-        specifier: ^4.0.11
-        version: 4.0.11
       '@vee-validate/rules':
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.24(typescript@5.9.3))
@@ -38,9 +35,6 @@ importers:
       element-plus:
         specifier: ^2.11.8
         version: 2.11.8(vue@3.5.24(typescript@5.9.3))
-      ioredis:
-        specifier: ^5.8.2
-        version: 5.8.2
       lucide-vue-next:
         specifier: ^0.554.0
         version: 0.554.0(vue@3.5.24(typescript@5.9.3))
@@ -53,9 +47,6 @@ importers:
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3))
-      redis:
-        specifier: ^5.9.0
-        version: 5.9.0
       vee-validate:
         specifier: ^4.15.1
         version: 4.15.1(vue@3.5.24(typescript@5.9.3))
@@ -73,7 +64,7 @@ importers:
         specifier: ^22.0.2
         version: 22.0.5
       '@types/node':
-        specifier: ^22.18.11
+        specifier: ^22.19.1
         version: 22.19.1
       '@vitejs/plugin-vue':
         specifier: ^6.0.1
@@ -649,9 +640,6 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@ioredis/commands@1.4.0':
-    resolution: {integrity: sha512-aFT2yemJJo+TZCmieA7qnYGQooOS7QfNmYrzGtsYd3g9j5iDP8AimYYAesf79ohjbLG12XxC4nG5DyEnC88AsQ==}
-
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
@@ -768,34 +756,6 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
-
-  '@redis/bloom@5.9.0':
-    resolution: {integrity: sha512-W9D8yfKTWl4tP8lkC3MRYkMz4OfbuzE/W8iObe0jFgoRmgMfkBV+Vj38gvIqZPImtY0WB34YZkX3amYuQebvRQ==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.9.0
-
-  '@redis/client@5.9.0':
-    resolution: {integrity: sha512-EI0Ti5pojD2p7TmcS7RRa+AJVahdQvP/urpcSbK/K9Rlk6+dwMJTQ354pCNGCwfke8x4yKr5+iH85wcERSkwLQ==}
-    engines: {node: '>= 18'}
-
-  '@redis/json@5.9.0':
-    resolution: {integrity: sha512-Bm2jjLYaXdUWPb9RaEywxnjmzw7dWKDZI4MS79mTWPV16R982jVWBj6lY2ZGelJbwxHtEVg4/FSVgYDkuO/MxA==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.9.0
-
-  '@redis/search@5.9.0':
-    resolution: {integrity: sha512-jdk2csmJ29DlpvCIb2ySjix2co14/0iwIT3C0I+7ZaToXgPbgBMB+zfEilSuncI2F9JcVxHki0YtLA0xX3VdpA==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.9.0
-
-  '@redis/time-series@5.9.0':
-    resolution: {integrity: sha512-W6ILxcyOqhnI7ELKjJXOktIg3w4+aBHugDbVpgVLPZ+YDjObis1M0v7ZzwlpXhlpwsfePfipeSK+KWNuymk52w==}
-    engines: {node: '>= 18'}
-    peerDependencies:
-      '@redis/client': ^5.9.0
 
   '@rolldown/pluginutils@1.0.0-beta.29':
     resolution: {integrity: sha512-NIJgOsMjbxAXvoGq/X0gD7VPMQ8j9g0BiDaNjVNVjvl+iKXxL3Jre0v31RmBYeLEmkbj2s02v8vFTbUXi5XS2Q==}
@@ -1183,10 +1143,6 @@ packages:
   '@types/phoenix@1.6.6':
     resolution: {integrity: sha512-PIzZZlEppgrpoT2QgbnDU+MMzuR6BbCjllj0bM70lWoejMeNJAxCchxnv7J3XFkI8MpygtRpzXrIlmWUBclP5A==}
 
-  '@types/redis@4.0.11':
-    resolution: {integrity: sha512-bI+gth8La8Wg/QCR1+V1fhrL9+LZUSWfcqpOj2Kc80ZQ4ffbdL173vQd5wovmoV9i071FU9oP2g6etLuEwb6Rg==}
-    deprecated: This is a stub types definition. redis provides its own type definitions, so you do not need this installed.
-
   '@types/web-bluetooth@0.0.16':
     resolution: {integrity: sha512-oh8q2Zc32S6gd/j50GowEjKLoOVOwHP/bWVjKJInBwQqdOYMdPrf1oVlelTlyfFK3CKxL1uahMDAr+vy8T7yMQ==}
 
@@ -1519,10 +1475,6 @@ packages:
     resolution: {integrity: sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA==}
     engines: {node: '>= 14.16.0'}
 
-  cluster-key-slot@1.1.2:
-    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
-    engines: {node: '>=0.10.0'}
-
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
     engines: {node: '>=7.0.0'}
@@ -1593,10 +1545,6 @@ packages:
   define-lazy-prop@3.0.0:
     resolution: {integrity: sha512-N+MeXYoqr3pOgn8xfyRPREN7gHakLYjhsHhWGT3fWAiL4IkAt0iDw14QiiEm2bE30c5XX5q0FtAA3CK5f9/BUg==}
     engines: {node: '>=12'}
-
-  denque@2.1.0:
-    resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
-    engines: {node: '>=0.10'}
 
   detect-libc@1.0.3:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
@@ -1882,10 +1830,6 @@ packages:
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
-  ioredis@5.8.2:
-    resolution: {integrity: sha512-C6uC+kleiIMmjViJINWk80sOQw5lEzse1ZmvD+S/s8p8CWapftSaC+kocGTx6xrbrJ4WmYQGC08ffHLr6ToR6Q==}
-    engines: {node: '>=12.22.0'}
-
   ipaddr.js@2.2.0:
     resolution: {integrity: sha512-Ag3wB2o37wslZS19hZqorUnrnzSkpOVy+IiiDEiTqNubEYpYuHWIf6K4psgN2ZWKExS4xhVCrRVfb/wfW8fWJA==}
     engines: {node: '>= 10'}
@@ -2007,12 +1951,6 @@ packages:
       '@types/lodash-es': '*'
       lodash: '*'
       lodash-es: '*'
-
-  lodash.defaults@4.2.0:
-    resolution: {integrity: sha512-qjxPLHd3r5DnsdGacqOMU6pb/avJzdh9tFX2ymgoZE27BmjXrNy/y4LoaiTeAb+O3gL8AfpJGtqfX/ae2leYYQ==}
-
-  lodash.isarguments@3.1.0:
-    resolution: {integrity: sha512-chi4NHZlZqZD18a0imDHnZPrDeBbTtVN7GXMwuGdRH9qotxAjYs3aVLKc7zNOG9eddR5Ksd8rvFEBc9SsggPpg==}
 
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
@@ -2243,18 +2181,6 @@ packages:
     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
     engines: {node: '>= 14.18.0'}
 
-  redis-errors@1.2.0:
-    resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
-    engines: {node: '>=4'}
-
-  redis-parser@3.0.0:
-    resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
-    engines: {node: '>=4'}
-
-  redis@5.9.0:
-    resolution: {integrity: sha512-E8dQVLSyH6UE/C9darFuwq4usOPrqfZ1864kI4RFbr5Oj9ioB9qPF0oJMwX7s8mf6sPYrz84x/Dx1PGF3/0EaQ==}
-    engines: {node: '>= 18'}
-
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
     engines: {node: '>=4'}
@@ -2445,9 +2371,6 @@ packages:
   split-on-first@1.1.0:
     resolution: {integrity: sha512-43ZssAJaMusuKWL8sKUBQXHWOpq8d6CfN/u1p4gUzfJkM05C8rxTmYrkIPTXapZpORA6LkkzcUulJ8FqA7Uudw==}
     engines: {node: '>=6'}
-
-  standard-as-callback@2.1.0:
-    resolution: {integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==}
 
   stream-chain@2.2.5:
     resolution: {integrity: sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA==}
@@ -3563,8 +3486,6 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@ioredis/commands@1.4.0': {}
-
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -3660,26 +3581,6 @@ snapshots:
   '@pkgr/core@0.2.9': {}
 
   '@polka/url@1.0.0-next.29': {}
-
-  '@redis/bloom@5.9.0(@redis/client@5.9.0)':
-    dependencies:
-      '@redis/client': 5.9.0
-
-  '@redis/client@5.9.0':
-    dependencies:
-      cluster-key-slot: 1.1.2
-
-  '@redis/json@5.9.0(@redis/client@5.9.0)':
-    dependencies:
-      '@redis/client': 5.9.0
-
-  '@redis/search@5.9.0(@redis/client@5.9.0)':
-    dependencies:
-      '@redis/client': 5.9.0
-
-  '@redis/time-series@5.9.0(@redis/client@5.9.0)':
-    dependencies:
-      '@redis/client': 5.9.0
 
   '@rolldown/pluginutils@1.0.0-beta.29': {}
 
@@ -4153,10 +4054,6 @@ snapshots:
 
   '@types/phoenix@1.6.6': {}
 
-  '@types/redis@4.0.11':
-    dependencies:
-      redis: 5.9.0
-
   '@types/web-bluetooth@0.0.16': {}
 
   '@types/web-bluetooth@0.0.21': {}
@@ -4594,8 +4491,6 @@ snapshots:
       readdirp: 4.1.2
     optional: true
 
-  cluster-key-slot@1.1.2: {}
-
   color-convert@2.0.1:
     dependencies:
       color-name: 1.1.4
@@ -4648,8 +4543,6 @@ snapshots:
       gopd: 1.2.0
 
   define-lazy-prop@3.0.0: {}
-
-  denque@2.1.0: {}
 
   detect-libc@1.0.3:
     optional: true
@@ -4962,20 +4855,6 @@ snapshots:
 
   inherits@2.0.4: {}
 
-  ioredis@5.8.2:
-    dependencies:
-      '@ioredis/commands': 1.4.0
-      cluster-key-slot: 1.1.2
-      debug: 4.4.3
-      denque: 2.1.0
-      lodash.defaults: 4.2.0
-      lodash.isarguments: 3.1.0
-      redis-errors: 1.2.0
-      redis-parser: 3.0.0
-      standard-as-callback: 2.1.0
-    transitivePeerDependencies:
-      - supports-color
-
   ipaddr.js@2.2.0: {}
 
   is-arguments@1.2.0:
@@ -5074,10 +4953,6 @@ snapshots:
       '@types/lodash-es': 4.17.12
       lodash: 4.17.21
       lodash-es: 4.17.21
-
-  lodash.defaults@4.2.0: {}
-
-  lodash.isarguments@3.1.0: {}
 
   lodash.merge@4.6.2: {}
 
@@ -5293,20 +5168,6 @@ snapshots:
   readdirp@4.1.2:
     optional: true
 
-  redis-errors@1.2.0: {}
-
-  redis-parser@3.0.0:
-    dependencies:
-      redis-errors: 1.2.0
-
-  redis@5.9.0:
-    dependencies:
-      '@redis/bloom': 5.9.0(@redis/client@5.9.0)
-      '@redis/client': 5.9.0
-      '@redis/json': 5.9.0(@redis/client@5.9.0)
-      '@redis/search': 5.9.0(@redis/client@5.9.0)
-      '@redis/time-series': 5.9.0(@redis/client@5.9.0)
-
   resolve-from@4.0.0: {}
 
   reusify@1.1.0: {}
@@ -5490,8 +5351,6 @@ snapshots:
   speakingurl@14.0.1: {}
 
   split-on-first@1.1.0: {}
-
-  standard-as-callback@2.1.0: {}
 
   stream-chain@2.2.5: {}
 

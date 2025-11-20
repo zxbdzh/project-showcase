@@ -1,6 +1,6 @@
-// 缓存管理 - 按照CSDN文章实现
+// 缓存管理 - 使用Supabase替代Redis
 import { ref, computed } from 'vue'
-import redis from '@/utils/redisClient'
+import supabaseCache from '@/utils/supabaseCache'
 
 // 缓存配置
 interface CacheConfig {
@@ -12,7 +12,7 @@ interface CacheConfig {
 // 全局缓存状态
 const cacheVersion = ref('1.0.0')
 const cacheEnabled = ref(true)
-const redisConnected = ref(false)
+const supabaseConnected = ref(false)
 
 // 路由缓存策略配置
 const routeCacheStrategies: Record<string, { enabled: boolean }> = {
@@ -61,22 +61,15 @@ const generateCacheKey = (key: string, config?: CacheConfig) => {
   return `${key}:${version}`
 }
 
-// 检查Redis连接状态
-const checkRedisConnection = async (): Promise<boolean> => {
-  // 浏览器环境不支持Redis，直接返回false
-  if (typeof window !== 'undefined') {
-    redisConnected.value = false
-    return false
-  }
-
+// 检查Supabase连接状态
+const checkSupabaseConnection = async (): Promise<boolean> => {
   try {
-    // 尝试ping Redis
-    await redis.ping()
-    redisConnected.value = true
-    return true
+    const isConnected = supabaseCache.isConnected()
+    supabaseConnected.value = isConnected
+    return isConnected
   } catch (error) {
-    console.error('Redis连接检查失败:', error)
-    redisConnected.value = false
+    console.error('Supabase连接检查失败:', error)
+    supabaseConnected.value = false
     return false
   }
 }
@@ -88,29 +81,25 @@ const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<
     return false
   }
 
-  // 浏览器环境不支持Redis，直接返回false
-  if (typeof window !== 'undefined') {
-    console.log(`浏览器环境跳过缓存设置: ${key}`)
-    return false
-  }
-
-  const cacheKey = generateCacheKey(key, config)
-  const ttl = config?.ttl || 5 * 60 // 默认5分钟（秒）
-
   try {
-    // 检查Redis连接
-    const isConnected = await checkRedisConnection()
+    const cacheKey = generateCacheKey(key, config)
+    const ttl = config?.ttl || 5 * 60 // 默认5分钟
+
+    // 检查Supabase连接
+    const isConnected = await checkSupabaseConnection()
     if (!isConnected) {
-      console.warn(`Redis不可用，缓存设置失败: ${key}`)
+      console.warn(`Supabase不可用，缓存设置失败: ${key}`)
       return false
     }
 
-    // 设置缓存，带过期时间
-    await redis.set(cacheKey, JSON.stringify(data), 'EX', ttl)
-    console.log(`Redis缓存设置成功: ${key}`)
-    return true
+    // 设置缓存
+    const success = await supabaseCache.set(key, data, config)
+    if (success) {
+      console.log(`Supabase缓存设置成功: ${key}`)
+    }
+    return success
   } catch (error) {
-    console.error(`Redis缓存设置异常: ${key}`, error)
+    console.error(`Supabase缓存设置异常: ${key}`, error)
     return false
   }
 }
@@ -122,116 +111,78 @@ const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null>
     return null
   }
 
-  // 浏览器环境不支持Redis，直接返回null
-  if (typeof window !== 'undefined') {
-    console.log(`浏览器环境跳过缓存获取: ${key}`)
-    return null
-  }
-
-  const cacheKey = generateCacheKey(key, config)
-
   try {
-    // 检查Redis连接
-    const isConnected = await checkRedisConnection()
+    const cacheKey = generateCacheKey(key, config)
+
+    // 检查Supabase连接
+    const isConnected = await checkSupabaseConnection()
     if (!isConnected) {
-      console.warn(`Redis不可用，缓存获取失败: ${key}`)
+      console.warn(`Supabase不可用，缓存获取失败: ${key}`)
       return null
     }
 
     // 获取缓存
-    const data = await redis.get(cacheKey)
-    if (data !== null) {
-      console.log(`Redis缓存命中: ${key}`)
-      return JSON.parse(data)
-    } else {
-      console.log(`Redis缓存未命中: ${key}`)
-      return null
-    }
+    const data = await supabaseCache.get<T>(key, config)
+    return data
   } catch (error) {
-    console.error(`Redis缓存获取异常: ${key}`, error)
+    console.error(`Supabase缓存获取异常: ${key}`, error)
     return null
   }
 }
 
 // 删除缓存
 const removeCache = async (key: string, config?: CacheConfig): Promise<void> => {
-  // 浏览器环境不支持Redis，直接返回
-  if (typeof window !== 'undefined') {
-    console.log(`浏览器环境跳过缓存删除: ${key}`)
-    return
-  }
-
-  const cacheKey = generateCacheKey(key, config)
-
   try {
-    // 检查Redis连接
-    const isConnected = await checkRedisConnection()
+    const cacheKey = generateCacheKey(key, config)
+
+    // 检查Supabase连接
+    const isConnected = await checkSupabaseConnection()
     if (!isConnected) {
-      console.warn(`Redis不可用，缓存删除失败: ${key}`)
+      console.warn(`Supabase不可用，缓存删除失败: ${key}`)
       return
     }
 
     // 删除缓存
-    await redis.del(cacheKey)
-    console.log(`Redis缓存删除成功: ${key}`)
+    await supabaseCache.remove(key, config)
+    console.log(`Supabase缓存删除成功: ${key}`)
   } catch (error) {
-    console.error(`Redis缓存删除异常: ${key}`, error)
+    console.error(`Supabase缓存删除异常: ${key}`, error)
   }
 }
 
 // 清除所有缓存
 const clearAllCache = async (): Promise<void> => {
-  // 浏览器环境不支持Redis，直接返回
-  if (typeof window !== 'undefined') {
-    console.log('浏览器环境跳过清空缓存')
-    return
-  }
-
   try {
-    // 检查Redis连接
-    const isConnected = await checkRedisConnection()
+    // 检查Supabase连接
+    const isConnected = await checkSupabaseConnection()
     if (!isConnected) {
-      console.warn('Redis不可用，清空缓存失败')
+      console.warn('Supabase不可用，清空缓存失败')
       return
     }
 
-    // 清空数据库
-    await redis.flushdb()
-    console.log('Redis缓存已清空')
+    // 清空缓存
+    await supabaseCache.clearAll()
+    console.log('Supabase缓存已清空')
   } catch (error) {
-    console.error('Redis清空缓存异常:', error)
+    console.error('Supabase清空缓存异常:', error)
   }
 }
 
 // 清除特定前缀的缓存
 const clearCacheByPrefix = async (prefix: string): Promise<void> => {
-  // 浏览器环境不支持Redis，直接返回
-  if (typeof window !== 'undefined') {
-    console.log(`浏览器环境跳过清除前缀缓存: ${prefix}`)
-    return
-  }
-
   try {
-    // 检查Redis连接
-    const isConnected = await checkRedisConnection()
+    // 检查Supabase连接
+    const isConnected = await checkSupabaseConnection()
     if (!isConnected) {
-      console.warn(`Redis不可用，清除前缀缓存失败: ${prefix}`)
+      console.warn(`Supabase不可用，清除前缀缓存失败: ${prefix}`)
       return
     }
 
-    // 获取匹配的键
-    const pattern = `${prefix}:*`
-    const keys = await redis.keys(pattern)
-
-    if (keys.length > 0) {
-      // 删除匹配的键
-      await redis.del(...keys)
-      console.log(`Redis删除前缀缓存: ${prefix}, 删除数量: ${keys.length}`)
-    } else {
-      console.log(`Redis前缀缓存为空: ${prefix}`)
-    }
+    // 清除前缀缓存
+    await supabaseCache.clearByPrefix(prefix)
+    console.log(`Supabase删除前缀缓存: ${prefix}`)
   } catch (error) {
-    console.error(`Redis删除前缀缓存异常: ${prefix}`, error)
+    console.error(`Supabase删除前缀缓存异常: ${prefix}`, error)
   }
 }
 
@@ -239,9 +190,10 @@ const clearCacheByPrefix = async (prefix: string): Promise<void> => {
 const withCache = <T>(key: string, fetchFn: () => Promise<T>, config?: CacheConfig) => {
   return async (): Promise<T> => {
     // 检查是否启用缓存
-    const routeStrategy = getCurrentRouteCacheStrategy(window.location.pathname)
+    const pathname = typeof window !== 'undefined' ? window.location.pathname : '/'
+    const routeStrategy = getCurrentRouteCacheStrategy(pathname)
     if (!routeStrategy.enabled) {
-      console.log(`缓存禁用路由: ${window.location.pathname}`)
+      console.log(`缓存禁用路由: ${pathname}`)
       return await fetchFn()
     }
 
@@ -268,75 +220,56 @@ const withCache = <T>(key: string, fetchFn: () => Promise<T>, config?: CacheConf
 
 // 缓存统计
 const getCacheStats = async () => {
-  let redisSize = 0
-  let redisInfo = ''
+  try {
+    // 检查Supabase连接
+    const isConnected = await checkSupabaseConnection()
 
-  // 浏览器环境不支持Redis，返回默认值
-  if (typeof window !== 'undefined') {
+    // 获取统计信息
+    const stats = await supabaseCache.getStats()
+
     return {
       local: 0, // 不再使用本地缓存
+      redis: stats.total,
+      total: stats.total,
+      redisConnected: supabaseConnected.value,
+      redisInfo: stats.info,
+    }
+  } catch (error) {
+    console.warn('获取Supabase统计失败:', error)
+    return {
+      local: 0,
       redis: 0,
       total: 0,
       redisConnected: false,
       redisInfo: JSON.stringify(
         {
-          type: 'browser',
-          status: 'disconnected',
-          message: '浏览器环境不支持Redis',
+          type: 'supabase',
+          status: 'error',
+          error: (error as any)?.message,
         },
         null,
         2,
       ),
     }
   }
-
-  try {
-    // 检查Redis连接
-    const isConnected = await checkRedisConnection()
-    if (isConnected) {
-      // 获取Redis信息
-      redisInfo = (await redis.info()) || ''
-
-      // 获取键的数量
-      const keys = await redis.keys('*')
-      redisSize = keys.length
-    }
-  } catch (error) {
-    console.warn('获取Redis统计失败:', error)
-  }
-
-  return {
-    local: 0, // 不再使用本地缓存
-    redis: redisSize,
-    total: redisSize,
-    redisConnected: redisConnected.value,
-    redisInfo,
-  }
 }
 
-// 监听Redis连接状态变化（仅在服务器端）
-const monitorRedisConnection = () => {
-  // 浏览器环境不进行监控
-  if (typeof window !== 'undefined') {
-    return
-  }
-
+// 监听Supabase连接状态变化
+const monitorSupabaseConnection = () => {
   setInterval(async () => {
-    const wasConnected = redisConnected.value
-    const isConnected = await checkRedisConnection()
+    const wasConnected = supabaseConnected.value
+    const isConnected = await checkSupabaseConnection()
 
     if (!wasConnected && isConnected) {
-      console.log('Redis连接恢复')
+      console.log('Supabase连接恢复')
     } else if (wasConnected && !isConnected) {
-      console.warn('Redis连接断开')
+      console.warn('Supabase连接断开')
     }
   }, 5000) // 每5秒检查一次
 }
 
-// 启动连接监控（仅在服务器端）
-if (typeof window === 'undefined') {
-  monitorRedisConnection()
-}
+// 启动连接监控
+monitorSupabaseConnection()
 
 // 导出缓存管理功能
 export function useCache() {
@@ -356,7 +289,7 @@ export function useCache() {
     // 配置
     enabled: computed(() => cacheEnabled.value),
     version: computed(() => cacheVersion.value),
-    redisConnected: computed(() => redisConnected.value),
+    redisConnected: computed(() => supabaseConnected.value),
 
     // 策略
     getRouteStrategy: getCurrentRouteCacheStrategy,
@@ -376,8 +309,8 @@ export function useCache() {
       clearAllCache() // 版本更新时清除所有缓存
     },
 
-    // Redis相关
-    checkRedisConnection,
-    getRedisStatus: () => (redisConnected.value ? 'connected' : 'disconnected'),
+    // Supabase相关
+    checkSupabaseConnection,
+    getRedisStatus: () => (supabaseConnected.value ? 'connected' : 'disconnected'),
   }
 }
