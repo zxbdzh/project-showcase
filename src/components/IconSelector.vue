@@ -99,10 +99,6 @@ import {
   farUniversalAccess,
   farAssistiveListeningSystems,
   farSignLanguage,
-  farArrowUp,
-  farArrowDown,
-  farArrowLeft,
-  farArrowRight,
 } from '@fortawesome/free-regular-svg-icons'
 import {
   faGithub as faGithubBrand,
@@ -242,10 +238,6 @@ const iconMap: Record<string, IconItem> = {
     type: 'far',
   },
   farSignLanguage: { name: 'farSignLanguage', icon: farSignLanguage, type: 'far' },
-  farArrowUp: { name: 'farArrowUp', icon: farArrowUp, type: 'far' },
-  farArrowDown: { name: 'farArrowDown', icon: farArrowDown, type: 'far' },
-  farArrowLeft: { name: 'farArrowLeft', icon: farArrowLeft, type: 'far' },
-  farArrowRight: { name: 'farArrowRight', icon: farArrowRight, type: 'far' },
 
   // Brand icons
   faGithub: { name: 'faGithub', icon: faGithubBrand, type: 'fab' },
