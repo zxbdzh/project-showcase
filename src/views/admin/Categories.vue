@@ -140,19 +140,7 @@
         </el-form-item>
 
         <el-form-item label="分类图标" prop="icon">
-          <el-select v-model="formData.icon" placeholder="请选择图标">
-            <el-option
-              v-for="icon in iconOptions"
-              :key="icon.value"
-              :label="icon.label"
-              :value="icon.value"
-            >
-              <div style="display: flex; align-items: center; gap: 8px">
-                <el-icon><component :is="icon.component" /></el-icon>
-                <span>{{ icon.label }}</span>
-              </div>
-            </el-option>
-          </el-select>
+          <IconSelector v-model="formData.icon" label="分类图标" />
         </el-form-item>
 
         <el-form-item label="分类颜色" prop="color">
@@ -197,6 +185,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+import IconSelector from '@/components/IconSelector.vue'
 import { useCategories } from '@/composables/useData'
 
 const router = useRouter()

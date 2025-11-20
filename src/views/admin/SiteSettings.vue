@@ -47,12 +47,17 @@
             </el-row>
 
             <el-row :gutter="20">
-              <el-col :span="12">
+              <el-col :span="8">
                 <el-form-item label="左上角文字">
                   <el-input v-model="settings.brand_text" placeholder="默认: GEEK" />
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :span="8">
+                <el-form-item label="左上角图标">
+                  <icon-selector v-model="settings.brand_icon" placeholder="选择品牌图标" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
                 <el-form-item label="网站描述">
                   <el-input
                     v-model="settings.site_description"
@@ -179,6 +184,7 @@ import { ArrowLeft, Check, Setting, Picture, Search } from '@element-plus/icons-
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
 import FileUpload from '@/components/FileUpload.vue'
+import IconSelector from '@/components/IconSelector.vue'
 import { useSystemSettings } from '@/composables/useData'
 
 const router = useRouter()
@@ -190,6 +196,7 @@ const defaultSettings = {
   site_title: '项目展示系统',
   site_subtitle: '全栈开发工程师作品集',
   brand_text: 'GEEK',
+  brand_icon: '',
   site_description: '基于Vue 3和TypeScript构建的现代化项目展示平台',
   home_title: '全栈开发工程师',
   home_subtitle: '专注于 Java 后端、Vue 前端和云原生部署',
@@ -214,6 +221,7 @@ const loadSettings = async () => {
       site_title: getSettingValue('site_title', defaultSettings.site_title),
       site_subtitle: getSettingValue('site_subtitle', defaultSettings.site_subtitle),
       brand_text: getSettingValue('brand_text', defaultSettings.brand_text),
+      brand_icon: getSettingValue('brand_icon', defaultSettings.brand_icon),
       site_description: getSettingValue('site_description', defaultSettings.site_description),
       home_title: getSettingValue('home_title', defaultSettings.home_title),
       home_subtitle: getSettingValue('home_subtitle', defaultSettings.home_subtitle),
@@ -380,6 +388,7 @@ const saveSettings = async () => {
       site_title: { value: settings.value.site_title, description: '网站标题' },
       site_subtitle: { value: settings.value.site_subtitle, description: '网站副标题' },
       brand_text: { value: settings.value.brand_text, description: '左上角文字' },
+      brand_icon: { value: settings.value.brand_icon, description: '左上角图标' },
       site_description: { value: settings.value.site_description, description: '网站描述' },
       home_title: { value: settings.value.home_title, description: '首页标题' },
       home_subtitle: { value: settings.value.home_subtitle, description: '首页副标题' },

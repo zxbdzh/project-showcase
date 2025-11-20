@@ -56,12 +56,17 @@
       </el-row>
 
       <el-row :gutter="20">
-        <el-col :span="12">
+        <el-col :span="8">
+          <el-form-item label="项目图标" prop="icon">
+            <icon-selector v-model="formData.icon" placeholder="选择项目图标" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
           <el-form-item label="演示链接" prop="demo_url">
             <el-input v-model="formData.demo_url" placeholder="https://example.com" />
           </el-form-item>
         </el-col>
-        <el-col :span="12">
+        <el-col :span="8">
           <el-form-item label="GitHub链接" prop="github_url">
             <el-input
               v-model="formData.github_url"
@@ -156,6 +161,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import FileUpload from '@/components/FileUpload.vue'
+import IconSelector from '@/components/IconSelector.vue'
 import { useAuth } from '@/composables/useAuth'
 
 interface Props {
@@ -182,6 +188,7 @@ const formData = reactive({
   demo_url: '',
   github_url: '',
   cover_image: '',
+  icon: '',
   featured: false,
   status: 'draft',
   sort_order: 0,
@@ -218,6 +225,7 @@ const resetForm = () => {
     demo_url: '',
     github_url: '',
     cover_image: '',
+    icon: '',
     featured: false,
     status: 'draft',
     sort_order: 0,
@@ -257,6 +265,7 @@ watch(
         demo_url: newProject.demo_url || '',
         github_url: newProject.github_url || '',
         cover_image: newProject.cover_image || '',
+        icon: newProject.icon || '',
         featured: newProject.featured || false,
         status: newProject.status || 'active',
         sort_order: newProject.sort_order || 0,

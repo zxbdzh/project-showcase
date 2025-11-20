@@ -79,7 +79,7 @@
                 'is-recent': recentIcons.includes(icon.name),
               }"
               @click="selectIcon(icon)"
-              @mouseenter="showIconPreview(icon, $event)"
+              @mouseenter="showIconPreview(icon)"
               @mouseleave="hideIconPreview"
             >
               <div class="icon-wrapper">
@@ -94,7 +94,7 @@
                     <el-icon><Star /></el-icon>
                   </el-button>
                   <el-button size="small" text @click.stop="copyIconName(icon.name)">
-                    <el-icon><Copy /></el-icon>
+                    <el-icon><DocumentCopy /></el-icon>
                   </el-button>
                 </div>
               </div>
@@ -106,7 +106,7 @@
           <!-- 加载状态 -->
           <div v-if="loading" class="loading-state">
             <el-icon class="is-loading">
-              <Loader2 />
+              <Loading />
             </el-icon>
             <span>加载图标中...</span>
           </div>
@@ -114,7 +114,7 @@
           <!-- 无结果状态 -->
           <div v-if="!loading && filteredIcons.length === 0" class="no-results">
             <el-icon>
-              <SearchX />
+              <Close />
             </el-icon>
             <span>未找到匹配的图标</span>
           </div>
@@ -125,10 +125,54 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, markRaw } from 'vue'
 import { ElMessage } from 'element-plus'
-import * as LucideIcons from 'lucide-vue-next'
-import { ArrowDown, Search, Loader2, SearchX, Grid, List, Star, Copy } from 'lucide-vue-next'
+import {
+  ArrowDown,
+  Search,
+  Loading,
+  Grid,
+  List,
+  Star,
+  DocumentCopy,
+  Plus,
+  Edit,
+  Delete,
+  Folder,
+  Monitor,
+  Phone,
+  Setting,
+  Tools,
+  TrendCharts,
+  DataBoard,
+  Link,
+  Message,
+  Location,
+  User,
+  ArrowLeft,
+  ArrowUp,
+  ArrowRight,
+  Bell,
+  Lock,
+  Key,
+  Check,
+  Close,
+  Refresh,
+  Download,
+  Upload,
+  Share,
+  Camera,
+  Picture,
+  Calendar,
+  Clock,
+  Position,
+  Compass,
+  Flag,
+  Warning,
+  InfoFilled,
+  SuccessFilled,
+  CircleCloseFilled,
+} from '@element-plus/icons-vue'
 
 // Props
 interface Props {
@@ -177,442 +221,102 @@ const iconCategories = [
   { key: 'development', name: '开发' },
   { key: 'design', name: '设计' },
   { key: 'social', name: '社交' },
-  { key: 'weather', name: '天气' },
-  { key: 'transport', name: '交通' },
-  { key: 'food', name: '餐饮' },
-  { key: 'health', name: '健康' },
-  { key: 'science', name: '科学' },
-  { key: 'education', name: '教育' },
-  { key: 'security', name: '安全' },
-  { key: 'shopping', name: '购物' },
-  { key: 'travel', name: '旅行' },
-  { key: 'sports', name: '运动' },
-  { key: 'music', name: '音乐' },
-  { key: 'photography', name: '摄影' },
-  { key: 'gaming', name: '游戏' },
-  { key: 'animals', name: '动物' },
-  { key: 'nature', name: '自然' },
-  { key: 'buildings', name: '建筑' },
-  { key: 'tools', name: '工具' },
-  { key: 'devices', name: '设备' },
-  { key: 'brands', name: '品牌' },
 ]
+
+// Element Plus 图标映射
+const elementPlusIcons: Record<string, unknown> = {
+  // 箭头
+  ArrowUp: markRaw(ArrowUp),
+  ArrowDown: markRaw(ArrowDown),
+  ArrowLeft: markRaw(ArrowLeft),
+  ArrowRight: markRaw(ArrowRight),
+
+  // 界面
+  Plus: markRaw(Plus),
+  Edit: markRaw(Edit),
+  Delete: markRaw(Delete),
+  Close: markRaw(Close),
+  Check: markRaw(Check),
+  Star: markRaw(Star),
+  Flag: markRaw(Flag),
+  Bell: markRaw(Bell),
+  Lock: markRaw(Lock),
+  Key: markRaw(Key),
+  Setting: markRaw(Setting),
+  Grid: markRaw(Grid),
+  List: markRaw(List),
+
+  // 媒体
+  Camera: markRaw(Camera),
+  Picture: markRaw(Picture),
+
+  // 文件
+  Folder: markRaw(Folder),
+  DocumentCopy: markRaw(DocumentCopy),
+
+  // 通讯
+  Message: markRaw(Message),
+  Phone: markRaw(Phone),
+  Share: markRaw(Share),
+
+  // 商务
+  TrendCharts: markRaw(TrendCharts),
+  DataBoard: markRaw(DataBoard),
+  Calendar: markRaw(Calendar),
+  Clock: markRaw(Clock),
+
+  // 开发
+  Tools: markRaw(Tools),
+  Monitor: markRaw(Monitor),
+  Download: markRaw(Download),
+  Upload: markRaw(Upload),
+  Refresh: markRaw(Refresh),
+
+  // 社交
+  User: markRaw(User),
+  Position: markRaw(Position),
+  Compass: markRaw(Compass),
+  Link: markRaw(Link),
+  Location: markRaw(Location),
+
+  // 其他
+  Warning: markRaw(Warning),
+  InfoFilled: markRaw(InfoFilled),
+  SuccessFilled: markRaw(SuccessFilled),
+  CircleCloseFilled: markRaw(CircleCloseFilled),
+}
 
 // 图标分类映射
 const iconCategoryMap: Record<string, string[]> = {
-  arrows: [
-    'ArrowUp',
-    'ArrowDown',
-    'ArrowLeft',
-    'ArrowRight',
-    'ChevronUp',
-    'ChevronDown',
-    'ChevronLeft',
-    'ChevronRight',
-    'Expand',
-    'Shrink',
-    'Maximize2',
-    'Minimize2',
-  ],
+  arrows: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
   ui: [
-    'Menu',
-    'X',
     'Plus',
-    'Minus',
+    'Edit',
+    'Delete',
+    'Close',
     'Check',
-    'Square',
-    'Circle',
     'Star',
-    'Heart',
-    'Bookmark',
     'Flag',
     'Bell',
-    'Eye',
-    'EyeOff',
     'Lock',
-    'Unlock',
     'Key',
-    'Shield',
-    'Home',
-    'Settings',
+    'Setting',
     'Grid',
     'List',
-    'Layers',
-    'Layout',
   ],
-  media: [
-    'Play',
-    'Pause',
-    'SkipBack',
-    'SkipForward',
-    'Rewind',
-    'FastForward',
-    'Volume2',
-    'VolumeX',
-    'Mic',
-    'MicOff',
-    'Video',
-    'VideoOff',
-    'Camera',
-    'CameraOff',
-    'Image',
-    'Film',
-    'Tv',
-    'Radio',
-    'Speaker',
-  ],
-  files: [
-    'File',
-    'FileText',
-    'FilePlus',
-    'FileMinus',
-    'FileX',
-    'FileCheck',
-    'Folder',
-    'FolderOpen',
-    'FolderPlus',
-    'FolderMinus',
-    'FolderX',
-  ],
-  communication: [
-    'MessageSquare',
-    'MessageCircle',
-    'Send',
-    'Share',
-    'Mail',
-    'MailOpen',
-    'Phone',
-    'PhoneCall',
-    'PhoneOff',
-    'AtSign',
-    'Hash',
-  ],
-  business: [
-    'Briefcase',
-    'Building',
-    'Store',
-    'Factory',
-    'CreditCard',
-    'DollarSign',
-    'TrendingUp',
-    'TrendingDown',
-    'BarChart',
-    'PieChart',
-    'Calendar',
-  ],
-  development: [
-    'Code',
-    'Terminal',
-    'GitBranch',
-    'GitCommit',
-    'GitMerge',
-    'GitPullRequest',
-    'Database',
-    'Server',
-    'Cloud',
-    'Download',
-    'Upload',
-    'Cpu',
-  ],
-  design: [
-    'Palette',
-    'Brush',
-    'PenTool',
-    'Eraser',
-    'Droplet',
-    'PaintBucket',
-    'Type',
-    'Image',
-    'Crop',
-    'Move',
-    'RotateCw',
-    'ZoomIn',
-    'ZoomOut',
-  ],
-  social: [
-    'Facebook',
-    'Twitter',
-    'Instagram',
-    'Youtube',
-    'Linkedin',
-    'Github',
-    'Discord',
-    'Slack',
-    'Telegram',
-    'Whatsapp',
-  ],
-  weather: [
-    'Sun',
-    'Moon',
-    'Cloud',
-    'CloudRain',
-    'CloudSnow',
-    'CloudLightning',
-    'Wind',
-    'Thermometer',
-    'Droplets',
-    'Snowflake',
-    'Umbrella',
-    'Eye',
-  ],
-  transport: [
-    'Car',
-    'Truck',
-    'Bus',
-    'Train',
-    'Plane',
-    'Bike',
-    'Ship',
-    'Helicopter',
-    'Rocket',
-    'Motorcycle',
-    'Taxi',
-    'Anchor',
-  ],
-  food: [
-    'Pizza',
-    'Coffee',
-    'Cake',
-    'Apple',
-    'Beer',
-    'Wine',
-    'Utensils',
-    'ChefHat',
-    'IceCream',
-    'Cookie',
-    'Candy',
-    'Milk',
-  ],
-  health: [
-    'Heart',
-    'Activity',
-    'Pulse',
-    'Thermometer',
-    'Pill',
-    'Syringe',
-    'Stethoscope',
-    'Bone',
-    'Brain',
-    'Eye',
-    'Ear',
-    'Nose',
-  ],
-  science: [
-    'Flask',
-    'Microscope',
-    'Atom',
-    'Dna',
-    'TestTube',
-    'Beaker',
-    'Magnet',
-    'Zap',
-    'Battery',
-    'Lightbulb',
-    'Cpu',
-    'HardDrive',
-  ],
-  education: [
-    'Book',
-    'BookOpen',
-    'GraduationCap',
-    'School',
-    'PenTool',
-    'Edit',
-    'Highlighter',
-    'Ruler',
-    'Calculator',
-    'Award',
-    'Medal',
-    'Trophy',
-  ],
-  security: [
-    'Shield',
-    'Lock',
-    'Unlock',
-    'Key',
-    'Fingerprint',
-    'Eye',
-    'EyeOff',
-    'AlertTriangle',
-    'AlertCircle',
-    'Info',
-    'CheckCircle',
-    'XCircle',
-  ],
-  shopping: [
-    'ShoppingCart',
-    'ShoppingBag',
-    'CreditCard',
-    'DollarSign',
-    'Tag',
-    'Receipt',
-    'Package',
-    'Truck',
-    'Store',
-    'Gift',
-    'Percent',
-    'Calculator',
-  ],
-  travel: [
-    'Map',
-    'MapPin',
-    'Compass',
-    'Navigation',
-    'Globe',
-    'Mountain',
-    'Trees',
-    'Umbrella',
-    'Camera',
-    'Hotel',
-    'Plane',
-    'Ship',
-  ],
-  sports: [
-    'Football',
-    'Basketball',
-    'Tennis',
-    'Golf',
-    'Baseball',
-    'Volleyball',
-    'Target',
-    'Trophy',
-    'Medal',
-    'Award',
-    'Activity',
-    'Zap',
-  ],
-  music: [
-    'Music',
-    'Play',
-    'Pause',
-    'SkipBack',
-    'SkipForward',
-    'Repeat',
-    'Shuffle',
-    'Volume2',
-    'VolumeX',
-    'Headphones',
-    'Mic',
-    'Radio',
-    'Disc',
-  ],
-  photography: [
-    'Camera',
-    'Image',
-    'Film',
-    'Aperture',
-    'Focus',
-    'Crop',
-    'Filter',
-    'Palette',
-    'Sun',
-    'Moon',
-    'Zap',
-    'Adjustments',
-  ],
-  gaming: [
-    'Gamepad2',
-    'Joystick',
-    'Dice',
-    'Spade',
-    'Heart',
-    'Diamond',
-    'Club',
-    'Target',
-    'Trophy',
-    'Zap',
-    'Cpu',
-    'Monitor',
-  ],
-  animals: [
-    'Cat',
-    'Dog',
-    'Bird',
-    'Fish',
-    'Rabbit',
-    'Horse',
-    'PawPrint',
-    'Bug',
-    'Spider',
-    'Octopus',
-    'Turtle',
-    'Butterfly',
-  ],
-  nature: [
-    'TreePine',
-    'Trees',
-    'Flower',
-    'Leaf',
-    'Sun',
-    'Moon',
-    'Cloud',
-    'CloudRain',
-    'Mountain',
-    'Waves',
-    'Wind',
-    'Droplets',
-  ],
-  buildings: [
-    'Building',
-    'Home',
-    'Store',
-    'Factory',
-    'Warehouse',
-    'Building2',
-    'Apartment',
-    'Hotel',
-    'Bank',
-    'Church',
-    'Castle',
-    'Tent',
-  ],
-  tools: [
-    'Wrench',
-    'Hammer',
-    'Screwdriver',
-    'Drill',
-    'Saw',
-    'Measure',
-    'Ruler',
-    'Scissors',
-    'Knife',
-    'PenTool',
-    'PaintBucket',
-    'Eraser',
-  ],
-  devices: [
-    'Monitor',
-    'Smartphone',
-    'Tablet',
-    'Laptop',
-    'Desktop',
-    'Tv',
-    'Radio',
-    'Speaker',
-    'Headphones',
-    'Camera',
-    'Printer',
-    'HardDrive',
-  ],
-  brands: [
-    'Facebook',
-    'Twitter',
-    'Instagram',
-    'Youtube',
-    'Linkedin',
-    'Github',
-    'Chrome',
-    'Firefox',
-    'Safari',
-    'Edge',
-    'Opera',
-  ],
+  media: ['Camera', 'Picture'],
+  files: ['Folder', 'DocumentCopy'],
+  communication: ['Message', 'Phone', 'Share'],
+  business: ['TrendCharts', 'DataBoard', 'Calendar', 'Clock'],
+  development: ['Tools', 'Monitor', 'Download', 'Upload', 'Refresh'],
+  design: ['Picture'],
+  social: ['User', 'Position', 'Compass', 'Link', 'Location'],
 }
 
 // 计算属性
 const currentIcon = computed(() => {
   if (!selectedIcon.value) return null
-  return (LucideIcons as Record<string, unknown>)[selectedIcon.value]
+  return elementPlusIcons[selectedIcon.value]
 })
 
 const filteredIcons = computed(() => {
@@ -654,7 +358,7 @@ const displayIcons = computed(() => {
 const loadIcons = async () => {
   loading.value = true
   try {
-    const icons = Object.entries(LucideIcons).map(([name, component]) => {
+    const icons = Object.entries(elementPlusIcons).map(([name, component]) => {
       // 确定图标分类
       let category = 'all'
       for (const [catName, iconList] of Object.entries(iconCategoryMap)) {
@@ -786,8 +490,8 @@ const copyIconName = async (iconName: string) => {
 // 显示图标预览
 const showIconPreview = (
   icon: { name: string; component: unknown; category: string },
-  event: MouseEvent,
 ) => {
+  // 这里可以实现预览功能，比如显示大图标预览
   // 这里可以实现预览功能，比如显示大图标预览
   console.log('Preview icon:', icon.name)
 }
@@ -1118,4 +822,3 @@ onUnmounted(() => {
 .icon-grid::-webkit-scrollbar-thumb:hover {
   background: var(--el-border-color-dark);
 }
-</style>

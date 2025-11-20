@@ -125,19 +125,7 @@
         </el-form-item>
 
         <el-form-item label="链接图标" prop="icon_url">
-          <el-select v-model="formData.icon_url" placeholder="请选择图标">
-            <el-option
-              v-for="icon in iconOptions"
-              :key="icon.value"
-              :label="icon.label"
-              :value="icon.value"
-            >
-              <div style="display: flex; align-items: center; gap: 8px">
-                <el-icon><component :is="icon.component" /></el-icon>
-                <span>{{ icon.label }}</span>
-              </div>
-            </el-option>
-          </el-select>
+          <IconSelector v-model="formData.icon_url" label="链接图标" />
         </el-form-item>
 
         <el-form-item label="排序" prop="sort_order">
@@ -176,6 +164,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
+import IconSelector from '@/components/IconSelector.vue'
 import { useSocialLinks } from '@/composables/useData'
 
 const router = useRouter()
