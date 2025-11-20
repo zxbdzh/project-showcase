@@ -52,8 +52,19 @@ const iconDefinition = computed((): IconDefinition => {
 
   const icon = iconLibrary[iconName]
   if (!icon) {
-    // 如果找不到图标，返回一个默认图标或抛出错误
-    console.warn(`Icon "${props.icon}" not found in ${props.type} library`)
+    // 如果找不到图标，尝试在其他库中查找
+    if (props.type !== 'fab' && fab[iconName]) {
+      return fab[iconName] as IconDefinition
+    }
+    if (props.type !== 'fas' && fas[iconName]) {
+      return fas[iconName] as IconDefinition
+    }
+    if (props.type !== 'far' && far && far[iconName]) {
+      return far[iconName] as IconDefinition
+    }
+
+    // 如果都找不到，返回一个默认图标
+    console.warn(`Icon "${props.icon}" not found in any Font Awesome library`)
     return fas['question'] as IconDefinition // 使用问号图标作为默认
   }
   return icon

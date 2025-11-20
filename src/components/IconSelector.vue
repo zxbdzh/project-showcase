@@ -4,7 +4,7 @@
       <el-popover placement="bottom" :width="500" trigger="click">
         <template #reference>
           <div class="icon-display" @click="showIconPicker = true">
-            <font-awesome-icon v-if="modelValue" :icon="modelValue" />
+            <font-awesome-icon v-if="modelValue" :icon="modelValue" type="fas" />
             <span v-else>选择图标</span>
           </div>
         </template>
@@ -18,7 +18,7 @@
               @input="handleSearch"
             >
               <template #prefix>
-                <font-awesome-icon icon="search" />
+                <font-awesome-icon icon="search" type="fas" />
               </template>
             </el-input>
           </div>
@@ -45,7 +45,7 @@
               @click="selectIcon(icon)"
               :title="icon"
             >
-              <font-awesome-icon :icon="icon" />
+              <font-awesome-icon :icon="icon" type="fas" />
             </div>
           </div>
 
