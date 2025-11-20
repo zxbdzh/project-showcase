@@ -530,6 +530,7 @@ onUnmounted(() => {
 <style scoped>
 .icon-selector {
   width: 100%;
+  min-width: 300px;
 }
 
 .icon-selector-container {
@@ -580,6 +581,9 @@ onUnmounted(() => {
   max-height: 500px;
   overflow: hidden;
   margin-top: 4px;
+  width: 100%;
+  min-width: 300px;
+  max-width: 500px;
 }
 
 .search-box {
