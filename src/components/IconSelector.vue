@@ -111,6 +111,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import {
+  getAllFreeIcons,
+  getIconsByCategory,
+  getIconPath as getIconPathUtil,
+} from '../utils/fontawesomeIcons'
 
 defineProps<{
   modelValue: string
@@ -181,457 +186,45 @@ const paginatedCustomIcons = computed(() => {
   return customIcons.value.slice(start, end)
 })
 
-// 图标分类映射 - 只包含免费图标
-const iconCategories: Record<string, string[]> = {
-  interface: [
-    'user',
-    'users',
-    'user-circle',
-    'heart',
-    'star',
-    'check-circle',
-    'times-circle',
-    'plus-circle',
-    'minus-circle',
-    'plus-square',
-    'minus-square',
-    'eye',
-    'eye-slash',
-    'bell',
-    'bell-slash',
-    'lock',
-    'lock-open',
-    'key',
-    'shield-alt',
-    'cog',
-    'cogs',
-    'tools',
-    'wrench',
-    'hammer',
-    'search',
-    'filter',
-    'download',
-    'upload',
-    'sync',
-    'sync-alt',
-    'undo',
-    'redo',
-    'copy',
-    'paste',
-    'cut',
-    'save',
-    'edit',
-    'trash',
-    'trash-alt',
-    'plus',
-    'minus',
-    'times',
-    'check',
-    'info-circle',
-    'question-circle',
-    'exclamation-circle',
-    'exclamation-triangle',
-    'home',
-    'building',
-    'store',
-    'shopping-cart',
-    'shopping-bag',
-    'credit-card',
-    'money-bill',
-    'money-bill-wave',
-    'gift',
-    'box',
-    'boxes',
-    'palette',
-    'paint-brush',
-    'eraser',
-    'font',
-    'heading',
-    'paragraph',
-    'list',
-    'list-ul',
-    'list-ol',
-    'table',
-    'th',
-    'th-large',
-    'bars',
-    'ellipsis-h',
-    'ellipsis-v',
-    'expand',
-    'compress',
-    'expand-arrows-alt',
-    'compress-arrows-alt',
-    'arrows-alt',
-    'arrows-alt-h',
-    'arrows-alt-v',
-    'random',
-    'refresh',
-    'retweet',
-    'bookmark',
-    'flag',
-    'tags',
-    'tag',
-    'thumbtack',
-    'pushpin',
-    'link',
-    'unlink',
-    'paperclip',
-    'print',
-    'qrcode',
-    'barcode',
-    'camera',
-    'video',
-    'image',
-    'play',
-    'pause',
-    'stop',
-    'forward',
-    'backward',
-    'fast-forward',
-    'fast-backward',
-    'step-forward',
-    'step-backward',
-    'eject',
-    'volume-up',
-    'volume-down',
-    'volume-mute',
-    'volume-off',
-    'microphone',
-    'microphone-slash',
-    'headphones',
-    'phone',
-    'phone-alt',
-    'mobile',
-    'tablet',
-    'laptop',
-    'desktop',
-    'tv',
-    'gamepad',
-    'keyboard',
-    'mouse',
-    'wifi',
-    'bluetooth',
-    'battery-full',
-    'battery-half',
-    'battery-quarter',
-    'battery-empty',
-    'plug',
-    'power-off',
-    'sign-out-alt',
-    'sign-in-alt',
-    'user-plus',
-    'user-minus',
-    'user-check',
-    'user-times',
-    'users-cog',
-    'clock',
-    'calendar',
-    'calendar-alt',
-    'calendar-week',
-    'hourglass',
-    'hourglass-half',
-    'history',
-    'stopwatch',
-    'timer',
-  ],
-  arrow: [
-    'arrow-up',
-    'arrow-down',
-    'arrow-left',
-    'arrow-right',
-    'arrow-circle-up',
-    'arrow-circle-down',
-    'arrow-circle-left',
-    'arrow-circle-right',
-    'angle-up',
-    'angle-down',
-    'angle-left',
-    'angle-right',
-    'angle-double-up',
-    'angle-double-down',
-    'angle-double-left',
-    'angle-double-right',
-    'caret-up',
-    'caret-down',
-    'caret-left',
-    'caret-right',
-    'caret-square-up',
-    'caret-square-down',
-    'caret-square-left',
-    'caret-square-right',
-    'chevron-up',
-    'chevron-down',
-    'chevron-left',
-    'chevron-right',
-    'chevron-circle-up',
-    'chevron-circle-down',
-    'chevron-circle-left',
-    'chevron-circle-right',
-    'long-arrow-alt-up',
-    'long-arrow-alt-down',
-    'long-arrow-alt-left',
-    'long-arrow-alt-right',
-    'arrow-alt',
-    'exchange-alt',
-    'level-up-alt',
-    'level-down-alt',
-    'sort',
-    'sort-up',
-    'sort-down',
-    'sort-amount-up',
-    'sort-amount-down',
-    'sort-alpha-down',
-    'sort-alpha-up',
-    'sort-numeric-down',
-    'sort-numeric-up',
-  ],
-  media: [
-    'play-circle',
-    'play',
-    'pause',
-    'stop',
-    'step-backward',
-    'fast-backward',
-    'backward',
-    'forward',
-    'fast-forward',
-    'step-forward',
-    'eject',
-    'fullscreen',
-    'resize-full',
-    'resize-small',
-    'camera',
-    'camera-retro',
-    'film',
-    'video',
-    'image',
-    'photo-video',
-    'music',
-    'headphones',
-    'microphone',
-    'microphone-alt',
-    'microphone-slash',
-    'volume-up',
-    'volume-down',
-    'volume-off',
-    'volume-mute',
-    'tv',
-    'desktop',
-    'mobile',
-    'tablet',
-    'gamepad',
-    'joystick',
-  ],
-  file: [
-    'file',
-    'folder',
-    'folder-open',
-    'file-alt',
-    'file-image',
-    'file-pdf',
-    'file-code',
-    'file-excel',
-    'file-word',
-    'file-powerpoint',
-    'file-archive',
-    'file-audio',
-    'file-video',
-    'envelope',
-    'envelope-open',
-    'comment',
-    'comments',
-    'share',
-    'share-alt',
-    'chart-bar',
-    'chart-line',
-    'chart-pie',
-    'chart-area',
-    'sun',
-    'cloud',
-    'cloud-sun',
-    'cloud-rain',
-    'snowflake',
-    'map',
-    'map-marker-alt',
-    'compass',
-    'globe',
-    'earth',
-    'wheelchair',
-    'universal-access',
-    'assistive-listening-systems',
-    'sign-language',
-    'bookmark',
-    'flag',
-    'tags',
-    'tag',
-    'thumbtack',
-    'pushpin',
-    'link',
-    'unlink',
-    'paperclip',
-    'print',
-    'qrcode',
-    'barcode',
-    'save',
-    'copy',
-    'paste',
-    'cut',
-    'edit',
-    'trash',
-    'trash-alt',
-    'download',
-    'upload',
-    'sync',
-    'sync-alt',
-    'undo',
-    'redo',
-    'history',
-    'clock',
-    'calendar',
-    'calendar-alt',
-  ],
-  brand: [
-    'github',
-    'twitter',
-    'facebook',
-    'facebook-f',
-    'linkedin',
-    'linkedin-in',
-    'instagram',
-    'youtube',
-    'chrome',
-    'firefox',
-    'safari',
-    'edge',
-    'opera',
-    'internet-explorer',
-    'apple',
-    'microsoft',
-    'google',
-    'google-plus',
-    'google-plus-g',
-    'amazon',
-    'paypal',
-    'stripe',
-    'bitcoin',
-    'ethereum',
-    'discord',
-    'slack',
-    'telegram',
-    'whatsapp',
-    'weixin',
-    'qq',
-    'weibo',
-    'vuejs',
-    'react',
-    'angular',
-    'node-js',
-    'npm',
-    'yarn',
-    'linux',
-    'windows',
-    'android',
-    'apple-alt',
-    'docker',
-    'git',
-    'git-alt',
-    'bitbucket',
-    'jenkins',
-    'html5',
-    'css3',
-    'js',
-    'js-square',
-    'python',
-    'java',
-    'php',
-    'swift',
-    'kotlin',
-    'rust',
-    'go',
-    'd-and-d',
-    'steam',
-    'steam-symbol',
-    'twitch',
-    'spotify',
-    'soundcloud',
-    'dropbox',
-    'google-drive',
-    'one-drive',
-    'skyatlas',
-    'ravelry',
-    'sellcast',
-    'scribd',
-    'shirtsinbulk',
-    'simplybuilt',
-    'skyatlas-2',
-    'facebook-messenger',
-    'font-awesome',
-    'font-awesome-alt',
-    'font-awesome-flag',
-    'fonticons',
-    'fonticons-fi',
-    'fort-awesome',
-    'fort-awesome-alt',
-  ],
-}
-
-// 获取图标路径
-const getIconPath = (iconName: string): string => {
-  // 逻辑：判断 fa 开头 → 截取后文本 → 驼峰转连字符 → 转小写
-  if (iconName.startsWith('fa')) {
-    iconName = iconName
-      // 1. 优先移除开头的 fas 或 fa 前缀（fas 优先，避免 fast-forward 拆错）
-      .replace(/^fas?/, '')
-      // 2. 处理连字符：将 - 转为空格（针对 fast-forward 这类带连字符的场景）
-      .replace(/-/g, ' ')
-      // 3. 处理驼峰：小写字母后接大写字母时加空格（兼容原有驼峰命名，如 UserInfo）
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      // 4. 统一转为小写
-      .toLowerCase()
-      // 5. （可选）去除首尾空格：避免前缀移除后可能残留的空字符（如 "fa-" 转为 ""）
-      .trim()
-  }
-
-  // if (iconName.includes('-')) iconName = iconName.replace('-', '')
-
-  // 检查是否是品牌图标
-  if (iconCategories.brand?.includes(iconName)) {
-    return `fa-brands fa-${iconName}`
-  }
-  // 默认为solid图标
-  return `fa-solid fa-${iconName}`
-}
-
-// 获取所有可用的图标名称
-const getAllIcons = (): string[] => {
-  const allIcons: string[] = []
-
-  // 从预定义的分类中获取图标，确保图标可用
-  Object.values(iconCategories).forEach((categoryIcons) => {
-    allIcons.push(...categoryIcons)
-  })
-
-  // 去重
-  return [...new Set(allIcons)]
-}
-
-const allIcons = ref<string[]>([])
+// 获取所有免费图标
+const allFreeIcons = ref<string[]>([])
 
 // 初始化图标列表
-onMounted(() => {
-  allIcons.value = getAllIcons()
-  loadCustomIcons()
+onMounted(async () => {
+  try {
+    const icons = getAllFreeIcons()
+    allFreeIcons.value = icons.map((icon) => icon.name)
+    loadCustomIcons()
+  } catch (error) {
+    console.error('加载FontAwesome图标失败:', error)
+    // 如果加载失败，使用备用图标列表
+    allFreeIcons.value = [
+      'user',
+      'heart',
+      'star',
+      'home',
+      'cog',
+      'search',
+      'arrow-left',
+      'arrow-right',
+      'github',
+    ]
+  }
+})
+
+// 获取分类图标
+const categoryIcons = computed(() => {
+  if (activeCategory.value === 'all') {
+    return allFreeIcons.value
+  }
+
+  const categories = getIconsByCategory()
+  return categories[activeCategory.value as keyof typeof categories] || []
 })
 
 // 过滤图标
 const filteredIcons = computed(() => {
-  let icons = allIcons.value
-
-  // 按分类过滤
-  if (activeCategory.value !== 'all') {
-    const categoryIcons = iconCategories[activeCategory.value] || []
-    icons = icons.filter((icon) => categoryIcons.includes(icon))
-  }
+  let icons = categoryIcons.value
 
   // 按搜索词过滤
   if (searchQuery.value) {
@@ -648,6 +241,17 @@ const paginatedIcons = computed(() => {
   const end = start + pageSize.value
   return filteredIcons.value.slice(start, end)
 })
+
+// 获取图标路径
+const getIconPath = (iconName: string): string => {
+  // 如果是自定义图标（包含空格），直接返回
+  if (iconName.includes(' ')) {
+    return iconName
+  }
+
+  // 否则使用工具函数获取路径
+  return getIconPathUtil(iconName)
+}
 
 // 处理搜索
 const handleSearch = () => {
