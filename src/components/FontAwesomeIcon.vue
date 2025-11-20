@@ -1,9 +1,28 @@
 <template>
-  <i :class="iconClasses" :style="iconStyle" />
+  <font-awesome-icon
+    :icon="iconDefinition"
+    :size="normalizedSize"
+    :color="color"
+    :rotation="rotate"
+    :flip="flip"
+    :spin="spin"
+    :pulse="pulse"
+    :border="border"
+    :pull="pull"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import {
+  fas,
+  far,
+  fab,
+  IconDefinition,
+  IconName,
+  SizeProp,
+} from '@fortawesome/fontawesome-svg-core'
 
 interface Props {
   icon: string
@@ -22,7 +41,7 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'fas',
   size: undefined,
   color: undefined,
-  rotate: 0,
+  rotate: undefined,
   flip: undefined,
   spin: false,
   pulse: false,
@@ -30,38 +49,42 @@ const props = withDefaults(defineProps<Props>(), {
   pull: undefined,
 })
 
-const iconClasses = computed(() => {
-  const classes = [props.type, props.icon]
+// 获取图标定义
+const iconDefinition = computed((): IconDefinition | null => {
+  const iconLibrary = props.type === 'fas' ? fas : props.type === 'far' ? far : fab
+  const iconName = props.icon.replace(/^(fa|fas|far|fab)-?/, '') as IconName
 
-  if (props.spin) classes.push('fa-spin')
-  if (props.pulse) classes.push('fa-pulse')
-  if (props.border) classes.push('fa-border')
-  if (props.pull) classes.push(`fa-pull-${props.pull}`)
-  if (props.flip) classes.push(`fa-flip-${props.flip}`)
-
-  return classes
+  const icon = iconLibrary[iconName]
+  return icon || null
 })
 
-const iconStyle = computed(() => {
-  const style: Record<string, string> = {}
+// 标准化尺寸
+const normalizedSize = computed((): SizeProp | undefined => {
+  if (!props.size) return undefined
 
-  if (props.size) {
-    if (typeof props.size === 'number') {
-      style.fontSize = `${props.size}px`
-    } else {
-      style.fontSize = props.size
-    }
+  if (typeof props.size === 'number') {
+    if (props.size <= 12) return '2xs'
+    if (props.size <= 16) return 'xs'
+    if (props.size <= 20) return 'sm'
+    if (props.size <= 24) return undefined // default
+    if (props.size <= 32) return 'lg'
+    if (props.size <= 40) return 'xl'
+    if (props.size <= 48) return '2xl'
+    return '3xl'
   }
 
-  if (props.color) {
-    style.color = props.color
+  // 字符串尺寸直接返回
+  const sizeMap: Record<string, SizeProp> = {
+    '2xs': '2xs',
+    xs: 'xs',
+    sm: 'sm',
+    lg: 'lg',
+    xl: 'xl',
+    '2xl': '2xl',
+    '3xl': '3xl',
   }
 
-  if (props.rotate) {
-    style.transform = `rotate(${props.rotate}deg)`
-  }
-
-  return style
+  return sizeMap[props.size] || undefined
 })
 </script>
 
