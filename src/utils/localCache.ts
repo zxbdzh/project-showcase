@@ -21,6 +21,7 @@ class LocalCache {
   private versionCache: Map<string, number> = new Map()
   private lastVersionCheck: Map<string, number> = new Map()
   private readonly VERSION_CHECK_INTERVAL = 30000 // 30秒检查一次版本
+  private isWarmingUp = false
 
   constructor() {
     this.supabase = createClient(
@@ -61,7 +62,7 @@ class LocalCache {
   }
 
   // 检查是否需要更新版本
-  private async shouldCheckVersion(dataType: string): Promise<boolean> {
+  private shouldCheckVersion(dataType: string): boolean {
     const lastCheck = this.lastVersionCheck.get(dataType) || 0
     return Date.now() - lastCheck > this.VERSION_CHECK_INTERVAL
   }
@@ -76,7 +77,7 @@ class LocalCache {
   // 检查版本是否变化
   private async hasVersionChanged(dataType: string, currentVersion: number): Promise<boolean> {
     // 如果超过检查间隔，更新本地版本
-    if (await this.shouldCheckVersion(dataType)) {
+    if (this.shouldCheckVersion(dataType)) {
       await this.updateLocalVersion(dataType)
     }
 
@@ -280,8 +281,16 @@ class LocalCache {
     }
   }
 
-  // 预热版本缓存
+  // 预热版本缓存 - 防止重复请求
   async warmupVersionCache(): Promise<void> {
+    // 防止重复预热
+    if (this.isWarmingUp) {
+      console.log('版本缓存预热中，跳过重复请求')
+      return
+    }
+
+    this.isWarmingUp = true
+
     const dataTypes = [
       'projects',
       'categories',
@@ -293,6 +302,7 @@ class LocalCache {
     ]
 
     try {
+      console.log('开始预热版本缓存...')
       const { data, error } = await this.supabase
         .from('cache_versions')
         .select('data_type, version')
@@ -308,10 +318,12 @@ class LocalCache {
           this.versionCache.set(item.data_type, item.version)
           this.lastVersionCheck.set(item.data_type, Date.now())
         })
-        console.log('版本缓存预热完成')
+        console.log(`版本缓存预热完成: ${data.length} 个数据类型`)
       }
     } catch (error) {
       console.error('预热版本缓存异常:', error)
+    } finally {
+      this.isWarmingUp = false
     }
   }
 }
@@ -321,7 +333,10 @@ const localCache = new LocalCache()
 
 // 初始化时预热版本缓存
 if (typeof window !== 'undefined') {
-  localCache.warmupVersionCache()
+  // 延迟预热，避免阻塞页面加载
+  setTimeout(() => {
+    localCache.warmupVersionCache()
+  }, 1000)
 }
 
 // 导出缓存客户端
