@@ -32,11 +32,54 @@
               <el-tab-pane label="媒体" name="media" />
               <el-tab-pane label="文件" name="file" />
               <el-tab-pane label="品牌" name="brand" />
+              <el-tab-pane label="自定义" name="custom" />
             </el-tabs>
           </div>
 
+          <!-- 自定义图标添加区域 -->
+          <div v-if="activeCategory === 'custom'" class="custom-icon-section">
+            <div class="custom-icon-input">
+              <el-input
+                v-model="customIconName"
+                placeholder="输入图标名称 (如: fa-solid fa-user)"
+                clearable
+                @keyup.enter="addCustomIcon"
+              >
+                <template #append>
+                  <el-button @click="addCustomIcon" type="primary">添加</el-button>
+                </template>
+              </el-input>
+              <div class="help-text">支持格式：fa-solid fa-icon-name, fa-brands fa-icon-name</div>
+            </div>
+
+            <div v-if="customIcons.length > 0" class="custom-icons-list">
+              <div class="section-title">已添加的自定义图标：</div>
+              <div class="icon-grid">
+                <div
+                  v-for="icon in paginatedCustomIcons"
+                  :key="`custom-${icon}`"
+                  class="icon-item custom-icon-item"
+                  :class="{ selected: modelValue === icon }"
+                  @click="selectIcon(icon)"
+                  :title="icon"
+                >
+                  <font-awesome-icon :icon="icon" />
+                  <el-button
+                    size="small"
+                    type="danger"
+                    text
+                    @click.stop="removeCustomIcon(icon)"
+                    class="remove-btn"
+                  >
+                    ×
+                  </el-button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- 图标网格 -->
-          <div class="icon-grid">
+          <div v-else class="icon-grid">
             <div
               v-for="icon in paginatedIcons"
               :key="icon"
@@ -54,7 +97,7 @@
             <el-pagination
               v-model:current-page="currentPage"
               :page-size="pageSize"
-              :total="filteredIcons.length"
+              :total="activeCategory === 'custom' ? customIcons.length : filteredIcons.length"
               layout="prev, pager, next"
               small
               @current-change="handlePageChange"
@@ -84,6 +127,59 @@ const searchQuery = ref('')
 const activeCategory = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(48)
+const customIconName = ref('')
+const customIcons = ref<string[]>([])
+
+// 从localStorage加载自定义图标
+const loadCustomIcons = () => {
+  const saved = localStorage.getItem('custom-icons')
+  if (saved) {
+    customIcons.value = JSON.parse(saved)
+  }
+}
+
+// 保存自定义图标到localStorage
+const saveCustomIcons = () => {
+  localStorage.setItem('custom-icons', JSON.stringify(customIcons.value))
+}
+
+// 添加自定义图标
+const addCustomIcon = () => {
+  const icon = customIconName.value.trim()
+  if (!icon) return
+
+  // 验证格式
+  if (!icon.startsWith('fa-solid ') && !icon.startsWith('fa-brands ')) {
+    // 尝试自动补全格式
+    if (!icon.includes(' ')) {
+      customIconName.value = `fa-solid ${icon}`
+      return
+    }
+  }
+
+  // 检查是否已存在
+  if (!customIcons.value.includes(icon)) {
+    customIcons.value.push(icon)
+    saveCustomIcons()
+    customIconName.value = ''
+  }
+}
+
+// 移除自定义图标
+const removeCustomIcon = (icon: string) => {
+  const index = customIcons.value.indexOf(icon)
+  if (index > -1) {
+    customIcons.value.splice(index, 1)
+    saveCustomIcons()
+  }
+}
+
+// 自定义图标分页
+const paginatedCustomIcons = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return customIcons.value.slice(start, end)
+})
 
 // 图标分类映射 - 只包含免费图标
 const iconCategories: Record<string, string[]> = {
@@ -524,6 +620,7 @@ const allIcons = ref<string[]>([])
 // 初始化图标列表
 onMounted(() => {
   allIcons.value = getAllIcons()
+  loadCustomIcons()
 })
 
 // 过滤图标
@@ -610,6 +707,31 @@ const selectIcon = (icon: string) => {
   margin-bottom: 16px;
 }
 
+.custom-icon-section {
+  margin-bottom: 16px;
+}
+
+.custom-icon-input {
+  margin-bottom: 16px;
+}
+
+.help-text {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 8px;
+}
+
+.custom-icons-list {
+  margin-top: 16px;
+}
+
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
@@ -635,6 +757,7 @@ const selectIcon = (icon: string) => {
   color: #606266;
   transition: all 0.3s;
   background: white;
+  position: relative;
 }
 
 .icon-item:hover {
@@ -648,6 +771,23 @@ const selectIcon = (icon: string) => {
   border-color: #409eff;
   color: #409eff;
   background-color: #ecf5ff;
+}
+
+.custom-icon-item {
+  position: relative;
+}
+
+.remove-btn {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 50%;
+  z-index: 10;
 }
 
 .pagination {
