@@ -48,9 +48,10 @@
               <div class="social-link-card__content">
                 <div class="social-link-card__header">
                   <div class="social-link-card__icon" :style="{ backgroundColor: '#409EFF' }">
-                    <el-icon :size="24">
-                      <component :is="getLinkIcon(link.icon || 'Link')" />
-                    </el-icon>
+                    <font-awesome-icon
+                      :icon="getIconPath(link.icon_url || link.icon || 'link')"
+                      :size="24"
+                    />
                   </div>
                   <div class="social-link-card__actions">
                     <el-dropdown @command="handleLinkAction">
@@ -233,6 +234,33 @@ const goBack = () => {
 
 const handleSearch = () => {
   // 搜索逻辑已在计算属性中处理
+}
+
+// 获取图标路径
+const getIconPath = (iconName: string): string => {
+  if (!iconName || iconName === 'Link') {
+    return 'fa-solid fa-link'
+  }
+
+  // 品牌图标列表
+  const brandIcons = [
+    'github',
+    'twitter',
+    'facebook',
+    'linkedin',
+    'instagram',
+    'youtube',
+    'weixin',
+    'qq',
+    'weibo',
+  ]
+
+  if (brandIcons.includes(iconName)) {
+    return `fa-brands fa-${iconName}`
+  }
+
+  // 默认为solid图标
+  return `fa-solid fa-${iconName}`
 }
 
 const getLinkIcon = (iconName: string) => {
