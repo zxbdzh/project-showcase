@@ -68,8 +68,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { fas } from '@fortawesome/free-solid-svg-icons'
-import { fab } from '@fortawesome/free-brands-svg-icons'
 
 defineProps<{
   modelValue: string
@@ -87,7 +85,7 @@ const activeCategory = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(48)
 
-// 图标分类映射
+// 图标分类映射 - 只包含免费图标
 const iconCategories: Record<string, string[]> = {
   interface: [
     'user',
@@ -139,7 +137,6 @@ const iconCategories: Record<string, string[]> = {
     'exclamation-triangle',
     'home',
     'building',
-    'industry',
     'store',
     'shopping-cart',
     'shopping-bag',
@@ -484,6 +481,23 @@ const iconCategories: Record<string, string[]> = {
 
 // 获取图标路径
 const getIconPath = (iconName: string): string => {
+  // 逻辑：判断 fa 开头 → 截取后文本 → 驼峰转连字符 → 转小写
+  if (iconName.startsWith('fa')) {
+    iconName = iconName
+      // 1. 优先移除开头的 fas 或 fa 前缀（fas 优先，避免 fast-forward 拆错）
+      .replace(/^fas?/, '')
+      // 2. 处理连字符：将 - 转为空格（针对 fast-forward 这类带连字符的场景）
+      .replace(/-/g, ' ')
+      // 3. 处理驼峰：小写字母后接大写字母时加空格（兼容原有驼峰命名，如 UserInfo）
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      // 4. 统一转为小写
+      .toLowerCase()
+      // 5. （可选）去除首尾空格：避免前缀移除后可能残留的空字符（如 "fa-" 转为 ""）
+      .trim()
+  }
+
+  // if (iconName.includes('-')) iconName = iconName.replace('-', '')
+
   // 检查是否是品牌图标
   if (iconCategories.brand?.includes(iconName)) {
     return `fa-brands fa-${iconName}`
@@ -496,21 +510,13 @@ const getIconPath = (iconName: string): string => {
 const getAllIcons = (): string[] => {
   const allIcons: string[] = []
 
-  // 从fas中获取所有solid图标
-  Object.keys(fas).forEach((key) => {
-    if (key !== 'prefix' && key !== 'icon') {
-      allIcons.push(key)
-    }
+  // 从预定义的分类中获取图标，确保图标可用
+  Object.values(iconCategories).forEach((categoryIcons) => {
+    allIcons.push(...categoryIcons)
   })
 
-  // 从fab中获取所有brand图标
-  Object.keys(fab).forEach((key) => {
-    if (key !== 'prefix' && key !== 'icon') {
-      allIcons.push(key)
-    }
-  })
-
-  return allIcons
+  // 去重
+  return [...new Set(allIcons)]
 }
 
 const allIcons = ref<string[]>([])
