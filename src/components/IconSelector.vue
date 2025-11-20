@@ -488,10 +488,7 @@ const copyIconName = async (iconName: string) => {
 }
 
 // 显示图标预览
-const showIconPreview = (
-  icon: { name: string; component: unknown; category: string },
-) => {
-  // 这里可以实现预览功能，比如显示大图标预览
+const showIconPreview = (icon: { name: string; component: unknown; category: string }) => {
   // 这里可以实现预览功能，比如显示大图标预览
   console.log('Preview icon:', icon.name)
 }
@@ -822,3 +819,4 @@ onUnmounted(() => {
 .icon-grid::-webkit-scrollbar-thumb:hover {
   background: var(--el-border-color-dark);
 }
+</style>
