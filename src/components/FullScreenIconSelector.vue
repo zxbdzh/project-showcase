@@ -38,13 +38,13 @@
           <div class="fullscreen-icon-selector__icons">
             <div
               v-for="icon in filteredIcons"
-              :key="icon.name"
+              :key="icon.iconName"
               class="icon-item"
-              :class="{ active: selectedIcon === icon.name }"
-              @click="selectIcon(icon.name)"
+              :class="{ active: selectedIcon === icon.iconName }"
+              @click="selectIcon(icon.iconName)"
             >
               <font-awesome-icon :icon="icon" size="2x" />
-              <span class="icon-name">{{ icon.name }}</span>
+              <span class="icon-name">{{ icon.iconName }}</span>
             </div>
           </div>
 
@@ -72,10 +72,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, toRefs, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Close } from '@element-plus/icons-vue'
-import { fas, far, fab } from '@fortawesome/free-solid-svg-icons'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+import { far } from '@fortawesome/free-regular-svg-icons'
+import { fab } from '@fortawesome/free-brands-svg-icons'
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
 
 interface Props {
