@@ -49,7 +49,7 @@
                 <div class="social-link-card__header">
                   <div class="social-link-card__icon" :style="{ backgroundColor: '#409EFF' }">
                     <font-awesome-icon
-                      :icon="getIconPath(link.icon_url || link.icon || 'link')"
+                      :icon="getIconObject(link.icon_url || link.icon || 'link')"
                       :size="24"
                     />
                   </div>
@@ -234,6 +234,33 @@ const goBack = () => {
 
 const handleSearch = () => {
   // 搜索逻辑已在计算属性中处理
+}
+
+// 获取图标对象
+const getIconObject = (iconName: string) => {
+  if (!iconName || iconName === 'link') {
+    return ['fas', 'link']
+  }
+
+  // 品牌图标列表
+  const brandIcons = [
+    'github',
+    'twitter',
+    'facebook',
+    'linkedin',
+    'instagram',
+    'youtube',
+    'weixin',
+    'qq',
+    'weibo',
+  ]
+
+  if (brandIcons.includes(iconName)) {
+    return ['fab', iconName]
+  }
+
+  // 默认为solid图标
+  return ['fas', iconName]
 }
 
 // 获取图标路径
