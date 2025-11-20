@@ -4,7 +4,13 @@
       <div class="icon-selector-container">
         <!-- 当前选中的图标预览 -->
         <div class="current-icon" @click="showSelector = !showSelector">
-          <component :is="currentIcon" v-if="currentIcon" :size="24" />
+          <component
+            :is="currentIcon"
+            v-if="currentIcon"
+            :size="24"
+            :icon="getCurrentIconProps()?.icon || ''"
+            v-bind="getCurrentIconProps()"
+          />
           <span v-else class="placeholder">选择图标</span>
           <el-icon class="arrow" :class="{ 'is-open': showSelector }">
             <ArrowDown />
@@ -96,6 +102,7 @@
                   :is="icon.component"
                   v-bind="icon.props"
                   :size="viewMode === 'list' ? 16 : 20"
+                  :icon="icon.props?.icon || ''"
                 />
                 <div class="icon-actions">
                   <el-button
@@ -478,6 +485,23 @@ const displayIcons = computed(() => {
 
   return icons
 })
+
+// 获取当前图标的属性
+const getCurrentIconProps = () => {
+  if (!selectedIcon.value) return {}
+
+  const [library, iconName] = selectedIcon.value.includes(':')
+    ? selectedIcon.value.split(':')
+    : ['elementplus', selectedIcon.value]
+
+  if (library === 'fontawesome') {
+    // 从 allIcons 中查找对应的图标
+    const icon = allIcons.value.find((icon) => icon.name === selectedIcon.value)
+    return icon?.props || {}
+  }
+
+  return {}
+}
 
 // 获取分类映射
 const getCategoryMap = (library: string): Record<string, string[]> => {
