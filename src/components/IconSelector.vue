@@ -1,22 +1,64 @@
 <template>
   <div class="icon-selector">
     <el-form-item :label="label" :required="required">
-      <el-popover placement="bottom" :width="400" trigger="click">
+      <el-popover placement="bottom" :width="500" trigger="click">
         <template #reference>
           <div class="icon-display" @click="showIconPicker = true">
-            <font-awesome-icon v-if="modelValue" :icon="selectedIcon" />
+            <font-awesome-icon v-if="modelValue" :icon="modelValue" />
             <span v-else>选择图标</span>
           </div>
         </template>
-        <div class="icon-grid">
-          <div
-            v-for="icon in availableIcons"
-            :key="icon.name"
-            class="icon-item"
-            :class="{ selected: modelValue === icon.name }"
-            @click="selectIcon(icon)"
-          >
-            <font-awesome-icon :icon="icon.icon" />
+        <div class="icon-picker">
+          <!-- 搜索框 -->
+          <div class="search-box">
+            <el-input
+              v-model="searchQuery"
+              placeholder="搜索图标..."
+              clearable
+              @input="handleSearch"
+            >
+              <template #prefix>
+                <font-awesome-icon icon="search" />
+              </template>
+            </el-input>
+          </div>
+
+          <!-- 分类标签 -->
+          <div class="category-tabs">
+            <el-tabs v-model="activeCategory" @tab-change="handleCategoryChange">
+              <el-tab-pane label="全部" name="all" />
+              <el-tab-pane label="界面" name="interface" />
+              <el-tab-pane label="箭头" name="arrow" />
+              <el-tab-pane label="媒体" name="media" />
+              <el-tab-pane label="文件" name="file" />
+              <el-tab-pane label="品牌" name="brand" />
+            </el-tabs>
+          </div>
+
+          <!-- 图标网格 -->
+          <div class="icon-grid">
+            <div
+              v-for="icon in paginatedIcons"
+              :key="icon"
+              class="icon-item"
+              :class="{ selected: modelValue === icon }"
+              @click="selectIcon(icon)"
+              :title="icon"
+            >
+              <font-awesome-icon :icon="icon" />
+            </div>
+          </div>
+
+          <!-- 分页 -->
+          <div class="pagination">
+            <el-pagination
+              v-model:current-page="currentPage"
+              :page-size="pageSize"
+              :total="filteredIcons.length"
+              layout="prev, pager, next"
+              small
+              @current-change="handlePageChange"
+            />
           </div>
         </div>
       </el-popover>
@@ -25,91 +67,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import {
-  faUser,
-  faHeart,
-  faStar,
-  faCheckCircle,
-  faTimesCircle,
-  faPlusSquare,
-  faFile,
-  faFolder,
-  faFileAlt,
-  faFileImage,
-  faFilePdf,
-  faEnvelope,
-  faComment,
-  faComments,
-  faShare,
-  faShareAlt,
-  faChartBar,
-  faChartLine,
-  faChartPie,
-  faSun,
-  faCloud,
-  faSnowflake,
-  faMap,
-  faMapMarkerAlt,
-  faCompass,
-  faGlobe,
-  faWheelchair,
-  faUniversalAccess,
-  faAssistiveListeningSystems,
-  faSignLanguage,
-  faArrowUp,
-  faArrowDown,
-  faArrowLeft,
-  faArrowRight,
-  faArrowCircleUp,
-  faBars,
-  faEllipsisH,
-  faEllipsisV,
-  faExpand,
-  faCompress,
-} from '@fortawesome/free-solid-svg-icons'
-import {
-  faGithub as faGithubBrand,
-  faTwitter as faTwitterBrand,
-  faFacebook as faFacebookBrand,
-  faLinkedin as faLinkedinBrand,
-  faInstagram as faInstagramBrand,
-  faYoutube as faYoutubeBrand,
-  faChrome as faChromeBrand,
-  faFirefox as faFirefoxBrand,
-  faSafari as faSafariBrand,
-  faEdge as faEdgeBrand,
-  faOpera as faOperaBrand,
-  faInternetExplorer as faInternetExplorerBrand,
-  faApple as faAppleBrand,
-  faMicrosoft as faMicrosoftBrand,
-  faGoogle as faGoogleBrand,
-  faAmazon as faAmazonBrand,
-  faPaypal as faPaypalBrand,
-  faStripe as faStripeBrand,
-  faBitcoin as faBitcoinBrand,
-  faEthereum as faEthereumBrand,
-  faDiscord as faDiscordBrand,
-  faSlack as faSlackBrand,
-  faTelegram as faTelegramBrand,
-  faWhatsapp as faWhatsappBrand,
-  faVuejs as faVuejsBrand,
-  faReact as faReactBrand,
-  faAngular as faAngularBrand,
-  faNodeJs as faNodeJsBrand,
-  faNpm as faNpmBrand,
-  faYarn as faYarnBrand,
-  faLinux as faLinuxBrand,
-  faWindows as faWindowsBrand,
-  faAndroid as faAndroidBrand,
-  faDocker as faDockerBrand,
-} from '@fortawesome/free-brands-svg-icons'
+import { ref, computed, onMounted } from 'vue'
+import { library } from '@fortawesome/fontawesome-svg-core'
 
-interface IconItem {
-  name: string
-  icon: any
-  type: 'fas' | 'fab'
-}
+// 导入所有solid图标
+import { fas } from '@fortawesome/free-solid-svg-icons'
+// 导入所有brand图标
+import { fab } from '@fortawesome/free-brands-svg-icons'
+
+// 将所有图标添加到库中
+library.add(fas, fab)
 
 const props = defineProps<{
   modelValue: string
@@ -122,102 +89,478 @@ const emit = defineEmits<{
 }>()
 
 const showIconPicker = ref(false)
+const searchQuery = ref('')
+const activeCategory = ref('all')
+const currentPage = ref(1)
+const pageSize = ref(48)
 
-// 创建图标映射 - 只包含solid和brand图标
-const iconMap: Record<string, IconItem> = {
-  // Solid icons
-  faUser: { name: 'faUser', icon: faUser, type: 'fas' },
-  faHeart: { name: 'faHeart', icon: faHeart, type: 'fas' },
-  faStar: { name: 'faStar', icon: faStar, type: 'fas' },
-  faCheckCircle: { name: 'faCheckCircle', icon: faCheckCircle, type: 'fas' },
-  faTimesCircle: { name: 'faTimesCircle', icon: faTimesCircle, type: 'fas' },
-  faPlusSquare: { name: 'faPlusSquare', icon: faPlusSquare, type: 'fas' },
-  faFile: { name: 'faFile', icon: faFile, type: 'fas' },
-  faFolder: { name: 'faFolder', icon: faFolder, type: 'fas' },
-  faFileAlt: { name: 'faFileAlt', icon: faFileAlt, type: 'fas' },
-  faFileImage: { name: 'faFileImage', icon: faFileImage, type: 'fas' },
-  faFilePdf: { name: 'faFilePdf', icon: faFilePdf, type: 'fas' },
-  faEnvelope: { name: 'faEnvelope', icon: faEnvelope, type: 'fas' },
-  faComment: { name: 'faComment', icon: faComment, type: 'fas' },
-  faComments: { name: 'faComments', icon: faComments, type: 'fas' },
-  faShare: { name: 'faShare', icon: faShare, type: 'fas' },
-  faShareAlt: { name: 'faShareAlt', icon: faShareAlt, type: 'fas' },
-  faChartBar: { name: 'faChartBar', icon: faChartBar, type: 'fas' },
-  faChartLine: { name: 'faChartLine', icon: faChartLine, type: 'fas' },
-  faChartPie: { name: 'faChartPie', icon: faChartPie, type: 'fas' },
-  faSun: { name: 'faSun', icon: faSun, type: 'fas' },
-  faCloud: { name: 'faCloud', icon: faCloud, type: 'fas' },
-  faSnowflake: { name: 'faSnowflake', icon: faSnowflake, type: 'fas' },
-  faMap: { name: 'faMap', icon: faMap, type: 'fas' },
-  faMapMarkerAlt: { name: 'faMapMarkerAlt', icon: faMapMarkerAlt, type: 'fas' },
-  faCompass: { name: 'faCompass', icon: faCompass, type: 'fas' },
-  faGlobe: { name: 'faGlobe', icon: faGlobe, type: 'fas' },
-  faWheelchair: { name: 'faWheelchair', icon: faWheelchair, type: 'fas' },
-  faUniversalAccess: { name: 'faUniversalAccess', icon: faUniversalAccess, type: 'fas' },
-  faAssistiveListeningSystems: {
-    name: 'faAssistiveListeningSystems',
-    icon: faAssistiveListeningSystems,
-    type: 'fas',
-  },
-  faSignLanguage: { name: 'faSignLanguage', icon: faSignLanguage, type: 'fas' },
-  faArrowUp: { name: 'faArrowUp', icon: faArrowUp, type: 'fas' },
-  faArrowDown: { name: 'faArrowDown', icon: faArrowDown, type: 'fas' },
-  faArrowLeft: { name: 'faArrowLeft', icon: faArrowLeft, type: 'fas' },
-  faArrowRight: { name: 'faArrowRight', icon: faArrowRight, type: 'fas' },
-  faArrowCircleUp: { name: 'faArrowCircleUp', icon: faArrowCircleUp, type: 'fas' },
-  faBars: { name: 'faBars', icon: faBars, type: 'fas' },
-  faEllipsisH: { name: 'faEllipsisH', icon: faEllipsisH, type: 'fas' },
-  faEllipsisV: { name: 'faEllipsisV', icon: faEllipsisV, type: 'fas' },
-  faExpand: { name: 'faExpand', icon: faExpand, type: 'fas' },
-  faCompress: { name: 'faCompress', icon: faCompress, type: 'fas' },
-
-  // Brand icons
-  faGithub: { name: 'faGithub', icon: faGithubBrand, type: 'fab' },
-  faTwitter: { name: 'faTwitter', icon: faTwitterBrand, type: 'fab' },
-  faFacebook: { name: 'faFacebook', icon: faFacebookBrand, type: 'fab' },
-  faLinkedin: { name: 'faLinkedin', icon: faLinkedinBrand, type: 'fab' },
-  faInstagram: { name: 'faInstagram', icon: faInstagramBrand, type: 'fab' },
-  faYoutube: { name: 'faYoutube', icon: faYoutubeBrand, type: 'fab' },
-  faChrome: { name: 'faChrome', icon: faChromeBrand, type: 'fab' },
-  faFirefox: { name: 'faFirefox', icon: faFirefoxBrand, type: 'fab' },
-  faSafari: { name: 'faSafari', icon: faSafariBrand, type: 'fab' },
-  faEdge: { name: 'faEdge', icon: faEdgeBrand, type: 'fab' },
-  faOpera: { name: 'faOpera', icon: faOperaBrand, type: 'fab' },
-  faInternetExplorer: { name: 'faInternetExplorer', icon: faInternetExplorerBrand, type: 'fab' },
-  faApple: { name: 'faApple', icon: faAppleBrand, type: 'fab' },
-  faMicrosoft: { name: 'faMicrosoft', icon: faMicrosoftBrand, type: 'fab' },
-  faGoogle: { name: 'faGoogle', icon: faGoogleBrand, type: 'fab' },
-  faAmazon: { name: 'faAmazon', icon: faAmazonBrand, type: 'fab' },
-  faPaypal: { name: 'faPaypal', icon: faPaypalBrand, type: 'fab' },
-  faStripe: { name: 'faStripe', icon: faStripeBrand, type: 'fab' },
-  faBitcoin: { name: 'faBitcoin', icon: faBitcoinBrand, type: 'fab' },
-  faEthereum: { name: 'faEthereum', icon: faEthereumBrand, type: 'fab' },
-  faDiscord: { name: 'faDiscord', icon: faDiscordBrand, type: 'fab' },
-  faSlack: { name: 'faSlack', icon: faSlackBrand, type: 'fab' },
-  faTelegram: { name: 'faTelegram', icon: faTelegramBrand, type: 'fab' },
-  faWhatsapp: { name: 'faWhatsapp', icon: faWhatsappBrand, type: 'fab' },
-  faVuejs: { name: 'faVuejs', icon: faVuejsBrand, type: 'fab' },
-  faReact: { name: 'faReact', icon: faReactBrand, type: 'fab' },
-  faAngular: { name: 'faAngular', icon: faAngularBrand, type: 'fab' },
-  faNodeJs: { name: 'faNodeJs', icon: faNodeJsBrand, type: 'fab' },
-  faNpm: { name: 'faNpm', icon: faNpmBrand, type: 'fab' },
-  faYarn: { name: 'faYarn', icon: faYarnBrand, type: 'fab' },
-  faLinux: { name: 'faLinux', icon: faLinuxBrand, type: 'fab' },
-  faWindows: { name: 'faWindows', icon: faWindowsBrand, type: 'fab' },
-  faAndroid: { name: 'faAndroid', icon: faAndroidBrand, type: 'fab' },
-  faDocker: { name: 'faDocker', icon: faDockerBrand, type: 'fab' },
+// 图标分类映射
+const iconCategories: Record<string, string[]> = {
+  interface: [
+    'user',
+    'users',
+    'user-circle',
+    'heart',
+    'star',
+    'check-circle',
+    'times-circle',
+    'plus-circle',
+    'minus-circle',
+    'plus-square',
+    'minus-square',
+    'eye',
+    'eye-slash',
+    'bell',
+    'bell-slash',
+    'lock',
+    'lock-open',
+    'key',
+    'shield-alt',
+    'cog',
+    'cogs',
+    'tools',
+    'wrench',
+    'hammer',
+    'search',
+    'filter',
+    'download',
+    'upload',
+    'sync',
+    'sync-alt',
+    'undo',
+    'redo',
+    'copy',
+    'paste',
+    'cut',
+    'save',
+    'edit',
+    'trash',
+    'trash-alt',
+    'plus',
+    'minus',
+    'times',
+    'check',
+    'info-circle',
+    'question-circle',
+    'exclamation-circle',
+    'exclamation-triangle',
+    'home',
+    'building',
+    'industry',
+    'store',
+    'shopping-cart',
+    'shopping-bag',
+    'credit-card',
+    'money-bill',
+    'money-bill-wave',
+    'gift',
+    'box',
+    'boxes',
+    'palette',
+    'paint-brush',
+    'eraser',
+    'font',
+    'heading',
+    'paragraph',
+    'list',
+    'list-ul',
+    'list-ol',
+    'table',
+    'th',
+    'th-large',
+    'bars',
+    'ellipsis-h',
+    'ellipsis-v',
+    'expand',
+    'compress',
+    'expand-arrows-alt',
+    'compress-arrows-alt',
+    'arrows-alt',
+    'arrows-alt-h',
+    'arrows-alt-v',
+    'random',
+    'refresh',
+    'retweet',
+    'bookmark',
+    'flag',
+    'tags',
+    'tag',
+    'thumbtack',
+    'pushpin',
+    'link',
+    'unlink',
+    'paperclip',
+    'print',
+    'qrcode',
+    'barcode',
+    'camera',
+    'video',
+    'image',
+    'play',
+    'pause',
+    'stop',
+    'forward',
+    'backward',
+    'fast-forward',
+    'fast-backward',
+    'step-forward',
+    'step-backward',
+    'eject',
+    'volume-up',
+    'volume-down',
+    'volume-mute',
+    'volume-off',
+    'microphone',
+    'microphone-slash',
+    'headphones',
+    'phone',
+    'phone-alt',
+    'mobile',
+    'tablet',
+    'laptop',
+    'desktop',
+    'tv',
+    'gamepad',
+    'keyboard',
+    'mouse',
+    'wifi',
+    'bluetooth',
+    'battery-full',
+    'battery-half',
+    'battery-quarter',
+    'battery-empty',
+    'plug',
+    'power-off',
+    'sign-out-alt',
+    'sign-in-alt',
+    'user-plus',
+    'user-minus',
+    'user-check',
+    'user-times',
+    'users-cog',
+    'clock',
+    'calendar',
+    'calendar-alt',
+    'calendar-week',
+    'hourglass',
+    'hourglass-half',
+    'history',
+    'stopwatch',
+    'timer',
+  ],
+  arrow: [
+    'arrow-up',
+    'arrow-down',
+    'arrow-left',
+    'arrow-right',
+    'arrow-circle-up',
+    'arrow-circle-down',
+    'arrow-circle-left',
+    'arrow-circle-right',
+    'angle-up',
+    'angle-down',
+    'angle-left',
+    'angle-right',
+    'angle-double-up',
+    'angle-double-down',
+    'angle-double-left',
+    'angle-double-right',
+    'caret-up',
+    'caret-down',
+    'caret-left',
+    'caret-right',
+    'caret-square-up',
+    'caret-square-down',
+    'caret-square-left',
+    'caret-square-right',
+    'chevron-up',
+    'chevron-down',
+    'chevron-left',
+    'chevron-right',
+    'chevron-circle-up',
+    'chevron-circle-down',
+    'chevron-circle-left',
+    'chevron-circle-right',
+    'long-arrow-alt-up',
+    'long-arrow-alt-down',
+    'long-arrow-alt-left',
+    'long-arrow-alt-right',
+    'arrow-alt',
+    'exchange-alt',
+    'level-up-alt',
+    'level-down-alt',
+    'sort',
+    'sort-up',
+    'sort-down',
+    'sort-amount-up',
+    'sort-amount-down',
+    'sort-alpha-down',
+    'sort-alpha-up',
+    'sort-numeric-down',
+    'sort-numeric-up',
+  ],
+  media: [
+    'play-circle',
+    'play',
+    'pause',
+    'stop',
+    'step-backward',
+    'fast-backward',
+    'backward',
+    'forward',
+    'fast-forward',
+    'step-forward',
+    'eject',
+    'fullscreen',
+    'resize-full',
+    'resize-small',
+    'camera',
+    'camera-retro',
+    'film',
+    'video',
+    'image',
+    'photo-video',
+    'music',
+    'headphones',
+    'microphone',
+    'microphone-alt',
+    'microphone-slash',
+    'volume-up',
+    'volume-down',
+    'volume-off',
+    'volume-mute',
+    'tv',
+    'desktop',
+    'mobile',
+    'tablet',
+    'gamepad',
+    'joystick',
+  ],
+  file: [
+    'file',
+    'folder',
+    'folder-open',
+    'file-alt',
+    'file-image',
+    'file-pdf',
+    'file-code',
+    'file-excel',
+    'file-word',
+    'file-powerpoint',
+    'file-archive',
+    'file-audio',
+    'file-video',
+    'envelope',
+    'envelope-open',
+    'comment',
+    'comments',
+    'share',
+    'share-alt',
+    'chart-bar',
+    'chart-line',
+    'chart-pie',
+    'chart-area',
+    'sun',
+    'cloud',
+    'cloud-sun',
+    'cloud-rain',
+    'snowflake',
+    'map',
+    'map-marker-alt',
+    'compass',
+    'globe',
+    'earth',
+    'wheelchair',
+    'universal-access',
+    'assistive-listening-systems',
+    'sign-language',
+    'bookmark',
+    'flag',
+    'tags',
+    'tag',
+    'thumbtack',
+    'pushpin',
+    'link',
+    'unlink',
+    'paperclip',
+    'print',
+    'qrcode',
+    'barcode',
+    'save',
+    'copy',
+    'paste',
+    'cut',
+    'edit',
+    'trash',
+    'trash-alt',
+    'download',
+    'upload',
+    'sync',
+    'sync-alt',
+    'undo',
+    'redo',
+    'history',
+    'clock',
+    'calendar',
+    'calendar-alt',
+  ],
+  brand: [
+    'github',
+    'twitter',
+    'facebook',
+    'facebook-f',
+    'linkedin',
+    'linkedin-in',
+    'instagram',
+    'youtube',
+    'chrome',
+    'firefox',
+    'safari',
+    'edge',
+    'opera',
+    'internet-explorer',
+    'apple',
+    'microsoft',
+    'google',
+    'google-plus',
+    'google-plus-g',
+    'amazon',
+    'paypal',
+    'stripe',
+    'bitcoin',
+    'ethereum',
+    'discord',
+    'slack',
+    'telegram',
+    'whatsapp',
+    'weixin',
+    'qq',
+    'weibo',
+    'vuejs',
+    'react',
+    'angular',
+    'node-js',
+    'npm',
+    'yarn',
+    'linux',
+    'windows',
+    'android',
+    'apple-alt',
+    'docker',
+    'git',
+    'git-alt',
+    'bitbucket',
+    'jenkins',
+    'html5',
+    'css3',
+    'js',
+    'js-square',
+    'python',
+    'java',
+    'php',
+    'swift',
+    'kotlin',
+    'rust',
+    'go',
+    'd-and-d',
+    'steam',
+    'steam-symbol',
+    'twitch',
+    'spotify',
+    'soundcloud',
+    'dropbox',
+    'google-drive',
+    'one-drive',
+    'skyatlas',
+    'ravelry',
+    'sellcast',
+    'scribd',
+    'shirtsinbulk',
+    'simplybuilt',
+    'skyatlas-2',
+    'facebook-messenger',
+    'font-awesome',
+    'font-awesome-alt',
+    'font-awesome-flag',
+    'fonticons',
+    'fonticons-fi',
+    'fort-awesome',
+    'fort-awesome-alt',
+  ],
 }
 
-const availableIcons = computed(() => {
-  return Object.values(iconMap)
+// 获取所有可用的图标名称
+const getAllIcons = (): string[] => {
+  const allIcons: string[] = []
+
+  // 从fas中获取所有solid图标
+  Object.keys(fas).forEach((key) => {
+    if (key !== 'prefix' && key !== 'icon') {
+      allIcons.push(key)
+    }
+  })
+
+  // 从fab中获取所有brand图标
+  Object.keys(fab).forEach((key) => {
+    if (key !== 'prefix' && key !== 'icon') {
+      allIcons.push(key)
+    }
+  })
+
+  return allIcons
+}
+
+const allIcons = ref<string[]>([])
+
+// 初始化图标列表
+onMounted(() => {
+  allIcons.value = getAllIcons()
 })
 
-const selectedIcon = computed(() => {
-  return iconMap[props.modelValue]?.icon || null
+// 过滤图标
+const filteredIcons = computed(() => {
+  let icons = allIcons.value
+
+  // 按分类过滤
+  if (activeCategory.value !== 'all') {
+    const categoryIcons = iconCategories[activeCategory.value] || []
+    icons = icons.filter((icon) => categoryIcons.includes(icon))
+  }
+
+  // 按搜索词过滤
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    icons = icons.filter((icon) => icon.toLowerCase().includes(query))
+  }
+
+  return icons
 })
 
-const selectIcon = (icon: IconItem) => {
-  emit('update:modelValue', icon.name)
+// 分页图标
+const paginatedIcons = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return filteredIcons.value.slice(start, end)
+})
+
+// 处理搜索
+const handleSearch = () => {
+  currentPage.value = 1
+}
+
+// 处理分类切换
+const handleCategoryChange = () => {
+  currentPage.value = 1
+}
+
+// 处理分页
+const handlePageChange = (page: number) => {
+  currentPage.value = page
+}
+
+// 选择图标
+const selectIcon = (icon: string) => {
+  emit('update:modelValue', icon)
   showIconPicker.value = false
 }
 </script>
@@ -246,6 +589,18 @@ const selectIcon = (icon: IconItem) => {
   color: #409eff;
 }
 
+.icon-picker {
+  padding: 16px;
+}
+
+.search-box {
+  margin-bottom: 16px;
+}
+
+.category-tabs {
+  margin-bottom: 16px;
+}
+
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
@@ -253,6 +608,9 @@ const selectIcon = (icon: IconItem) => {
   max-height: 300px;
   overflow-y: auto;
   padding: 8px;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  margin-bottom: 16px;
 }
 
 .icon-item {
@@ -264,20 +622,47 @@ const selectIcon = (icon: IconItem) => {
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   color: #606266;
   transition: all 0.3s;
+  background: white;
 }
 
 .icon-item:hover {
   border-color: #409eff;
   color: #409eff;
   background-color: #f5f7fa;
+  transform: scale(1.1);
 }
 
 .icon-item.selected {
   border-color: #409eff;
   color: #409eff;
   background-color: #ecf5ff;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* 滚动条样式 */
+.icon-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.icon-grid::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.icon-grid::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.icon-grid::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 </style>

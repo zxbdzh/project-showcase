@@ -25,7 +25,7 @@ interface Props {
   type?: 'fas' | 'far' | 'fab'
   size?: number | string
   color?: string
-  rotate?: number
+  rotate?: 90 | 180 | 270 | '90' | '180' | '270'
   flip?: 'horizontal' | 'vertical' | 'both'
   spin?: boolean
   pulse?: boolean
