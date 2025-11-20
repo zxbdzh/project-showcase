@@ -1,6 +1,6 @@
 // 缓存管理 - 使用localStorage + 版本控制
 import { ref, computed } from 'vue'
-import localCache from '@/utils/localCache'
+import localCache, { initializeVersionCache } from '@/utils/localCache'
 
 // 缓存配置
 interface CacheConfig {
@@ -62,6 +62,8 @@ const setCache = async <T>(key: string, data: T, config: CacheConfig): Promise<b
   }
 
   try {
+    // 等待版本缓存初始化完成
+    await initializeVersionCache()
     const ttl = config?.ttl || 30 * 60 * 1000 // 默认30分钟
     const success = await localCache.set(key, data, config.dataType, ttl)
     return success
@@ -79,6 +81,8 @@ const getCache = async <T>(key: string, config: CacheConfig): Promise<T | null> 
   }
 
   try {
+    // 等待版本缓存初始化完成
+    await initializeVersionCache()
     const data = await localCache.get<T>(key, config.dataType)
     return data
   } catch (error) {
@@ -128,6 +132,9 @@ const withCache = <T>(key: string, fetchFn: () => Promise<T>, config: CacheConfi
     const startTime = performance.now()
 
     try {
+      // 等待版本缓存初始化完成
+      await initializeVersionCache()
+
       // 先检查缓存
       const cached = await getCache<T>(key, config)
       if (cached !== null) {

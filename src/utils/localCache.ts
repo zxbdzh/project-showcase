@@ -331,14 +331,24 @@ class LocalCache {
 // 创建单例实例
 const localCache = new LocalCache()
 
-// 初始化时预热版本缓存
+// 立即初始化版本缓存 - 确保在应用启动时就加载
+let versionCachePromise: Promise<void> | null = null
+
+const initializeVersionCache = () => {
+  if (!versionCachePromise) {
+    versionCachePromise = localCache.warmupVersionCache()
+  }
+  return versionCachePromise
+}
+
+// 在浏览器环境中立即初始化
 if (typeof window !== 'undefined') {
-  // 延迟预热，避免阻塞页面加载
-  setTimeout(() => {
-    localCache.warmupVersionCache()
-  }, 1000)
+  initializeVersionCache()
 }
 
 // 导出缓存客户端
 export default localCache
 export type { LocalCacheEntry, VersionInfo }
+
+// 导出初始化函数，供其他模块调用
+export { initializeVersionCache }
