@@ -4,7 +4,7 @@
       <el-popover placement="bottom" :width="500" trigger="click">
         <template #reference>
           <div class="icon-display" @click="showIconPicker = true">
-            <font-awesome-icon v-if="modelValue" :icon="modelValue" />
+            <font-awesome-icon v-if="modelValue" :icon="getIconPath(modelValue)" />
             <span v-else>选择图标</span>
           </div>
         </template>
@@ -18,7 +18,7 @@
               @input="handleSearch"
             >
               <template #prefix>
-                <font-awesome-icon icon="search" />
+                <font-awesome-icon icon="fa-solid fa-search" />
               </template>
             </el-input>
           </div>
@@ -45,7 +45,7 @@
               @click="selectIcon(icon)"
               :title="icon"
             >
-              <font-awesome-icon :icon="icon" />
+              <font-awesome-icon :icon="getIconPath(icon)" />
             </div>
           </div>
 
@@ -71,7 +71,7 @@ import { ref, computed, onMounted } from 'vue'
 import { fas } from '@fortawesome/free-solid-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
 
-const props = defineProps<{
+defineProps<{
   modelValue: string
   label?: string
   required?: boolean
@@ -480,6 +480,16 @@ const iconCategories: Record<string, string[]> = {
     'fort-awesome',
     'fort-awesome-alt',
   ],
+}
+
+// 获取图标路径
+const getIconPath = (iconName: string): string => {
+  // 检查是否是品牌图标
+  if (iconCategories.brand?.includes(iconName)) {
+    return `fa-brands fa-${iconName}`
+  }
+  // 默认为solid图标
+  return `fa-solid fa-${iconName}`
 }
 
 // 获取所有可用的图标名称
