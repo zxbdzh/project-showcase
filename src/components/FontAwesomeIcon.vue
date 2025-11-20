@@ -2,13 +2,14 @@
   <font-awesome-icon
     :icon="iconDefinition"
     :size="normalizedSize"
-    :color="color"
+    :color="iconColor"
     :rotation="rotate"
     :flip="flip"
     :spin="spin"
     :pulse="pulse"
     :border="border"
     :pull="pull"
+    :class="iconClass"
   />
 </template>
 
@@ -51,6 +52,7 @@ const iconDefinition = computed((): IconDefinition => {
   const iconName = props.icon.replace(/^(fa|fas|far|fab)-?/, '') as IconName
 
   const icon = iconLibrary[iconName]
+
   if (!icon) {
     // 如果找不到图标，尝试在其他库中查找
     if (props.type !== 'fab' && fab[iconName]) {
@@ -97,8 +99,41 @@ const normalizedSize = computed((): SizeProp | undefined => {
 
   return sizeMap[props.size] || undefined
 })
+
+// 图标颜色处理
+const iconColor = computed(() => {
+  // 如果有明确指定颜色，使用指定颜色
+  if (props.color) {
+    return props.color
+  }
+
+  // 否则根据当前主题返回合适的颜色
+  const isDark = document.documentElement.classList.contains('dark')
+  return isDark ? '#e5eaf3' : '#606266'
+})
+
+// 图标样式类
+const iconClass = computed(() => {
+  return ['fa-icon', props.type].filter(Boolean).join(' ')
+})
 </script>
 
 <style scoped>
-/* Font Awesome styles will be loaded globally */
+.fa-icon {
+  transition: color 0.3s ease;
+}
+
+/* 确保图标在深色模式下有正确的颜色 */
+html.dark .fa-icon {
+  color: #e5eaf3 !important;
+}
+
+html:not(.dark) .fa-icon {
+  color: #606266 !important;
+}
+
+/* 如果有明确指定颜色，优先使用 */
+.fa-icon[style*='color'] {
+  color: inherit !important;
+}
 </style>
