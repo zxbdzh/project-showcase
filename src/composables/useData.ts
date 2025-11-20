@@ -206,8 +206,8 @@ export function useCategories() {
     try {
       const newCategory = await categoryService.createCategory(data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('categories')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('categories')
 
       categories.value.push(newCategory)
       ElMessage.success('分类创建成功')
@@ -222,8 +222,8 @@ export function useCategories() {
     try {
       const updatedCategory = await categoryService.updateCategory(id, data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('categories')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('categories')
 
       const index = categories.value.findIndex((c) => c.id === id)
       if (index !== -1) {
@@ -241,8 +241,8 @@ export function useCategories() {
     try {
       await categoryService.deleteCategory(id)
 
-      // 清除相关缓存
-      cache.clearByPrefix('categories')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('categories')
 
       categories.value = categories.value.filter((c) => c.id !== id)
       ElMessage.success('分类删除成功')
@@ -291,8 +291,8 @@ export function useTags() {
     try {
       const newTag = await tagService.createTag(data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('tags')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('tags')
 
       tags.value.push(newTag)
       ElMessage.success('标签创建成功')
@@ -307,8 +307,8 @@ export function useTags() {
     try {
       const updatedTag = await tagService.updateTag(id, data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('tags')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('tags')
 
       const index = tags.value.findIndex((t) => t.id === id)
       if (index !== -1) {
@@ -326,8 +326,8 @@ export function useTags() {
     try {
       await tagService.deleteTag(id)
 
-      // 清除相关缓存
-      cache.clearByPrefix('tags')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('tags')
 
       tags.value = tags.value.filter((t) => t.id !== id)
       ElMessage.success('标签删除成功')
@@ -376,8 +376,8 @@ export function useSkills() {
     try {
       const newSkill = await skillService.createSkill(data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('skills')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('skills')
 
       skills.value.push(newSkill)
       ElMessage.success('技能创建成功')
@@ -392,8 +392,8 @@ export function useSkills() {
     try {
       const updatedSkill = await skillService.updateSkill(id, data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('skills')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('skills')
 
       const index = skills.value.findIndex((s) => s.id === id)
       if (index !== -1) {
@@ -411,8 +411,8 @@ export function useSkills() {
     try {
       await skillService.deleteSkill(id)
 
-      // 清除相关缓存
-      cache.clearByPrefix('skills')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('skills')
 
       skills.value = skills.value.filter((s) => s.id !== id)
       ElMessage.success('技能删除成功')
@@ -463,8 +463,8 @@ export function useSocialLinks() {
     try {
       const newLink = await socialLinkService.createSocialLink(data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('social-links')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('social_links')
 
       socialLinks.value.push(newLink)
       ElMessage.success('社交链接创建成功')
@@ -479,8 +479,8 @@ export function useSocialLinks() {
     try {
       const updatedLink = await socialLinkService.updateSocialLink(id, data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('social-links')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('social_links')
 
       const index = socialLinks.value.findIndex((l) => l.id === id)
       if (index !== -1) {
@@ -498,8 +498,8 @@ export function useSocialLinks() {
     try {
       await socialLinkService.deleteSocialLink(id)
 
-      // 清除相关缓存
-      cache.clearByPrefix('social-links')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('social_links')
 
       socialLinks.value = socialLinks.value.filter((l) => l.id !== id)
       ElMessage.success('社交链接删除成功')
@@ -548,8 +548,8 @@ export function useProfile() {
     try {
       const updatedProfile = await profileService.updateProfile(userId, data)
 
-      // 清除相关缓存
-      cache.clearByPrefix(`profile:${userId}`)
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('profile')
 
       currentProfile.value = updatedProfile
       ElMessage.success('档案更新成功')
@@ -564,8 +564,8 @@ export function useProfile() {
     try {
       const newProfile = await profileService.createProfile(data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('profile:')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('profile')
 
       currentProfile.value = newProfile
       ElMessage.success('档案创建成功')
@@ -667,9 +667,8 @@ export function useSystemSettings() {
     try {
       const updatedSetting = await systemSettingsService.updateSetting(key, value, description)
 
-      // 清除相关缓存
-      cache.clearByPrefix('system-settings')
-      cache.clearByPrefix(`system-setting:${key}`)
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('system_settings')
 
       const index = systemSettings.value.findIndex((s) => s.key === key)
       if (index !== -1) {
@@ -694,8 +693,8 @@ export function useSystemSettings() {
     try {
       const results = await systemSettingsService.batchUpdateSettings(settings)
 
-      // 清除相关缓存
-      cache.clearByPrefix('system-settings')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('system_settings')
 
       // 更新本地状态
       for (const setting of results) {
@@ -722,9 +721,8 @@ export function useSystemSettings() {
     try {
       await systemSettingsService.deleteSetting(key)
 
-      // 清除相关缓存
-      cache.clearByPrefix('system-settings')
-      cache.clearByPrefix(`system-setting:${key}`)
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('system_settings')
 
       systemSettings.value = systemSettings.value.filter((s) => s.key !== key)
       ElMessage.success('设置删除成功')

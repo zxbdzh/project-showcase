@@ -36,17 +36,70 @@
             </el-tabs>
           </div>
 
+          <!-- 工具栏 -->
+          <div class="icon-toolbar">
+            <div class="toolbar-left">
+              <el-button-group>
+                <el-button
+                  size="small"
+                  :type="viewMode === 'grid' ? 'primary' : 'default'"
+                  @click="viewMode = 'grid'"
+                >
+                  <el-icon><Grid /></el-icon>
+                </el-button>
+                <el-button
+                  size="small"
+                  :type="viewMode === 'list' ? 'primary' : 'default'"
+                  @click="viewMode = 'list'"
+                >
+                  <el-icon><List /></el-icon>
+                </el-button>
+              </el-button-group>
+              <el-switch
+                v-model="showRecent"
+                size="small"
+                active-text="最近使用"
+                inactive-text="全部图标"
+              />
+            </div>
+            <div class="toolbar-right">
+              <el-button size="small" @click="clearRecent"> 清除历史 </el-button>
+            </div>
+          </div>
+
           <!-- 图标网格 -->
-          <div class="icon-grid">
+          <div class="icon-grid" :class="{ 'list-view': viewMode === 'list' }">
             <div
-              v-for="icon in filteredIcons"
+              v-for="icon in displayIcons"
               :key="icon.name"
               class="icon-item"
-              :class="{ 'is-selected': selectedIcon === icon.name }"
+              :class="{
+                'is-selected': selectedIcon === icon.name,
+                'is-favorite': favoriteIcons.includes(icon.name),
+                'is-recent': recentIcons.includes(icon.name),
+              }"
               @click="selectIcon(icon)"
+              @mouseenter="showIconPreview(icon, $event)"
+              @mouseleave="hideIconPreview"
             >
-              <component :is="icon.component" :size="20" />
+              <div class="icon-wrapper">
+                <component :is="icon.component" :size="viewMode === 'list' ? 16 : 20" />
+                <div class="icon-actions">
+                  <el-button
+                    size="small"
+                    text
+                    @click.stop="toggleFavorite(icon.name)"
+                    :class="{ 'is-favorite': favoriteIcons.includes(icon.name) }"
+                  >
+                    <el-icon><Star /></el-icon>
+                  </el-button>
+                  <el-button size="small" text @click.stop="copyIconName(icon.name)">
+                    <el-icon><Copy /></el-icon>
+                  </el-button>
+                </div>
+              </div>
               <span class="icon-name">{{ icon.name }}</span>
+              <span v-if="recentIcons.includes(icon.name)" class="recent-badge">最近</span>
             </div>
           </div>
 
@@ -75,7 +128,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as LucideIcons from 'lucide-vue-next'
-import { ArrowDown, Search, Loader2, SearchX } from 'lucide-vue-next'
+import { ArrowDown, Search, Loader2, SearchX, Grid, List, Star, Copy } from 'lucide-vue-next'
 
 // Props
 interface Props {
@@ -107,6 +160,10 @@ const activeCategory = ref('all')
 const selectedIcon = ref(props.modelValue)
 const loading = ref(false)
 const allIcons = ref<Array<{ name: string; component: unknown; category: string }>>([])
+const viewMode = ref<'grid' | 'list'>('grid')
+const showRecent = ref(false)
+const favoriteIcons = ref<string[]>([])
+const recentIcons = ref<string[]>([])
 
 // 图标分类
 const iconCategories = [
@@ -120,6 +177,25 @@ const iconCategories = [
   { key: 'development', name: '开发' },
   { key: 'design', name: '设计' },
   { key: 'social', name: '社交' },
+  { key: 'weather', name: '天气' },
+  { key: 'transport', name: '交通' },
+  { key: 'food', name: '餐饮' },
+  { key: 'health', name: '健康' },
+  { key: 'science', name: '科学' },
+  { key: 'education', name: '教育' },
+  { key: 'security', name: '安全' },
+  { key: 'shopping', name: '购物' },
+  { key: 'travel', name: '旅行' },
+  { key: 'sports', name: '运动' },
+  { key: 'music', name: '音乐' },
+  { key: 'photography', name: '摄影' },
+  { key: 'gaming', name: '游戏' },
+  { key: 'animals', name: '动物' },
+  { key: 'nature', name: '自然' },
+  { key: 'buildings', name: '建筑' },
+  { key: 'tools', name: '工具' },
+  { key: 'devices', name: '设备' },
+  { key: 'brands', name: '品牌' },
 ]
 
 // 图标分类映射
@@ -265,6 +341,272 @@ const iconCategoryMap: Record<string, string[]> = {
     'Telegram',
     'Whatsapp',
   ],
+  weather: [
+    'Sun',
+    'Moon',
+    'Cloud',
+    'CloudRain',
+    'CloudSnow',
+    'CloudLightning',
+    'Wind',
+    'Thermometer',
+    'Droplets',
+    'Snowflake',
+    'Umbrella',
+    'Eye',
+  ],
+  transport: [
+    'Car',
+    'Truck',
+    'Bus',
+    'Train',
+    'Plane',
+    'Bike',
+    'Ship',
+    'Helicopter',
+    'Rocket',
+    'Motorcycle',
+    'Taxi',
+    'Anchor',
+  ],
+  food: [
+    'Pizza',
+    'Coffee',
+    'Cake',
+    'Apple',
+    'Beer',
+    'Wine',
+    'Utensils',
+    'ChefHat',
+    'IceCream',
+    'Cookie',
+    'Candy',
+    'Milk',
+  ],
+  health: [
+    'Heart',
+    'Activity',
+    'Pulse',
+    'Thermometer',
+    'Pill',
+    'Syringe',
+    'Stethoscope',
+    'Bone',
+    'Brain',
+    'Eye',
+    'Ear',
+    'Nose',
+  ],
+  science: [
+    'Flask',
+    'Microscope',
+    'Atom',
+    'Dna',
+    'TestTube',
+    'Beaker',
+    'Magnet',
+    'Zap',
+    'Battery',
+    'Lightbulb',
+    'Cpu',
+    'HardDrive',
+  ],
+  education: [
+    'Book',
+    'BookOpen',
+    'GraduationCap',
+    'School',
+    'PenTool',
+    'Edit',
+    'Highlighter',
+    'Ruler',
+    'Calculator',
+    'Award',
+    'Medal',
+    'Trophy',
+  ],
+  security: [
+    'Shield',
+    'Lock',
+    'Unlock',
+    'Key',
+    'Fingerprint',
+    'Eye',
+    'EyeOff',
+    'AlertTriangle',
+    'AlertCircle',
+    'Info',
+    'CheckCircle',
+    'XCircle',
+  ],
+  shopping: [
+    'ShoppingCart',
+    'ShoppingBag',
+    'CreditCard',
+    'DollarSign',
+    'Tag',
+    'Receipt',
+    'Package',
+    'Truck',
+    'Store',
+    'Gift',
+    'Percent',
+    'Calculator',
+  ],
+  travel: [
+    'Map',
+    'MapPin',
+    'Compass',
+    'Navigation',
+    'Globe',
+    'Mountain',
+    'Trees',
+    'Umbrella',
+    'Camera',
+    'Hotel',
+    'Plane',
+    'Ship',
+  ],
+  sports: [
+    'Football',
+    'Basketball',
+    'Tennis',
+    'Golf',
+    'Baseball',
+    'Volleyball',
+    'Target',
+    'Trophy',
+    'Medal',
+    'Award',
+    'Activity',
+    'Zap',
+  ],
+  music: [
+    'Music',
+    'Play',
+    'Pause',
+    'SkipBack',
+    'SkipForward',
+    'Repeat',
+    'Shuffle',
+    'Volume2',
+    'VolumeX',
+    'Headphones',
+    'Mic',
+    'Radio',
+    'Disc',
+  ],
+  photography: [
+    'Camera',
+    'Image',
+    'Film',
+    'Aperture',
+    'Focus',
+    'Crop',
+    'Filter',
+    'Palette',
+    'Sun',
+    'Moon',
+    'Zap',
+    'Adjustments',
+  ],
+  gaming: [
+    'Gamepad2',
+    'Joystick',
+    'Dice',
+    'Spade',
+    'Heart',
+    'Diamond',
+    'Club',
+    'Target',
+    'Trophy',
+    'Zap',
+    'Cpu',
+    'Monitor',
+  ],
+  animals: [
+    'Cat',
+    'Dog',
+    'Bird',
+    'Fish',
+    'Rabbit',
+    'Horse',
+    'PawPrint',
+    'Bug',
+    'Spider',
+    'Octopus',
+    'Turtle',
+    'Butterfly',
+  ],
+  nature: [
+    'TreePine',
+    'Trees',
+    'Flower',
+    'Leaf',
+    'Sun',
+    'Moon',
+    'Cloud',
+    'CloudRain',
+    'Mountain',
+    'Waves',
+    'Wind',
+    'Droplets',
+  ],
+  buildings: [
+    'Building',
+    'Home',
+    'Store',
+    'Factory',
+    'Warehouse',
+    'Building2',
+    'Apartment',
+    'Hotel',
+    'Bank',
+    'Church',
+    'Castle',
+    'Tent',
+  ],
+  tools: [
+    'Wrench',
+    'Hammer',
+    'Screwdriver',
+    'Drill',
+    'Saw',
+    'Measure',
+    'Ruler',
+    'Scissors',
+    'Knife',
+    'PenTool',
+    'PaintBucket',
+    'Eraser',
+  ],
+  devices: [
+    'Monitor',
+    'Smartphone',
+    'Tablet',
+    'Laptop',
+    'Desktop',
+    'Tv',
+    'Radio',
+    'Speaker',
+    'Headphones',
+    'Camera',
+    'Printer',
+    'HardDrive',
+  ],
+  brands: [
+    'Facebook',
+    'Twitter',
+    'Instagram',
+    'Youtube',
+    'Linkedin',
+    'Github',
+    'Chrome',
+    'Firefox',
+    'Safari',
+    'Edge',
+    'Opera',
+  ],
 }
 
 // 计算属性
@@ -286,6 +628,23 @@ const filteredIcons = computed(() => {
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     icons = icons.filter((icon) => icon.name.toLowerCase().includes(query))
+  }
+
+  return icons
+})
+
+const displayIcons = computed(() => {
+  const icons = filteredIcons.value
+
+  // 如果显示最近使用，优先显示最近使用的图标
+  if (showRecent.value && recentIcons.value.length > 0) {
+    const recentIconObjects = recentIcons.value
+      .map((name) => icons.find((icon) => icon.name === name))
+      .filter(Boolean)
+
+    const otherIcons = icons.filter((icon) => !recentIcons.value.includes(icon.name))
+
+    return [...recentIconObjects, ...otherIcons]
   }
 
   return icons
@@ -327,9 +686,116 @@ const filterIcons = () => {
 
 const selectIcon = (icon: { name: string; component: unknown; category: string }) => {
   selectedIcon.value = icon.name
+
+  // 添加到最近使用
+  addToRecent(icon.name)
+
   emit('update:modelValue', icon.name)
   emit('change', icon.name)
   showSelector.value = false
+}
+
+// 本地存储管理
+const STORAGE_KEYS = {
+  FAVORITES: 'icon-selector-favorites',
+  RECENT: 'icon-selector-recent',
+}
+
+// 从本地存储加载数据
+const loadFromStorage = () => {
+  try {
+    const favorites = localStorage.getItem(STORAGE_KEYS.FAVORITES)
+    const recent = localStorage.getItem(STORAGE_KEYS.RECENT)
+
+    if (favorites) {
+      favoriteIcons.value = JSON.parse(favorites)
+    }
+
+    if (recent) {
+      recentIcons.value = JSON.parse(recent)
+    }
+  } catch (error) {
+    console.warn('Failed to load from storage:', error)
+  }
+}
+
+// 保存到本地存储
+const saveToStorage = () => {
+  try {
+    localStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favoriteIcons.value))
+    localStorage.setItem(STORAGE_KEYS.RECENT, JSON.stringify(recentIcons.value))
+  } catch (error) {
+    console.warn('Failed to save to storage:', error)
+  }
+}
+
+// 添加到最近使用
+const addToRecent = (iconName: string) => {
+  const index = recentIcons.value.indexOf(iconName)
+  if (index > -1) {
+    recentIcons.value.splice(index, 1)
+  }
+
+  recentIcons.value.unshift(iconName)
+
+  // 限制最近使用的数量
+  if (recentIcons.value.length > 20) {
+    recentIcons.value = recentIcons.value.slice(0, 20)
+  }
+
+  saveToStorage()
+}
+
+// 切换收藏状态
+const toggleFavorite = (iconName: string) => {
+  const index = favoriteIcons.value.indexOf(iconName)
+  if (index > -1) {
+    favoriteIcons.value.splice(index, 1)
+    ElMessage.success('已取消收藏')
+  } else {
+    favoriteIcons.value.push(iconName)
+    ElMessage.success('已添加收藏')
+  }
+  saveToStorage()
+}
+
+// 清除最近使用
+const clearRecent = () => {
+  recentIcons.value = []
+  saveToStorage()
+  ElMessage.success('已清除历史记录')
+}
+
+// 复制图标名称
+const copyIconName = async (iconName: string) => {
+  try {
+    await navigator.clipboard.writeText(iconName)
+    ElMessage.success('图标名称已复制到剪贴板')
+  } catch (error) {
+    // 降级方案
+    const textArea = document.createElement('textarea')
+    textArea.value = iconName
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    ElMessage.success('图标名称已复制到剪贴板')
+  }
+}
+
+// 显示图标预览
+const showIconPreview = (
+  icon: { name: string; component: unknown; category: string },
+  event: MouseEvent,
+) => {
+  // 这里可以实现预览功能，比如显示大图标预览
+  console.log('Preview icon:', icon.name)
+}
+
+// 隐藏图标预览
+const hideIconPreview = () => {
+  // 隐藏预览
+  console.log('Hide preview')
 }
 
 // 点击外部关闭选择器
@@ -351,6 +817,7 @@ watch(
 // 生命周期
 onMounted(() => {
   loadIcons()
+  loadFromStorage()
   document.addEventListener('click', handleClickOutside)
 })
 
@@ -434,6 +901,101 @@ onUnmounted(() => {
 .category-tabs :deep(.el-tabs__item) {
   padding: 0 16px;
   font-size: 12px;
+}
+
+.icon-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  background: var(--el-fill-color-lighter);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.icon-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.icon-item:hover .icon-actions {
+  opacity: 1;
+}
+
+.icon-actions .el-button {
+  padding: 2px;
+  min-height: 24px;
+  width: 24px;
+}
+
+.icon-actions .el-button.is-favorite {
+  color: var(--el-color-warning);
+}
+
+.recent-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--el-color-success);
+  color: white;
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+/* 列表视图样式 */
+.icon-grid.list-view {
+  grid-template-columns: 1fr;
+  gap: 4px;
+}
+
+.icon-grid.list-view .icon-item {
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
+.icon-grid.list-view .icon-wrapper {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-grid.list-view .icon-name {
+  margin: 0;
+  font-size: 12px;
+  text-align: left;
+  flex: 1;
+}
+
+.icon-grid.list-view .icon-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .icon-grid {
