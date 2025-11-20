@@ -69,38 +69,6 @@ import {
   faCompress,
 } from '@fortawesome/free-solid-svg-icons'
 import {
-  farUser,
-  farHeart,
-  farStar,
-  farCheckCircle,
-  farTimesCircle,
-  farPlusSquare,
-  farFile,
-  farFolder,
-  farFileAlt,
-  farFileImage,
-  farFilePdf,
-  farEnvelope,
-  farComment,
-  farComments,
-  farShare,
-  farShareAlt,
-  farChartBar,
-  farChartLine,
-  farChartPie,
-  farSun,
-  farCloud,
-  farSnowflake,
-  farMap,
-  farMapMarkerAlt,
-  farCompass,
-  farGlobe,
-  farWheelchair,
-  farUniversalAccess,
-  farAssistiveListeningSystems,
-  farSignLanguage,
-} from '@fortawesome/free-regular-svg-icons'
-import {
   faGithub as faGithubBrand,
   faTwitter as faTwitterBrand,
   faFacebook as faFacebookBrand,
@@ -140,7 +108,7 @@ import {
 interface IconItem {
   name: string
   icon: any
-  type: 'fas' | 'far' | 'fab'
+  type: 'fas' | 'fab'
 }
 
 const props = defineProps<{
@@ -155,7 +123,7 @@ const emit = defineEmits<{
 
 const showIconPicker = ref(false)
 
-// 创建图标映射
+// 创建图标映射 - 只包含solid和brand图标
 const iconMap: Record<string, IconItem> = {
   // Solid icons
   faUser: { name: 'faUser', icon: faUser, type: 'fas' },
@@ -202,42 +170,6 @@ const iconMap: Record<string, IconItem> = {
   faEllipsisV: { name: 'faEllipsisV', icon: faEllipsisV, type: 'fas' },
   faExpand: { name: 'faExpand', icon: faExpand, type: 'fas' },
   faCompress: { name: 'faCompress', icon: faCompress, type: 'fas' },
-
-  // Regular icons
-  farUser: { name: 'farUser', icon: farUser, type: 'far' },
-  farHeart: { name: 'farHeart', icon: farHeart, type: 'far' },
-  farStar: { name: 'farStar', icon: farStar, type: 'far' },
-  farCheckCircle: { name: 'farCheckCircle', icon: farCheckCircle, type: 'far' },
-  farTimesCircle: { name: 'farTimesCircle', icon: farTimesCircle, type: 'far' },
-  farPlusSquare: { name: 'farPlusSquare', icon: farPlusSquare, type: 'far' },
-  farFile: { name: 'farFile', icon: farFile, type: 'far' },
-  farFolder: { name: 'farFolder', icon: farFolder, type: 'far' },
-  farFileAlt: { name: 'farFileAlt', icon: farFileAlt, type: 'far' },
-  farFileImage: { name: 'farFileImage', icon: farFileImage, type: 'far' },
-  farFilePdf: { name: 'farFilePdf', icon: farFilePdf, type: 'far' },
-  farEnvelope: { name: 'farEnvelope', icon: farEnvelope, type: 'far' },
-  farComment: { name: 'farComment', icon: farComment, type: 'far' },
-  farComments: { name: 'farComments', icon: farComments, type: 'far' },
-  farShare: { name: 'farShare', icon: farShare, type: 'far' },
-  farShareAlt: { name: 'farShareAlt', icon: farShareAlt, type: 'far' },
-  farChartBar: { name: 'farChartBar', icon: farChartBar, type: 'far' },
-  farChartLine: { name: 'farChartLine', icon: farChartLine, type: 'far' },
-  farChartPie: { name: 'farChartPie', icon: farChartPie, type: 'far' },
-  farSun: { name: 'farSun', icon: farSun, type: 'far' },
-  farCloud: { name: 'farCloud', icon: farCloud, type: 'far' },
-  farSnowflake: { name: 'farSnowflake', icon: farSnowflake, type: 'far' },
-  farMap: { name: 'farMap', icon: farMap, type: 'far' },
-  farMapMarkerAlt: { name: 'farMapMarkerAlt', icon: farMapMarkerAlt, type: 'far' },
-  farCompass: { name: 'farCompass', icon: farCompass, type: 'far' },
-  farGlobe: { name: 'farGlobe', icon: farGlobe, type: 'far' },
-  farWheelchair: { name: 'farWheelchair', icon: farWheelchair, type: 'far' },
-  farUniversalAccess: { name: 'farUniversalAccess', icon: farUniversalAccess, type: 'far' },
-  farAssistiveListeningSystems: {
-    name: 'farAssistiveListeningSystems',
-    icon: farAssistiveListeningSystems,
-    type: 'far',
-  },
-  farSignLanguage: { name: 'farSignLanguage', icon: farSignLanguage, type: 'far' },
 
   // Brand icons
   faGithub: { name: 'faGithub', icon: faGithubBrand, type: 'fab' },
