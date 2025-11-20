@@ -6,10 +6,10 @@
       <section class="home__hero">
         <div class="home__hero-content">
           <h1 class="home__hero-title">
-            <glitch-text text="全栈开发工程师" :color="isDark ? '#00ff41' : '#0066cc'" :speed="3" />
+            <glitch-text :text="homeTitle" :color="isDark ? '#00ff41' : '#0066cc'" :speed="3" />
           </h1>
 
-          <p class="home__hero-subtitle">专注于 Java 后端、Vue 前端和云原生部署</p>
+          <p class="home__hero-subtitle">{{ homeSubtitle }}</p>
 
           <div class="home__hero-skills">
             <el-tag
@@ -187,7 +187,7 @@ import {
 } from '@element-plus/icons-vue'
 
 import { useTheme } from '@/composables/useTheme'
-import { useProjects, useSkills, useSocialLinks } from '@/composables/useData'
+import { useProjects, useSkills, useSocialLinks, useSystemSettings } from '@/composables/useData'
 import GlitchText from '@/components/GlitchText.vue'
 import CoolProgressBar from '@/components/CoolProgressBar.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
@@ -205,6 +205,7 @@ const loadingError = ref<string | null>(null)
 const { featuredProjects, loadProjects } = useProjects()
 const { skills, loadSkills } = useSkills()
 const { socialLinks, loadSocialLinks } = useSocialLinks()
+const { getSettingValue, loadSystemSettings } = useSystemSettings()
 
 // 加载数据
 const loadData = async () => {
@@ -227,8 +228,17 @@ const loadData = async () => {
   }
 }
 
+// 获取系统设置
+const homeTitle = computed(() => getSettingValue('home_title', '全栈开发工程师'))
+const homeSubtitle = computed(() =>
+  getSettingValue('home_subtitle', '专注于 Java 后端、Vue 前端和云原生部署'),
+)
+
 // 组件挂载时加载数据
-onMounted(() => {
+onMounted(async () => {
+  // 先加载系统设置
+  await loadSystemSettings()
+  // 然后加载数据
   loadData()
 })
 

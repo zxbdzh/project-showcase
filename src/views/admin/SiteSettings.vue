@@ -63,6 +63,24 @@
                 </el-form-item>
               </el-col>
             </el-row>
+
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="首页标题">
+                  <el-input v-model="settings.home_title" placeholder="默认: 全栈开发工程师" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="首页副标题">
+                  <el-input
+                    v-model="settings.home_subtitle"
+                    type="textarea"
+                    :rows="2"
+                    placeholder="默认: 专注于 Java 后端、Vue 前端和云原生部署"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
           </el-card>
 
           <!-- 媒体文件 -->
@@ -173,6 +191,8 @@ const defaultSettings = {
   site_subtitle: '全栈开发工程师作品集',
   brand_text: 'GEEK',
   site_description: '基于Vue 3和TypeScript构建的现代化项目展示平台',
+  home_title: '全栈开发工程师',
+  home_subtitle: '专注于 Java 后端、Vue 前端和云原生部署',
   site_logo: '',
   site_favicon: '',
   seo_keywords: 'Vue.js,TypeScript,全栈开发,项目展示',
@@ -195,6 +215,8 @@ const loadSettings = async () => {
       site_subtitle: getSettingValue('site_subtitle', defaultSettings.site_subtitle),
       brand_text: getSettingValue('brand_text', defaultSettings.brand_text),
       site_description: getSettingValue('site_description', defaultSettings.site_description),
+      home_title: getSettingValue('home_title', defaultSettings.home_title),
+      home_subtitle: getSettingValue('home_subtitle', defaultSettings.home_subtitle),
       site_logo: getSettingValue('site_logo', defaultSettings.site_logo),
       site_favicon: getSettingValue('site_favicon', defaultSettings.site_favicon),
       seo_keywords: getSettingValue('seo_keywords', defaultSettings.seo_keywords),
@@ -359,6 +381,8 @@ const saveSettings = async () => {
       site_subtitle: { value: settings.value.site_subtitle, description: '网站副标题' },
       brand_text: { value: settings.value.brand_text, description: '左上角文字' },
       site_description: { value: settings.value.site_description, description: '网站描述' },
+      home_title: { value: settings.value.home_title, description: '首页标题' },
+      home_subtitle: { value: settings.value.home_subtitle, description: '首页副标题' },
       site_logo: { value: settings.value.site_logo, description: '网站Logo' },
       site_favicon: { value: settings.value.site_favicon, description: '网站Favicon' },
       seo_keywords: { value: settings.value.seo_keywords, description: 'SEO关键词' },

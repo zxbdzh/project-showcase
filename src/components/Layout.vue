@@ -155,14 +155,14 @@ const handleChangePasswordSuccess = () => {
 // 处理切换模式
 const handleSwitchMode = (mode: string) => {
   // 这里可以切换到注册表单
-  console.log('Switch to mode:', mode)
+  // console.log('Switch to mode:', mode)
 }
 
 // 设置网页标题（参考favicon更新方法）
 const updatePageTitle = (title: string) => {
   if (title && title !== document.title) {
     document.title = title
-    console.log('Page title updated:', title)
+    // console.log('Page title updated:', title)
   }
 }
 
@@ -176,7 +176,7 @@ const updateFavicon = () => {
     if ($favicon !== null) {
       // 如果存在现有的favicon，直接更新href
       $favicon.href = favicon
-      console.log('Layout favicon updated:', favicon)
+      // console.log('Layout favicon updated:', favicon)
     } else {
       // 如果不存在，创建新的favicon元素
       $favicon = document.createElement('link')
