@@ -1,18 +1,17 @@
-// 缓存管理 - 使用Supabase替代Redis
+// 缓存管理 - 使用localStorage + 版本控制
 import { ref, computed } from 'vue'
-import supabaseCache from '@/utils/supabaseCache'
+import localCache from '@/utils/localCache'
 
 // 缓存配置
 interface CacheConfig {
   key: string
-  ttl?: number // 缓存时间（秒）
-  version?: string // 缓存版本
+  ttl?: number // 缓存时间（毫秒）
+  dataType: string // 数据类型，用于版本控制
 }
 
 // 全局缓存状态
 const cacheVersion = ref('1.0.0')
 const cacheEnabled = ref(true)
-const supabaseConnected = ref(false)
 
 // 路由缓存策略配置
 const routeCacheStrategies: Record<string, { enabled: boolean }> = {
@@ -55,139 +54,68 @@ const getCurrentRouteCacheStrategy = (route: string) => {
   }
 }
 
-// 生成缓存键
-const generateCacheKey = (key: string, config?: CacheConfig) => {
-  const version = config?.version || cacheVersion.value
-  return `${key}:${version}`
-}
-
-// 检查Supabase连接状态
-const checkSupabaseConnection = async (): Promise<boolean> => {
-  try {
-    const isConnected = supabaseCache.isConnected()
-    supabaseConnected.value = isConnected
-    return isConnected
-  } catch (error) {
-    console.error('Supabase连接检查失败:', error)
-    supabaseConnected.value = false
-    return false
-  }
-}
-
 // 设置缓存
-const setCache = async <T>(key: string, data: T, config?: CacheConfig): Promise<boolean> => {
+const setCache = async <T>(key: string, data: T, config: CacheConfig): Promise<boolean> => {
   if (!cacheEnabled.value) {
     console.log(`缓存已禁用，跳过设置: ${key}`)
     return false
   }
 
   try {
-    const cacheKey = generateCacheKey(key, config)
-    const ttl = config?.ttl || 5 * 60 // 默认5分钟
-
-    // 检查Supabase连接
-    const isConnected = await checkSupabaseConnection()
-    if (!isConnected) {
-      console.warn(`Supabase不可用，缓存设置失败: ${key}`)
-      return false
-    }
-
-    // 设置缓存
-    const success = await supabaseCache.set(key, data, config)
-    if (success) {
-      console.log(`Supabase缓存设置成功: ${key}`)
-    }
+    const ttl = config?.ttl || 30 * 60 * 1000 // 默认30分钟
+    const success = await localCache.set(key, data, config.dataType, ttl)
     return success
   } catch (error) {
-    console.error(`Supabase缓存设置异常: ${key}`, error)
+    console.error(`本地缓存设置异常: ${key}`, error)
     return false
   }
 }
 
 // 获取缓存
-const getCache = async <T>(key: string, config?: CacheConfig): Promise<T | null> => {
+const getCache = async <T>(key: string, config: CacheConfig): Promise<T | null> => {
   if (!cacheEnabled.value) {
     console.log(`缓存已禁用，跳过获取: ${key}`)
     return null
   }
 
   try {
-    const cacheKey = generateCacheKey(key, config)
-
-    // 检查Supabase连接
-    const isConnected = await checkSupabaseConnection()
-    if (!isConnected) {
-      console.warn(`Supabase不可用，缓存获取失败: ${key}`)
-      return null
-    }
-
-    // 获取缓存
-    const data = await supabaseCache.get<T>(key, config)
+    const data = await localCache.get<T>(key, config.dataType)
     return data
   } catch (error) {
-    console.error(`Supabase缓存获取异常: ${key}`, error)
+    console.error(`本地缓存获取异常: ${key}`, error)
     return null
   }
 }
 
 // 删除缓存
-const removeCache = async (key: string, config?: CacheConfig): Promise<void> => {
+const removeCache = (key: string): void => {
   try {
-    const cacheKey = generateCacheKey(key, config)
-
-    // 检查Supabase连接
-    const isConnected = await checkSupabaseConnection()
-    if (!isConnected) {
-      console.warn(`Supabase不可用，缓存删除失败: ${key}`)
-      return
-    }
-
-    // 删除缓存
-    await supabaseCache.remove(key, config)
-    console.log(`Supabase缓存删除成功: ${key}`)
+    localCache.remove(key)
   } catch (error) {
-    console.error(`Supabase缓存删除异常: ${key}`, error)
+    console.error(`本地缓存删除异常: ${key}`, error)
   }
 }
 
 // 清除所有缓存
-const clearAllCache = async (): Promise<void> => {
+const clearAllCache = (): void => {
   try {
-    // 检查Supabase连接
-    const isConnected = await checkSupabaseConnection()
-    if (!isConnected) {
-      console.warn('Supabase不可用，清空缓存失败')
-      return
-    }
-
-    // 清空缓存
-    await supabaseCache.clearAll()
-    console.log('Supabase缓存已清空')
+    localCache.clearAll()
   } catch (error) {
-    console.error('Supabase清空缓存异常:', error)
+    console.error('清空本地缓存异常:', error)
   }
 }
 
 // 清除特定前缀的缓存
-const clearCacheByPrefix = async (prefix: string): Promise<void> => {
+const clearCacheByPrefix = (prefix: string): void => {
   try {
-    // 检查Supabase连接
-    const isConnected = await checkSupabaseConnection()
-    if (!isConnected) {
-      console.warn(`Supabase不可用，清除前缀缓存失败: ${prefix}`)
-      return
-    }
-
-    // 清除前缀缓存
-    await supabaseCache.clearByPrefix(prefix)
-    console.log(`Supabase删除前缀缓存: ${prefix}`)
+    localCache.clearByPrefix(prefix)
   } catch (error) {
-    console.error(`Supabase删除前缀缓存异常: ${prefix}`, error)
+    console.error(`删除前缀缓存异常: ${prefix}`, error)
   }
 }
 
 // 缓存装饰器函数
-const withCache = <T>(key: string, fetchFn: () => Promise<T>, config?: CacheConfig) => {
+const withCache = <T>(key: string, fetchFn: () => Promise<T>, config: CacheConfig) => {
   return async (): Promise<T> => {
     // 检查是否启用缓存
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '/'
@@ -197,45 +125,57 @@ const withCache = <T>(key: string, fetchFn: () => Promise<T>, config?: CacheConf
       return await fetchFn()
     }
 
-    // 尝试从缓存获取
-    const cached = await getCache<T>(key, config)
-    if (cached !== null) {
-      return cached
-    }
+    const startTime = performance.now()
 
-    // 缓存未命中，执行数据获取
     try {
+      // 先检查缓存
+      const cached = await getCache<T>(key, config)
+      if (cached !== null) {
+        const cacheTime = performance.now() - startTime
+        console.log(`本地缓存命中: ${key} (${cacheTime.toFixed(2)}ms)`)
+        return cached
+      }
+
+      // 缓存未命中，获取数据
       const data = await fetchFn()
 
-      // 存储到缓存
-      await setCache(key, data, config)
+      // 异步存储到缓存（不阻塞返回）
+      setCache(key, data, config).catch((error) => {
+        console.warn(`缓存存储失败 ${key}:`, error)
+      })
 
+      const fetchTime = performance.now() - startTime
+      console.log(`数据获取: ${key} (${fetchTime.toFixed(2)}ms)`)
       return data
     } catch (error) {
-      console.error(`数据获取失败 ${key}:`, error)
+      const fetchTime = performance.now() - startTime
+      console.error(`数据获取失败 ${key} (${fetchTime.toFixed(2)}ms):`, error)
       throw error
     }
   }
 }
 
 // 缓存统计
-const getCacheStats = async () => {
+const getCacheStats = () => {
   try {
-    // 检查Supabase连接
-    const isConnected = await checkSupabaseConnection()
-
-    // 获取统计信息
-    const stats = await supabaseCache.getStats()
-
+    const stats = localCache.getStats()
     return {
-      local: 0, // 不再使用本地缓存
-      redis: stats.total,
+      local: stats.total,
+      redis: 0, // 不再使用Redis
       total: stats.total,
-      redisConnected: supabaseConnected.value,
-      redisInfo: stats.info,
+      redisConnected: false,
+      redisInfo: JSON.stringify(
+        {
+          type: 'localStorage',
+          status: 'active',
+          ...stats,
+        },
+        null,
+        2,
+      ),
     }
   } catch (error) {
-    console.warn('获取Supabase统计失败:', error)
+    console.warn('获取本地缓存统计失败:', error)
     return {
       local: 0,
       redis: 0,
@@ -243,7 +183,7 @@ const getCacheStats = async () => {
       redisConnected: false,
       redisInfo: JSON.stringify(
         {
-          type: 'supabase',
+          type: 'localStorage',
           status: 'error',
           error: (error as any)?.message,
         },
@@ -254,22 +194,32 @@ const getCacheStats = async () => {
   }
 }
 
-// 监听Supabase连接状态变化
-const monitorSupabaseConnection = () => {
-  setInterval(async () => {
-    const wasConnected = supabaseConnected.value
-    const isConnected = await checkSupabaseConnection()
-
-    if (!wasConnected && isConnected) {
-      console.log('Supabase连接恢复')
-    } else if (wasConnected && !isConnected) {
-      console.warn('Supabase连接断开')
-    }
-  }, 5000) // 每5秒检查一次
+// 更新版本号（后台操作时调用）
+const updateDataVersion = async (dataType: string): Promise<boolean> => {
+  try {
+    const success = await localCache.updateVersion(dataType)
+    return success
+  } catch (error) {
+    console.error(`更新版本号异常: ${dataType}`, error)
+    return false
+  }
 }
 
-// 启动连接监控
-monitorSupabaseConnection()
+// 定期清理过期缓存
+const setupCleanupInterval = () => {
+  // 每10分钟清理一次过期缓存
+  setInterval(
+    () => {
+      localCache.cleanupExpired()
+    },
+    10 * 60 * 1000,
+  )
+}
+
+// 启动清理任务
+if (typeof window !== 'undefined') {
+  setupCleanupInterval()
+}
 
 // 导出缓存管理功能
 export function useCache() {
@@ -289,7 +239,7 @@ export function useCache() {
     // 配置
     enabled: computed(() => cacheEnabled.value),
     version: computed(() => cacheVersion.value),
-    redisConnected: computed(() => supabaseConnected.value),
+    redisConnected: computed(() => false), // 不再使用Redis
 
     // 策略
     getRouteStrategy: getCurrentRouteCacheStrategy,
@@ -309,8 +259,8 @@ export function useCache() {
       clearAllCache() // 版本更新时清除所有缓存
     },
 
-    // Supabase相关
-    checkSupabaseConnection,
-    getRedisStatus: () => (supabaseConnected.value ? 'connected' : 'disconnected'),
+    // 版本控制
+    updateDataVersion,
+    getLocalStorageStatus: () => 'active',
   }
 }

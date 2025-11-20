@@ -81,8 +81,10 @@ export function useProjects() {
     try {
       // 使用缓存装饰器
       const cacheKey = `projects:${JSON.stringify(options)}`
-      const cachedProjects = cache.withCache(cacheKey, () =>
-        projectService.getProjectsWithRelations(options),
+      const cachedProjects = cache.withCache(
+        cacheKey,
+        () => projectService.getProjectsWithRelations(options),
+        { dataType: 'projects' },
       )()
 
       const data = await cachedProjects
@@ -101,8 +103,8 @@ export function useProjects() {
     try {
       const newProject = await projectService.createProject(data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('projects')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('projects')
 
       // 重新加载项目数据以获取关联的分类和标签
       await loadProjects()
@@ -118,8 +120,8 @@ export function useProjects() {
     try {
       const updatedProject = await projectService.updateProject(id, data)
 
-      // 清除相关缓存
-      cache.clearByPrefix('projects')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('projects')
 
       // 重新加载项目数据以获取关联的分类和标签
       await loadProjects()
@@ -135,8 +137,8 @@ export function useProjects() {
     try {
       await projectService.deleteProject(id)
 
-      // 清除相关缓存
-      cache.clearByPrefix('projects')
+      // 更新版本号，自动清除相关缓存
+      await cache.updateDataVersion('projects')
 
       projects.value = projects.value.filter((p) => p.id !== id)
       ElMessage.success('项目删除成功')
@@ -150,7 +152,9 @@ export function useProjects() {
     try {
       // 使用缓存装饰器
       const cacheKey = `project:${id}`
-      const cachedProject = cache.withCache(cacheKey, () => projectService.getProject(id))()
+      const cachedProject = cache.withCache(cacheKey, () => projectService.getProject(id), {
+        dataType: 'projects',
+      })()
 
       return await cachedProject
     } catch (err: any) {
@@ -182,7 +186,9 @@ export function useCategories() {
     try {
       // 使用缓存装饰器
       const cacheKey = 'categories'
-      const cachedCategories = cache.withCache(cacheKey, () => categoryService.getCategories())()
+      const cachedCategories = cache.withCache(cacheKey, () => categoryService.getCategories(), {
+        dataType: 'categories',
+      })()
 
       const data = await cachedCategories
       categories.value = data
@@ -265,7 +271,9 @@ export function useTags() {
     try {
       // 使用缓存装饰器
       const cacheKey = 'tags'
-      const cachedTags = cache.withCache(cacheKey, () => tagService.getTags())()
+      const cachedTags = cache.withCache(cacheKey, () => tagService.getTags(), {
+        dataType: 'tags',
+      })()
 
       const data = await cachedTags
       tags.value = data
@@ -348,7 +356,9 @@ export function useSkills() {
     try {
       // 使用缓存装饰器
       const cacheKey = 'skills'
-      const cachedSkills = cache.withCache(cacheKey, () => skillService.getSkills())()
+      const cachedSkills = cache.withCache(cacheKey, () => skillService.getSkills(), {
+        dataType: 'skills',
+      })()
 
       const data = await cachedSkills
       skills.value = data
@@ -431,8 +441,10 @@ export function useSocialLinks() {
     try {
       // 使用缓存装饰器
       const cacheKey = 'social-links'
-      const cachedSocialLinks = cache.withCache(cacheKey, () =>
-        socialLinkService.getSocialLinks(),
+      const cachedSocialLinks = cache.withCache(
+        cacheKey,
+        () => socialLinkService.getSocialLinks(),
+        { dataType: 'social_links' },
       )()
 
       const data = await cachedSocialLinks
@@ -516,7 +528,9 @@ export function useProfile() {
     try {
       // 使用缓存装饰器
       const cacheKey = `profile:${userId}`
-      const cachedProfile = cache.withCache(cacheKey, () => profileService.getProfile(userId))()
+      const cachedProfile = cache.withCache(cacheKey, () => profileService.getProfile(userId), {
+        dataType: 'profile',
+      })()
 
       const data = await cachedProfile
       currentProfile.value = data
@@ -618,7 +632,9 @@ export function useSystemSettings() {
     try {
       // 使用缓存装饰器
       const cacheKey = 'system-settings'
-      const cachedSettings = cache.withCache(cacheKey, () => systemSettingsService.getSettings())()
+      const cachedSettings = cache.withCache(cacheKey, () => systemSettingsService.getSettings(), {
+        dataType: 'system_settings',
+      })()
 
       const data = await cachedSettings
       systemSettings.value = data
@@ -636,7 +652,9 @@ export function useSystemSettings() {
     try {
       // 使用缓存装饰器
       const cacheKey = `system-setting:${key}`
-      const cachedSetting = cache.withCache(cacheKey, () => systemSettingsService.getSetting(key))()
+      const cachedSetting = cache.withCache(cacheKey, () => systemSettingsService.getSetting(key), {
+        dataType: 'system_settings',
+      })()
 
       return await cachedSetting
     } catch (err: any) {

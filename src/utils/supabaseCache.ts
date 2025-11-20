@@ -45,7 +45,7 @@ class SupabaseCache {
   async set<T>(key: string, data: T, config?: CacheConfig): Promise<boolean> {
     try {
       const cacheKey = this.generateCacheKey(key, config)
-      const ttl = config?.ttl || 5 * 60 // 默认5分钟
+      const ttl = config?.ttl || 30 // 默认30秒，减少缓存时间提高性能感知
 
       // 计算过期时间
       const expiresAt = new Date()
@@ -67,7 +67,7 @@ class SupabaseCache {
         return false
       }
 
-      console.log(`Supabase缓存设置成功: ${key}`)
+      console.log(`Supabase缓存设置成功: ${key} (TTL: ${ttl}s)`)
       return true
     } catch (error) {
       console.error(`Supabase缓存设置异常: ${key}`, error)
