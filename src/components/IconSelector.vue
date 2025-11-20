@@ -286,21 +286,23 @@ const selectIcon = (icon: string) => {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-color-border);
   border-radius: 4px;
   cursor: pointer;
   font-size: 18px;
-  color: #606266;
+  color: var(--el-color-text-regular);
   transition: all 0.3s;
+  background: var(--el-color-fill-blank);
 }
 
 .icon-display:hover {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
 }
 
 .icon-picker {
   padding: 16px;
+  background: var(--el-color-fill-blank);
 }
 
 .search-box {
@@ -321,14 +323,14 @@ const selectIcon = (icon: string) => {
 
 .help-text {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-color-text-secondary);
   margin-top: 4px;
 }
 
 .section-title {
   font-size: 14px;
   font-weight: 500;
-  color: #303133;
+  color: var(--el-color-text-primary);
   margin-bottom: 8px;
 }
 
@@ -343,9 +345,10 @@ const selectIcon = (icon: string) => {
   max-height: 300px;
   overflow-y: auto;
   padding: 8px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--el-color-border-light);
   border-radius: 4px;
   margin-bottom: 16px;
+  background: var(--el-color-fill-blank);
 }
 
 .icon-item {
@@ -354,27 +357,27 @@ const selectIcon = (icon: string) => {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--el-color-border);
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  color: #606266;
+  color: var(--el-color-text-regular);
   transition: all 0.3s;
-  background: white;
+  background: var(--el-color-fill-blank);
   position: relative;
 }
 
 .icon-item:hover {
-  border-color: #409eff;
-  color: #409eff;
-  background-color: #f5f7fa;
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9);
   transform: scale(1.1);
 }
 
 .icon-item.selected {
-  border-color: #409eff;
-  color: #409eff;
-  background-color: #ecf5ff;
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-8);
 }
 
 .custom-icon-item {
@@ -406,16 +409,64 @@ const selectIcon = (icon: string) => {
 }
 
 .icon-grid::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--el-color-fill-light);
   border-radius: 3px;
 }
 
 .icon-grid::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--el-color-text-placeholder);
   border-radius: 3px;
 }
 
 .icon-grid::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--el-color-text-secondary);
+}
+
+/* 深色模式特殊处理 */
+html.dark .icon-display {
+  border-color: var(--el-color-border-dark);
+  color: var(--el-color-text-regular);
+  background: var(--el-color-fill-dark);
+}
+
+html.dark .icon-display:hover {
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  background: rgba(0, 255, 65, 0.1);
+}
+
+html.dark .icon-grid {
+  border-color: var(--el-color-border-dark);
+  background: var(--el-color-fill-dark);
+}
+
+html.dark .icon-item {
+  border-color: var(--el-color-border-dark);
+  color: var(--el-color-text-regular);
+  background: var(--el-color-fill-dark);
+}
+
+html.dark .icon-item:hover {
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  background: rgba(0, 255, 65, 0.15);
+}
+
+html.dark .icon-item.selected {
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  background: rgba(0, 255, 65, 0.2);
+}
+
+html.dark .icon-grid::-webkit-scrollbar-track {
+  background: var(--el-color-fill-darker);
+}
+
+html.dark .icon-grid::-webkit-scrollbar-thumb {
+  background: var(--el-color-border-darker);
+}
+
+html.dark .icon-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--el-color-border);
 }
 </style>
