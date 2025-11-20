@@ -15,14 +15,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import {
-  fas,
-  far,
-  fab,
-  IconDefinition,
-  IconName,
-  SizeProp,
-} from '@fortawesome/fontawesome-svg-core'
+import type { IconDefinition, IconName, SizeProp } from '@fortawesome/fontawesome-svg-core'
+import { fas } from '@fortawesome/free-solid-svg-icons'
+import { far } from '@fortawesome/free-regular-svg-icons'
+import { fab } from '@fortawesome/free-brands-svg-icons'
 
 interface Props {
   icon: string
@@ -50,12 +46,17 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // 获取图标定义
-const iconDefinition = computed((): IconDefinition | null => {
+const iconDefinition = computed((): IconDefinition => {
   const iconLibrary = props.type === 'fas' ? fas : props.type === 'far' ? far : fab
   const iconName = props.icon.replace(/^(fa|fas|far|fab)-?/, '') as IconName
 
   const icon = iconLibrary[iconName]
-  return icon || null
+  if (!icon) {
+    // 如果找不到图标，返回一个默认图标或抛出错误
+    console.warn(`Icon "${props.icon}" not found in ${props.type} library`)
+    return fas['question'] as IconDefinition // 使用问号图标作为默认
+  }
+  return icon
 })
 
 // 标准化尺寸
@@ -70,10 +71,10 @@ const normalizedSize = computed((): SizeProp | undefined => {
     if (props.size <= 32) return 'lg'
     if (props.size <= 40) return 'xl'
     if (props.size <= 48) return '2xl'
-    return '3xl'
+    return '2xl' // 使用2xl作为最大尺寸，因为3xl可能在Font Awesome 7.x中不支持
   }
 
-  // 字符串尺寸直接返回
+  // 字符串尺寸直接返回，移除可能不支持的尺寸
   const sizeMap: Record<string, SizeProp> = {
     '2xs': '2xs',
     xs: 'xs',
@@ -81,7 +82,6 @@ const normalizedSize = computed((): SizeProp | undefined => {
     lg: 'lg',
     xl: 'xl',
     '2xl': '2xl',
-    '3xl': '3xl',
   }
 
   return sizeMap[props.size] || undefined
