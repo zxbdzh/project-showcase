@@ -24,11 +24,20 @@
             />
           </div>
 
+          <!-- 图标库选择 -->
+          <div class="library-tabs">
+            <el-tabs v-model="activeLibrary" @tab-change="handleLibraryChange">
+              <el-tab-pane label="Font Awesome" name="fontawesome" />
+              <el-tab-pane label="Element Plus" name="elementplus" />
+              <el-tab-pane label="Lucide" name="lucide" />
+            </el-tabs>
+          </div>
+
           <!-- 分类标签 -->
           <div class="category-tabs">
             <el-tabs v-model="activeCategory" @tab-change="filterIcons">
               <el-tab-pane
-                v-for="category in iconCategories"
+                v-for="category in currentCategories"
                 :key="category.key"
                 :label="category.name"
                 :name="category.key"
@@ -83,7 +92,11 @@
               @mouseleave="hideIconPreview"
             >
               <div class="icon-wrapper">
-                <component :is="icon.component" :size="viewMode === 'list' ? 16 : 20" />
+                <component
+                  :is="icon.component"
+                  v-bind="icon.props"
+                  :size="viewMode === 'list' ? 16 : 20"
+                />
                 <div class="icon-actions">
                   <el-button
                     size="small"
@@ -98,7 +111,7 @@
                   </el-button>
                 </div>
               </div>
-              <span class="icon-name">{{ icon.name }}</span>
+              <span class="icon-name">{{ icon.displayName }}</span>
               <span v-if="recentIcons.includes(icon.name)" class="recent-badge">最近</span>
             </div>
           </div>
@@ -125,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, markRaw } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, markRaw, defineAsyncComponent } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   ArrowDown,
@@ -174,6 +187,9 @@ import {
   CircleCloseFilled,
 } from '@element-plus/icons-vue'
 
+// 异步导入Lucide图标
+import * as LucideIcons from 'lucide-vue-next'
+
 // Props
 interface Props {
   modelValue?: string
@@ -200,17 +216,46 @@ const emit = defineEmits<{
 // 响应式数据
 const showSelector = ref(false)
 const searchQuery = ref('')
+const activeLibrary = ref('fontawesome')
 const activeCategory = ref('all')
 const selectedIcon = ref(props.modelValue)
 const loading = ref(false)
-const allIcons = ref<Array<{ name: string; component: unknown; category: string }>>([])
+const allIcons = ref<
+  Array<{
+    name: string
+    displayName: string
+    component: unknown
+    props?: Record<string, unknown>
+    category: string
+    library: string
+  }>
+>([])
 const viewMode = ref<'grid' | 'list'>('grid')
 const showRecent = ref(false)
 const favoriteIcons = ref<string[]>([])
 const recentIcons = ref<string[]>([])
 
-// 图标分类
-const iconCategories = [
+// Font Awesome 图标分类
+const fontAwesomeCategories = [
+  { key: 'all', name: '全部' },
+  { key: 'solid', name: '实心图标' },
+  { key: 'regular', name: '空心图标' },
+  { key: 'brands', name: '品牌图标' },
+  { key: 'arrows', name: '箭头' },
+  { key: 'interface', name: '界面' },
+  { key: 'media', name: '媒体' },
+  { key: 'files', name: '文件' },
+  { key: 'communication', name: '通讯' },
+  { key: 'business', name: '商务' },
+  { key: 'development', name: '开发' },
+  { key: 'social', name: '社交' },
+  { key: 'weather', name: '天气' },
+  { key: 'maps', name: '地图' },
+  { key: 'accessibility', name: '无障碍' },
+]
+
+// Element Plus 图标分类
+const elementPlusCategories = [
   { key: 'all', name: '全部' },
   { key: 'arrows', name: '箭头' },
   { key: 'ui', name: '界面' },
@@ -222,6 +267,37 @@ const iconCategories = [
   { key: 'design', name: '设计' },
   { key: 'social', name: '社交' },
 ]
+
+// Lucide 图标分类
+const lucideCategories = [
+  { key: 'all', name: '全部' },
+  { key: 'arrows', name: '箭头' },
+  { key: 'interface', name: '界面' },
+  { key: 'media', name: '媒体' },
+  { key: 'files', name: '文件' },
+  { key: 'communication', name: '通讯' },
+  { key: 'business', name: '商务' },
+  { key: 'development', name: '开发' },
+  { key: 'design', name: '设计' },
+  { key: 'social', name: '社交' },
+  { key: 'weather', name: '天气' },
+  { key: 'maps', name: '地图' },
+  { key: 'accessibility', name: '无障碍' },
+]
+
+// 计算当前分类
+const currentCategories = computed(() => {
+  switch (activeLibrary.value) {
+    case 'fontawesome':
+      return fontAwesomeCategories
+    case 'elementplus':
+      return elementPlusCategories
+    case 'lucide':
+      return lucideCategories
+    default:
+      return fontAwesomeCategories
+  }
+})
 
 // Element Plus 图标映射
 const elementPlusIcons: Record<string, unknown> = {
@@ -286,8 +362,8 @@ const elementPlusIcons: Record<string, unknown> = {
   CircleCloseFilled: markRaw(CircleCloseFilled),
 }
 
-// 图标分类映射
-const iconCategoryMap: Record<string, string[]> = {
+// Element Plus 图标分类映射
+const elementPlusCategoryMap: Record<string, string[]> = {
   arrows: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
   ui: [
     'Plus',
@@ -313,10 +389,55 @@ const iconCategoryMap: Record<string, string[]> = {
   social: ['User', 'Position', 'Compass', 'Link', 'Location'],
 }
 
+// Font Awesome 图标分类映射
+const fontAwesomeCategoryMap: Record<string, string[]> = {
+  solid: ['faHome', 'faUser', 'faHeart', 'faStar', 'faCheck', 'faTimes', 'faPlus', 'faMinus'],
+  regular: ['farUser', 'farHeart', 'farStar', 'farCheckCircle', 'farTimesCircle', 'farPlusSquare'],
+  brands: ['faGithub', 'faTwitter', 'faFacebook', 'faLinkedin', 'faInstagram', 'faYoutube'],
+  arrows: ['faArrowUp', 'faArrowDown', 'faArrowLeft', 'faArrowRight', 'faArrowCircleUp'],
+  interface: ['faCog', 'faBars', 'faEllipsisH', 'faEllipsisV', 'faExpand', 'faCompress'],
+  media: ['faPlay', 'faPause', 'faStop', 'faVolumeUp', 'faVolumeDown', 'faVolumeMute'],
+  files: ['faFile', 'faFolder', 'faFileAlt', 'faFileCode', 'faFileImage', 'faFilePdf'],
+  communication: ['faEnvelope', 'faPhone', 'faComment', 'faComments', 'faShare', 'faShareAlt'],
+  business: [
+    'faChartBar',
+    'faChartLine',
+    'faChartPie',
+    'faDollarSign',
+    'faShoppingCart',
+    'faCreditCard',
+  ],
+  development: ['faCode', 'faTerminal', 'faDatabase', 'faServer', 'faCloud', 'faGit'],
+  social: ['faUser', 'faUsers', 'faUserFriends', 'faUserCircle', 'faAddressBook', 'faIdCard'],
+  weather: ['faSun', 'faCloud', 'faCloudRain', 'faSnowflake', 'faTemperatureHigh', 'faWind'],
+  maps: ['faMap', 'faMapMarkerAlt', 'faCompass', 'faRoute', 'faStreetView', 'faGlobe'],
+  accessibility: [
+    'faWheelchair',
+    'faUniversalAccess',
+    'faAssistiveListeningSystems',
+    'faSignLanguage',
+  ],
+}
+
 // 计算属性
 const currentIcon = computed(() => {
   if (!selectedIcon.value) return null
-  return elementPlusIcons[selectedIcon.value]
+
+  // 解析图标名称，格式：library:iconName 或 iconName
+  const [library, iconName] = selectedIcon.value.includes(':')
+    ? selectedIcon.value.split(':')
+    : ['elementplus', selectedIcon.value]
+
+  switch (library) {
+    case 'fontawesome':
+      return markRaw(defineAsyncComponent(() => import('./FontAwesomeIcon.vue')))
+    case 'elementplus':
+      return elementPlusIcons[iconName]
+    case 'lucide':
+      return LucideIcons[iconName as keyof typeof LucideIcons]
+    default:
+      return null
+  }
 })
 
 const filteredIcons = computed(() => {
@@ -324,14 +445,18 @@ const filteredIcons = computed(() => {
 
   // 按分类筛选
   if (activeCategory.value !== 'all') {
-    const categoryIcons = iconCategoryMap[activeCategory.value] || []
+    const categoryMap = getCategoryMap(activeLibrary.value)
+    const categoryIcons = categoryMap[activeCategory.value] || []
     icons = icons.filter((icon) => categoryIcons.includes(icon.name))
   }
 
   // 按搜索关键词筛选
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    icons = icons.filter((icon) => icon.name.toLowerCase().includes(query))
+    icons = icons.filter(
+      (icon) =>
+        icon.name.toLowerCase().includes(query) || icon.displayName.toLowerCase().includes(query),
+    )
   }
 
   return icons
@@ -344,7 +469,7 @@ const displayIcons = computed(() => {
   if (showRecent.value && recentIcons.value.length > 0) {
     const recentIconObjects = recentIcons.value
       .map((name) => icons.find((icon) => icon.name === name))
-      .filter(Boolean)
+      .filter((icon): icon is NonNullable<typeof icon> => icon !== undefined)
 
     const otherIcons = icons.filter((icon) => !recentIcons.value.includes(icon.name))
 
@@ -354,26 +479,44 @@ const displayIcons = computed(() => {
   return icons
 })
 
+// 获取分类映射
+const getCategoryMap = (library: string): Record<string, string[]> => {
+  switch (library) {
+    case 'fontawesome':
+      return fontAwesomeCategoryMap
+    case 'elementplus':
+      return elementPlusCategoryMap
+    case 'lucide':
+      return {} // Lucide 图标需要动态分类
+    default:
+      return {}
+  }
+}
+
 // 方法
 const loadIcons = async () => {
   loading.value = true
   try {
-    const icons = Object.entries(elementPlusIcons).map(([name, component]) => {
-      // 确定图标分类
-      let category = 'all'
-      for (const [catName, iconList] of Object.entries(iconCategoryMap)) {
-        if (iconList.includes(name)) {
-          category = catName
-          break
-        }
-      }
+    let icons: Array<{
+      name: string
+      displayName: string
+      component: unknown
+      props?: any
+      category: string
+      library: string
+    }> = []
 
-      return {
-        name,
-        component,
-        category,
-      }
-    })
+    switch (activeLibrary.value) {
+      case 'fontawesome':
+        icons = loadFontAwesomeIcons()
+        break
+      case 'elementplus':
+        icons = loadElementPlusIcons()
+        break
+      case 'lucide':
+        icons = loadLucideIcons()
+        break
+    }
 
     allIcons.value = icons
   } catch (error) {
@@ -384,11 +527,273 @@ const loadIcons = async () => {
   }
 }
 
+const loadFontAwesomeIcons = () => {
+  const icons: Array<{
+    name: string
+    displayName: string
+    component: unknown
+    props?: Record<string, unknown>
+    category: string
+    library: string
+  }> = []
+
+  // Solid icons
+  const solidIcons = [
+    'faHome',
+    'faUser',
+    'faHeart',
+    'faStar',
+    'faCheck',
+    'faTimes',
+    'faPlus',
+    'faMinus',
+    'faSearch',
+    'faMenu',
+    'faCog',
+    'faEdit',
+    'faTrash',
+    'faSave',
+    'faDownload',
+    'faUpload',
+    'faPlay',
+    'faPause',
+    'faStop',
+    'faVolumeUp',
+    'faVolumeDown',
+    'faVolumeMute',
+    'faFile',
+    'faFolder',
+    'faFileAlt',
+    'faFileCode',
+    'faFileImage',
+    'faFilePdf',
+    'faEnvelope',
+    'faPhone',
+    'faComment',
+    'faComments',
+    'faShare',
+    'faShareAlt',
+    'faChartBar',
+    'faChartLine',
+    'faChartPie',
+    'faDollarSign',
+    'faShoppingCart',
+    'faCreditCard',
+    'faCode',
+    'faTerminal',
+    'faDatabase',
+    'faServer',
+    'faCloud',
+    'faGit',
+    'faSun',
+    'faCloud',
+    'faCloudRain',
+    'faSnowflake',
+    'faTemperatureHigh',
+    'faWind',
+    'faMap',
+    'faMapMarkerAlt',
+    'faCompass',
+    'faRoute',
+    'faStreetView',
+    'faGlobe',
+    'faWheelchair',
+    'faUniversalAccess',
+    'faAssistiveListeningSystems',
+    'faSignLanguage',
+    'faArrowUp',
+    'faArrowDown',
+    'faArrowLeft',
+    'faArrowRight',
+    'faArrowCircleUp',
+    'faBars',
+    'faEllipsisH',
+    'faEllipsisV',
+    'faExpand',
+    'faCompress',
+  ]
+
+  solidIcons.forEach((iconName) => {
+    icons.push({
+      name: `fontawesome:${iconName}`,
+      displayName: iconName.replace('fa', ''),
+      component: markRaw(defineAsyncComponent(() => import('./FontAwesomeIcon.vue'))),
+      props: { icon: iconName, type: 'fas' },
+      category: 'solid',
+      library: 'fontawesome',
+    })
+  })
+
+  // Regular icons
+  const regularIcons = [
+    'farUser',
+    'farHeart',
+    'farStar',
+    'farCheckCircle',
+    'farTimesCircle',
+    'farPlusSquare',
+    'farFile',
+    'farFolder',
+    'farFileAlt',
+    'farFileImage',
+    'farFilePdf',
+    'farEnvelope',
+    'farComment',
+    'farComments',
+    'farShare',
+    'farShareAlt',
+    'farChartBar',
+    'farChartLine',
+    'farChartPie',
+    'farSun',
+    'farCloud',
+    'farSnowflake',
+    'farMap',
+    'farMapMarkerAlt',
+    'farCompass',
+    'farGlobe',
+    'farWheelchair',
+    'farUniversalAccess',
+    'farAssistiveListeningSystems',
+    'farSignLanguage',
+    'farArrowUp',
+    'farArrowDown',
+    'farArrowLeft',
+    'farArrowRight',
+  ]
+
+  regularIcons.forEach((iconName) => {
+    icons.push({
+      name: `fontawesome:${iconName}`,
+      displayName: iconName.replace('far', ''),
+      component: markRaw(defineAsyncComponent(() => import('./FontAwesomeIcon.vue'))),
+      props: { icon: iconName, type: 'far' },
+      category: 'regular',
+      library: 'fontawesome',
+    })
+  })
+
+  // Brand icons
+  const brandIcons = [
+    'faGithub',
+    'faTwitter',
+    'faFacebook',
+    'faLinkedin',
+    'faInstagram',
+    'faYoutube',
+    'faChrome',
+    'faFirefox',
+    'faSafari',
+    'faEdge',
+    'faOpera',
+    'faInternetExplorer',
+    'faApple',
+    'faMicrosoft',
+    'faGoogle',
+    'faAmazon',
+    'faPaypal',
+    'faStripe',
+    'faBitcoin',
+    'faEthereum',
+    'faDiscord',
+    'faSlack',
+    'faTelegram',
+    'faWhatsapp',
+    'faVuejs',
+    'faReact',
+    'faAngular',
+    'faNodeJs',
+    'faNpm',
+    'faYarn',
+    'faLinux',
+    'faWindows',
+    'faAndroid',
+    'faApple',
+    'faDocker',
+    'faKubernetes',
+  ]
+
+  brandIcons.forEach((iconName) => {
+    icons.push({
+      name: `fontawesome:${iconName}`,
+      displayName: iconName.replace('fa', ''),
+      component: markRaw(defineAsyncComponent(() => import('./FontAwesomeIcon.vue'))),
+      props: { icon: iconName, type: 'fab' },
+      category: 'brands',
+      library: 'fontawesome',
+    })
+  })
+
+  return icons
+}
+
+const loadElementPlusIcons = () => {
+  return Object.entries(elementPlusIcons).map(([name, component]) => {
+    // 确定图标分类
+    let category = 'all'
+    for (const [catName, iconList] of Object.entries(elementPlusCategoryMap)) {
+      if (iconList.includes(name)) {
+        category = catName
+        break
+      }
+    }
+
+    return {
+      name: `elementplus:${name}`,
+      displayName: name,
+      component,
+      category,
+      library: 'elementplus',
+    }
+  })
+}
+
+const loadLucideIcons = () => {
+  return Object.entries(LucideIcons).map(([name, component]) => {
+    // 简单的分类逻辑
+    let category = 'interface'
+    if (name.includes('Arrow')) category = 'arrows'
+    else if (name.includes('File') || name.includes('Folder')) category = 'files'
+    else if (name.includes('Mail') || name.includes('Message') || name.includes('Phone'))
+      category = 'communication'
+    else if (name.includes('Chart') || name.includes('Trend')) category = 'business'
+    else if (name.includes('Code') || name.includes('Terminal') || name.includes('Database'))
+      category = 'development'
+    else if (name.includes('User') || name.includes('Users') || name.includes('People'))
+      category = 'social'
+    else if (name.includes('Sun') || name.includes('Cloud') || name.includes('Rain'))
+      category = 'weather'
+    else if (name.includes('Map') || name.includes('Compass') || name.includes('Navigation'))
+      category = 'maps'
+
+    return {
+      name: `lucide:${name}`,
+      displayName: name,
+      component: markRaw(component),
+      category,
+      library: 'lucide',
+    }
+  })
+}
+
+const handleLibraryChange = () => {
+  activeCategory.value = 'all'
+  searchQuery.value = ''
+  loadIcons()
+}
+
 const filterIcons = () => {
   // 搜索和分类筛选会自动通过计算属性处理
 }
 
-const selectIcon = (icon: { name: string; component: unknown; category: string }) => {
+const selectIcon = (icon: {
+  name: string
+  displayName: string
+  component: unknown
+  props?: any
+  category: string
+  library: string
+}) => {
   selectedIcon.value = icon.name
 
   // 添加到最近使用
@@ -488,7 +893,14 @@ const copyIconName = async (iconName: string) => {
 }
 
 // 显示图标预览
-const showIconPreview = (icon: { name: string; component: unknown; category: string }) => {
+const showIconPreview = (icon: {
+  name: string
+  displayName: string
+  component: unknown
+  props?: any
+  category: string
+  library: string
+}) => {
   // 这里可以实现预览功能，比如显示大图标预览
   console.log('Preview icon:', icon.name)
 }
@@ -572,18 +984,17 @@ onUnmounted(() => {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
   z-index: 2000;
   background: var(--el-bg-color-overlay);
   border: 1px solid var(--el-border-color);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  max-height: 500px;
+  max-height: 600px;
   overflow: hidden;
   margin-top: 4px;
   width: 100%;
-  min-width: 300px;
-  max-width: 500px;
+  min-width: 350px;
+  max-width: 600px;
 }
 
 .search-box {
@@ -591,18 +1002,22 @@ onUnmounted(() => {
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
+.library-tabs,
 .category-tabs {
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
+.library-tabs :deep(.el-tabs__header),
 .category-tabs :deep(.el-tabs__header) {
   margin: 0;
 }
 
+.library-tabs :deep(.el-tabs__nav-wrap),
 .category-tabs :deep(.el-tabs__nav-wrap) {
   padding: 0 12px;
 }
 
+.library-tabs :deep(.el-tabs__item),
 .category-tabs :deep(.el-tabs__item) {
   padding: 0 16px;
   font-size: 12px;
@@ -708,7 +1123,7 @@ onUnmounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 8px;
   padding: 12px;
-  max-height: 300px;
+  max-height: 350px;
   overflow-y: auto;
 }
 
@@ -784,14 +1199,15 @@ onUnmounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .icon-selector-dropdown {
-    max-height: 400px;
+    max-height: 500px;
+    min-width: 300px;
   }
 
   .icon-grid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 6px;
     padding: 8px;
-    max-height: 250px;
+    max-height: 300px;
   }
 
   .icon-item {
