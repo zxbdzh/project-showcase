@@ -9,6 +9,7 @@
       :on-progress="onProgress"
       :on-success="onSuccess"
       :on-error="onError"
+      :on-remove="handleRemove"
       :file-list="fileList"
       :multiple="multiple"
       :accept="accept"
@@ -420,6 +421,29 @@ const handlePreview = (file: UploadUserFile) => {
       // 非图片文件，下载或在新窗口打开
       window.open(extendedFile.url, '_blank')
     }
+  }
+}
+
+// 处理文件删除
+const handleRemove = (file: UploadUserFile) => {
+  const extendedFile = file as ExtendedUploadFile
+
+  // 从fileList中移除文件
+  const index = fileList.value.findIndex((f) => f.uid === file.uid)
+  if (index > -1) {
+    fileList.value.splice(index, 1)
+  }
+
+  // 通知父组件文件被删除
+  emit('remove', file)
+
+  // 更新v-model值
+  if (props.multiple) {
+    const urls = fileList.value.filter((f) => f.url).map((f) => f.url!)
+    emit('update:modelValue', urls)
+  } else {
+    // 单文件模式：清空值
+    emit('update:modelValue', '')
   }
 }
 

@@ -210,8 +210,11 @@ const formatDate = (dateString: string | null) => {
 
 const handleImageError = (event: Event) => {
   const img = event.target as HTMLImageElement
-  if (img && img.src !== '/placeholder-project.svg') {
+  // 如果图片加载失败，设置为空或占位符
+  if (img) {
     img.src = '/placeholder-project.svg'
+    // 添加错误样式
+    img.style.opacity = '0.7'
   }
 }
 
