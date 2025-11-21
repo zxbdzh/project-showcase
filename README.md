@@ -385,6 +385,12 @@ pnpm build
 
 ### 🔄 最新改进 (2025-01-21)
 
+- ✅ **Admin.vue TypeScript错误修复**：解决管理后台活动日志显示的类型错误
+- ✅ **变量名匹配修复**：修复模板中recentActivities与activities变量名不匹配问题
+- ✅ **字段名引用修复**：修复ActivityLog类型字段名引用错误：
+  - activity.type 改为 activity.action_type
+  - activity.title 改为 activity.description
+- ✅ **类型安全增强**：确保ActivityLog类型与数据库activity_logs表结构完全一致
 - ✅ **系统设置数据库错误修复**：解决快捷跳转和页脚设置的UUID类型错误
 - ✅ **关键错误修复**：解决系统设置服务的UUID类型错误
 - ✅ **SystemSettingsService重构**：修复updateSetting方法的逻辑错误
