@@ -8,13 +8,15 @@ import {
   type SocialLink,
   type SystemSetting,
 } from '@/utils/supabase'
+import supabaseCache from '@/utils/supabaseCache'
 
 // 基础数据服务类
 export class DatabaseService {
   // 通用错误处理
-  protected handleError(error: any, operation: string) {
+  protected handleError(error: unknown, operation: string) {
     console.error(`Database error in ${operation}:`, error)
-    throw new Error(`Failed to ${operation}: ${error.message}`)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to ${operation}: ${errorMessage}`)
   }
 
   // 通用查询方法
@@ -22,14 +24,14 @@ export class DatabaseService {
     table: string,
     options?: {
       select?: string
-      filter?: Record<string, any>
+      filter?: Record<string, unknown>
       orderBy?: { column: string; ascending?: boolean }
       limit?: number
     },
   ): Promise<T[]> {
     try {
-      // 使用最简单的方法，直接构建查询
-      let query: any = supabase.from(table)
+      // 使用PostgrestBuilder类型
+      let query = supabase.from(table) as any
 
       if (options?.select) {
         query = query.select(options.select)
@@ -85,6 +87,12 @@ export class DatabaseService {
         .single()
 
       if (error) throw error
+
+      // 检查数据是否存在
+      if (!data) {
+        throw new Error(`Record with id ${id} not found in ${table}`)
+      }
+
       return data as T
     } catch (error) {
       this.handleError(error, `update ${table}`)
@@ -183,20 +191,20 @@ export class ProjectService extends DatabaseService {
       const projectIds = projectsData.map((p) => p.id)
 
       // 获取项目分类（直接关联，不是中间表）
-      const { data: categoriesData, error: categoriesError } = await supabase
+      const { data: categoriesData } = await supabase
         .from('categories')
         .select('*')
         .in('id', projectsData.map((p) => p.category_id).filter(Boolean))
 
       // 获取项目标签关联（通过中间表）
-      const { data: projectTagsData, error: projectTagsError } = await supabase
+      const { data: projectTagsData } = await supabase
         .from('project_tags')
         .select('project_id, tag_id')
         .in('project_id', projectIds)
 
       // 获取标签详情
       const tagIds = projectTagsData?.map((pt) => pt.tag_id) || []
-      const { data: tagsData, error: tagsError } = await supabase
+      const { data: tagsData } = await supabase
         .from('tags')
         .select('*')
         .in('id', tagIds)
@@ -231,14 +239,14 @@ export class ProjectService extends DatabaseService {
     limit?: number
     orderBy?: { column: string; ascending?: boolean }
   }): Promise<Project[]> {
-    const filter: Record<string, any> = {}
+    const filter: Record<string, unknown> = {}
 
     if (options?.featured !== undefined) {
-      filter.featured = options.featured
+      ;(filter as Record<string, unknown>).featured = options.featured
     }
 
     if (options?.status) {
-      filter.status = options.status
+      ;(filter as Record<string, unknown>).status = options.status
     }
 
     return this.fetch<Project>('projects', {
@@ -279,7 +287,12 @@ export class ProjectService extends DatabaseService {
   }
 
   async updateProject(id: string, data: Partial<Project>): Promise<Project> {
-    return this.update<Project>('projects', id, data)
+    const result = await this.update<Project>('projects', id, data)
+
+    // 清除projects相关缓存
+    await supabaseCache.clearByPrefix('projects')
+
+    return result
   }
 
   async deleteProject(id: string): Promise<void> {
@@ -342,11 +355,21 @@ export class CategoryService extends DatabaseService {
   }
 
   async updateCategory(id: string, data: Partial<Category>): Promise<Category> {
-    return this.update<Category>('categories', id, data)
+    const result = await this.update<Category>('categories', id, data)
+
+    // 清除categories相关缓存
+    await supabaseCache.clearByPrefix('categories')
+
+    return result
   }
 
   async deleteCategory(id: string): Promise<void> {
-    return this.delete('categories', id)
+    const result = await this.delete('categories', id)
+
+    // 清除categories相关缓存
+    await supabaseCache.clearByPrefix('categories')
+
+    return result
   }
 }
 
@@ -385,11 +408,21 @@ export class TagService extends DatabaseService {
   }
 
   async updateTag(id: string, data: Partial<Tag>): Promise<Tag> {
-    return this.update<Tag>('tags', id, data)
+    const result = await this.update<Tag>('tags', id, data)
+
+    // 清除tags相关缓存
+    await supabaseCache.clearByPrefix('tags')
+
+    return result
   }
 
   async deleteTag(id: string): Promise<void> {
-    return this.delete('tags', id)
+    const result = await this.delete('tags', id)
+
+    // 清除tags相关缓存
+    await supabaseCache.clearByPrefix('tags')
+
+    return result
   }
 }
 
@@ -415,24 +448,31 @@ export class SkillService extends DatabaseService {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user) {
-      throw new Error('用户未登录')
-    }
 
     const skillData = {
       ...data,
-      user_id: user.id,
+      user_id: user?.id || null,
     }
 
     return this.insert<Skill>('skills', skillData)
   }
 
   async updateSkill(id: string, data: Partial<Skill>): Promise<Skill> {
-    return this.update<Skill>('skills', id, data)
+    const result = await this.update<Skill>('skills', id, data)
+
+    // 清除skills相关缓存
+    await supabaseCache.clearByPrefix('skills')
+
+    return result
   }
 
   async deleteSkill(id: string): Promise<void> {
-    return this.delete('skills', id)
+    const result = await this.delete('skills', id)
+
+    // 清除skills相关缓存
+    await supabaseCache.clearByPrefix('skills')
+
+    return result
   }
 }
 
@@ -471,11 +511,21 @@ export class SocialLinkService extends DatabaseService {
   }
 
   async updateSocialLink(id: string, data: Partial<SocialLink>): Promise<SocialLink> {
-    return this.update<SocialLink>('social_links', id, data)
+    const result = await this.update<SocialLink>('social_links', id, data)
+
+    // 清除social_links相关缓存
+    await supabaseCache.clearByPrefix('social_links')
+
+    return result
   }
 
   async deleteSocialLink(id: string): Promise<void> {
-    return this.delete('social_links', id)
+    const result = await this.delete('social_links', id)
+
+    // 清除social_links相关缓存
+    await supabaseCache.clearByPrefix('social_links')
+
+    return result
   }
 }
 
@@ -515,37 +565,12 @@ export class SystemSettingsService extends DatabaseService {
   }
 
   async updateSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
-    try {
-      // 先尝试更新
-      const { data: updateData, error: updateError } = await supabase
-        .from('system_settings')
-        .update({ value, description })
-        .eq('key', key)
-        .select()
-        .single()
+    const result = await this.update<SystemSetting>('system_settings', key, { value, description })
 
-      if (!updateError && updateData) {
-        return updateData as SystemSetting
-      }
+    // 清除system_settings相关缓存
+    await supabaseCache.clearByPrefix('system_settings')
 
-      // 如果更新失败（记录不存在），则创建新记录
-      const { data: insertData, error: insertError } = await supabase
-        .from('system_settings')
-        .insert({
-          key,
-          value,
-          description: description || key,
-          type: 'string',
-        })
-        .select()
-        .single()
-
-      if (insertError) throw insertError
-      return insertData as SystemSetting
-    } catch (error) {
-      this.handleError(error, 'update system setting')
-      throw error
-    }
+    return result
   }
 
   async batchUpdateSettings(
@@ -567,14 +592,12 @@ export class SystemSettingsService extends DatabaseService {
   }
 
   async deleteSetting(key: string): Promise<void> {
-    try {
-      const { error } = await supabase.from('system_settings').delete().eq('key', key)
+    const result = await this.delete('system_settings', key)
 
-      if (error) throw error
-    } catch (error) {
-      this.handleError(error, 'delete system setting')
-      throw error
-    }
+    // 清除system_settings相关缓存
+    await supabaseCache.clearByPrefix('system_settings')
+
+    return result
   }
 }
 

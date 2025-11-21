@@ -190,15 +190,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, markRaw } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, View, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useProjects } from '@/composables/useData'
-import { projectService } from '@/services/database'
-import type { Project } from '@/utils/supabase'
 import GlitchText from '@/components/GlitchText.vue'
 import ProjectForm from '@/components/ProjectForm.vue'
+
+// 类型定义
+interface ProjectItem {
+  id: string
+  title: string
+  description?: string
+  featured: boolean
+  sort_order: number
+  [key: string]: unknown
+}
+
+interface ProjectFormData {
+  project: Record<string, unknown>
+  categories?: string[]
+  tags?: string[]
+}
 
 const router = useRouter()
 const {
@@ -216,9 +230,9 @@ const statusFilter = ref('')
 const featuredFilter = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
-const selectedProjects = ref<any[]>([])
+const selectedProjects = ref<ProjectItem[]>([])
 const showCreateDialog = ref(false)
-const editingProject = ref<any>(null)
+const editingProject = ref<ProjectItem | null>(null)
 
 // 计算属性
 const filteredProjects = computed(() => {
@@ -263,7 +277,7 @@ const handleFilter = () => {
   currentPage.value = 1
 }
 
-const handleSelectionChange = (selection: any[]) => {
+const handleSelectionChange = (selection: ProjectItem[]) => {
   selectedProjects.value = selection
 }
 
@@ -311,16 +325,16 @@ const getStatusText = (status: string) => {
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('zh-CN')
 }
-const viewProject = (project: any) => {
+const viewProject = (project: ProjectItem) => {
   router.push(`/project/${project.id}`)
 }
 
-const editProject = (project: any) => {
+const editProject = (project: ProjectItem) => {
   editingProject.value = { ...project }
   showCreateDialog.value = true
 }
 
-const deleteProject = async (project: any) => {
+const deleteProject = async (project: ProjectItem) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除项目 "${project.title}" 吗？此操作不可恢复。`,
@@ -342,22 +356,22 @@ const deleteProject = async (project: any) => {
   }
 }
 
-const handleFeaturedChange = async (project: any) => {
+const handleFeaturedChange = async (project: ProjectItem) => {
   try {
     await updateProject(project.id, { featured: project.featured })
     ElMessage.success(project.featured ? '设为精选成功' : '取消精选成功')
-  } catch (error) {
+  } catch {
     ElMessage.error('操作失败')
     // 恢复原状态
     project.featured = !project.featured
   }
 }
 
-const handleSortOrderChange = async (project: any) => {
+const handleSortOrderChange = async (project: ProjectItem) => {
   try {
     await updateProject(project.id, { sort_order: project.sort_order })
     ElMessage.success('排序更新成功')
-  } catch (error) {
+  } catch {
     ElMessage.error('更新排序失败')
   }
 }
@@ -367,28 +381,18 @@ const handleDialogClose = () => {
   editingProject.value = null
 }
 
-const handleProjectSubmit = async (data: any) => {
+const handleProjectSubmit = async (data: ProjectFormData) => {
   try {
-    const { project, categories, tags } = data
+    const { project } = data
 
     if (editingProject.value) {
-      // 更新项目基本信息
+      // 更新项目基本信息 - 不包含category_id，因为projects表没有这个字段
       await updateProject(editingProject.value.id, project)
-
-      // 更新项目数据
-      const projectData = {
-        ...project,
-        category_id: categories && categories.length > 0 ? categories[0] : null,
-        tech_stack: tags || [],
-      }
-      await updateProject(editingProject.value.id, projectData)
 
       ElMessage.success('项目更新成功')
     } else {
       // 创建项目
-      const newProject = await createProject(project)
-
-      // 项目创建时已包含category_id和tech_stack
+      await createProject(project)
 
       ElMessage.success('项目创建成功')
     }
@@ -413,7 +417,7 @@ const batchDelete = async () => {
       },
     )
 
-    const deletePromises = selectedProjects.value.map((project: any) =>
+    const deletePromises = selectedProjects.value.map((project: ProjectItem) =>
       deleteProjectData(project.id),
     )
     await Promise.all(deletePromises)
@@ -421,16 +425,14 @@ const batchDelete = async () => {
     ElMessage.success('批量删除成功')
     selectedProjects.value = []
     await loadProjects()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('批量删除失败')
-    }
+  } catch {
+    ElMessage.error('批量删除失败')
   }
 }
 
 const batchSetFeatured = async (featured: boolean) => {
   try {
-    const updatePromises = selectedProjects.value.map((project: any) =>
+    const updatePromises = selectedProjects.value.map((project: ProjectItem) =>
       updateProject(project.id, { featured }),
     )
     await Promise.all(updatePromises)
@@ -438,7 +440,7 @@ const batchSetFeatured = async (featured: boolean) => {
     ElMessage.success(featured ? '批量设为精选成功' : '批量取消精选成功')
     selectedProjects.value = []
     await loadProjects()
-  } catch (error) {
+  } catch {
     ElMessage.error('批量操作失败')
   }
 }
