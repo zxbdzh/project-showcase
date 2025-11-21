@@ -68,53 +68,45 @@
       <div class="admin__actions-content">
         <h2 class="admin__section-title">快捷操作</h2>
         <div class="admin__actions-grid">
-          <el-button
-            type="primary"
-            size="large"
-            class="admin__action-btn"
-            @click="navigateToProjects"
-          >
-            <el-icon><Document /></el-icon>
+          <el-button type="primary" size="large" class="admin__action-btn" @click="navigateToProjects">
+            <el-icon>
+              <Document />
+            </el-icon>
             项目管理
           </el-button>
 
-          <el-button
-            type="success"
-            size="large"
-            class="admin__action-btn"
-            @click="navigateToCategories"
-          >
-            <el-icon><Folder /></el-icon>
+          <el-button type="success" size="large" class="admin__action-btn" @click="navigateToCategories">
+            <el-icon>
+              <Folder />
+            </el-icon>
             分类管理
           </el-button>
 
           <el-button type="warning" size="large" class="admin__action-btn" @click="navigateToTags">
-            <el-icon><CollectionTag /></el-icon>
+            <el-icon>
+              <CollectionTag />
+            </el-icon>
             标签管理
           </el-button>
 
           <el-button type="info" size="large" class="admin__action-btn" @click="navigateToSkills">
-            <el-icon><TrendCharts /></el-icon>
+            <el-icon>
+              <TrendCharts />
+            </el-icon>
             技能管理
           </el-button>
 
-          <el-button
-            type="danger"
-            size="large"
-            class="admin__action-btn"
-            @click="navigateToSocialLinks"
-          >
-            <el-icon><Link /></el-icon>
+          <el-button type="danger" size="large" class="admin__action-btn" @click="navigateToSocialLinks">
+            <el-icon>
+              <Link />
+            </el-icon>
             社交链接
           </el-button>
 
-          <el-button
-            type="primary"
-            size="large"
-            class="admin__action-btn"
-            @click="navigateToSiteSettings"
-          >
-            <el-icon><Setting /></el-icon>
+          <el-button type="primary" size="large" class="admin__action-btn" @click="navigateToSiteSettings">
+            <el-icon>
+              <Setting />
+            </el-icon>
             网站设置
           </el-button>
         </div>
@@ -126,14 +118,14 @@
       <div class="admin__activity-content">
         <h2 class="admin__section-title">最近活动</h2>
         <div class="admin__activity-list">
-          <div v-for="activity in recentActivities" :key="activity.id" class="admin__activity-item">
+          <div v-for="activity in activities" :key="activity.id" class="admin__activity-item">
             <div class="admin__activity-icon">
-              <el-icon :color="getActivityColor(activity.type)">
-                <component :is="getActivityIcon(activity.type)" />
+              <el-icon :color="getActivityColor(activity.action_type)">
+                <component :is="getActivityIcon(activity.action_type)" />
               </el-icon>
             </div>
             <div class="admin__activity-content">
-              <p class="admin__activity-title">{{ activity.title }}</p>
+              <p class="admin__activity-title">{{ activity.description }}</p>
               <p class="admin__activity-time">{{ formatTime(activity.created_at) }}</p>
             </div>
           </div>
@@ -206,12 +198,15 @@ import {
 } from '@element-plus/icons-vue'
 
 import GlitchText from '@/components/GlitchText.vue'
-import { useData } from '@/composables/useData'
+import { useData, useActivityLog } from '@/composables/useData'
 
 const router = useRouter()
 
 // 数据相关
 const { projects, categories, tags, skills, socialLinks } = useData()
+
+// 活动日志相关
+const { activities, loadRecentActivities } = useActivityLog()
 
 // 统计数据
 const stats = ref({
@@ -220,28 +215,6 @@ const stats = ref({
   views: 0,
   likes: 0,
 })
-
-// 最近活动
-const recentActivities = ref([
-  {
-    id: 1,
-    type: 'create',
-    title: '创建了新项目',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    type: 'update',
-    title: '更新了项目信息',
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: 3,
-    type: 'delete',
-    title: '删除了项目数据',
-    created_at: new Date(Date.now() - 7200000).toISOString(),
-  },
-])
 
 // 系统状态
 const systemStatus = ref({
@@ -333,6 +306,9 @@ onMounted(async () => {
     // 更新统计数据
     stats.value.projects = projects.value.length
     stats.value.users = 1 // 暂时固定为1，后续可以从用户表获取
+
+    // 加载最近活动数据
+    await loadRecentActivities(10)
 
     ElMessage.success('欢迎来到管理后台')
   } catch {
