@@ -565,12 +565,52 @@ export class SystemSettingsService extends DatabaseService {
   }
 
   async updateSetting(key: string, value: string, description?: string): Promise<SystemSetting> {
-    const result = await this.update<SystemSetting>('system_settings', key, { value, description })
+    try {
+      // 先尝试更新现有记录
+      const { data: existingData, error: fetchError } = await supabase
+        .from('system_settings')
+        .select('*')
+        .eq('key', key)
+        .single()
 
-    // 清除system_settings相关缓存
-    await supabaseCache.clearByPrefix('system_settings')
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError
+      }
 
-    return result
+      if (existingData) {
+        // 记录存在，进行更新
+        const { data, error } = await supabase
+          .from('system_settings')
+          .update({ value, description })
+          .eq('key', key)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        // 清除system_settings相关缓存
+        await supabaseCache.clearByPrefix('system_settings')
+
+        return data as SystemSetting
+      } else {
+        // 记录不存在，创建新记录
+        const { data, error } = await supabase
+          .from('system_settings')
+          .insert({ key, value, description })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        // 清除system_settings相关缓存
+        await supabaseCache.clearByPrefix('system_settings')
+
+        return data as SystemSetting
+      }
+    } catch (error) {
+      this.handleError(error, 'update system setting')
+      throw error
+    }
   }
 
   async batchUpdateSettings(
@@ -592,12 +632,20 @@ export class SystemSettingsService extends DatabaseService {
   }
 
   async deleteSetting(key: string): Promise<void> {
-    const result = await this.delete('system_settings', key)
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .delete()
+        .eq('key', key)
 
-    // 清除system_settings相关缓存
-    await supabaseCache.clearByPrefix('system_settings')
+      if (error) throw error
 
-    return result
+      // 清除system_settings相关缓存
+      await supabaseCache.clearByPrefix('system_settings')
+    } catch (error) {
+      this.handleError(error, 'delete system setting')
+      throw error
+    }
   }
 }
 
