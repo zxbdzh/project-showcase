@@ -1,0 +1,91 @@
+/* FontAwesome深色模式修复 - 全局样式 */
+html.dark {
+  /* 强制所有FontAwesome图标在深色模式下显示为白色 */
+  .icon-selector svg,
+  .icon-selector svg *,
+  font-awesome-icon svg,
+  font-awesome-icon svg * {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    opacity: 1 !important;
+  }
+
+  /* 悬停状态 */
+  .icon-selector .icon-display:hover svg,
+  .icon-selector .icon-display:hover font-awesome-icon svg,
+  .icon-selector .icon-item:hover svg,
+  .icon-selector .icon-item:hover font-awesome-icon svg,
+  .icon-selector .icon-display:hover svg *,
+  .icon-selector .icon-display:hover font-awesome-icon svg *,
+  .icon-selector .icon-item:hover svg *,
+  .icon-selector .icon-item:hover font-awesome-icon svg * {
+    color: #409eff !important;
+    fill: #409eff !important;
+    opacity: 1 !important;
+  }
+
+  /* 选中状态 */
+  .icon-selector .icon-item.selected svg,
+  .icon-selector .icon-item.selected font-awesome-icon svg,
+  .icon-selector .icon-item.selected svg *,
+  .icon-selector .icon-item.selected font-awesome-icon svg * {
+    color: #409eff !important;
+    fill: #409eff !important;
+    opacity: 1 !important;
+  }
+
+  /* FontAwesome特定类名 */
+  .icon-selector .fa-svg-inline--fa,
+  .icon-selector .svg-inline--fa {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+  }
+
+  .icon-selector .icon-display:hover .fa-svg-inline--fa,
+  .icon-selector .icon-display:hover .svg-inline--fa,
+  .icon-selector .icon-item:hover .fa-svg-inline--fa,
+  .icon-selector .icon-item:hover .svg-inline--fa {
+    color: #409eff !important;
+    fill: #409eff !important;
+  }
+
+  .icon-selector .icon-item.selected .fa-svg-inline--fa,
+  .icon-selector .icon-item.selected .svg-inline--fa {
+    color: #409eff !important;
+    fill: #409eff !important;
+  }
+
+  /* 搜索框图标 */
+  .icon-selector .search-box .fa-svg-inline--fa,
+  .icon-selector .search-box .svg-inline--fa {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+  }
+}
+
+/* 额外的全局强制样式 */
+html.dark .fa-primary,
+html.dark .fa-secondary {
+  fill: #ffffff !important;
+}
+
+html.dark .icon-display:hover .fa-primary,
+html.dark .icon-display:hover .fa-secondary,
+html.dark .icon-item:hover .fa-primary,
+html.dark .icon-item:hover .fa-secondary,
+html.dark .icon-item.selected .fa-primary,
+html.dark .icon-item.selected .fa-secondary {
+  fill: #409eff !important;
+}
+
+/* 路径元素强制样式 */
+html.dark .icon-selector svg path,
+html.dark font-awesome-icon svg path {
+  fill: #ffffff !important;
+}
+
+html.dark .icon-selector .icon-display:hover svg path,
+html.dark .icon-selector .icon-item:hover svg path,
+html.dark .icon-selector .icon-item.selected svg path {
+  fill: #409eff !important;
+}

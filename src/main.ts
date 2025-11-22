@@ -7,6 +7,7 @@ import './styles/element-plus-theme.scss'
 import './styles/animations.scss'
 import './styles/card-effects.scss'
 import './styles/scrollbar.scss'
+import './styles/fontawesome-dark-mode.scss'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 // Font Awesome
@@ -15,7 +16,6 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { fas } from '@fortawesome/free-solid-svg-icons'
 import { far } from '@fortawesome/free-regular-svg-icons'
 import { fab } from '@fortawesome/free-brands-svg-icons'
-import '@fortawesome/fontawesome-free/css/all.css'
 
 // 添加所有图标到库
 library.add(fas, far, fab)

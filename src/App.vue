@@ -1,5 +1,8 @@
 <template>
   <div id="app" :data-theme="actualTheme">
+    <!-- 全局页面加载器 -->
+    <GlobalPageLoader />
+
     <router-view :key="route.fullPath" />
   </div>
 </template>
@@ -9,6 +12,7 @@ import { onMounted } from 'vue'
 import { useTheme } from './composables/useTheme'
 import { initializeData } from './composables/useData'
 import { useRoute } from 'vue-router'
+import GlobalPageLoader from './components/GlobalPageLoader.vue'
 
 const route = useRoute()
 

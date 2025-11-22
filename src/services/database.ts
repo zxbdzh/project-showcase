@@ -7,6 +7,7 @@ import {
   type Skill,
   type SocialLink,
   type SystemSetting,
+  type ActivityLog,
 } from '@/utils/supabase'
 import supabaseCache from '@/utils/supabaseCache'
 
@@ -649,6 +650,93 @@ export class SystemSettingsService extends DatabaseService {
   }
 }
 
+// 活动日志服务
+export class ActivityLogService extends DatabaseService {
+  async getActivities(options?: {
+    limit?: number
+    entityType?: string
+    actionType?: string
+    userId?: string
+    entity_id?: string
+  }): Promise<ActivityLog[]> {
+    try {
+      let query = supabase
+        .from('activity_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (options?.limit) {
+        query = query.limit(options.limit)
+      }
+
+      if (options?.entityType) {
+        query = query.eq('entity_type', options.entityType)
+      }
+
+      if (options?.actionType) {
+        query = query.eq('action_type', options.actionType)
+      }
+
+      if (options?.userId) {
+        query = query.eq('user_id', options.userId)
+      }
+
+      if (options?.entity_id) {
+        query = query.eq('entity_id', options.entity_id)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      return data as ActivityLog[]
+    } catch (error) {
+      this.handleError(error, 'get activities')
+      throw error
+    }
+  }
+
+  async createActivity(
+    actionType: string,
+    entityType: string,
+    entity_id?: string,
+    description?: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<ActivityLog> {
+    try {
+      // 获取当前用户ID
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      const activityData = {
+        user_id: user?.id || null,
+        action_type: actionType,
+        entity_type: entityType,
+        entity_id: entity_id || null,
+        description: description || null,
+        metadata: metadata || null,
+      }
+
+      return this.insert<ActivityLog>('activity_logs', activityData)
+    } catch (error) {
+      this.handleError(error, 'create activity')
+      throw error
+    }
+  }
+
+  async getRecentActivities(limit: number = 10): Promise<ActivityLog[]> {
+    return this.getActivities({ limit })
+  }
+
+  async getActivitiesByEntity(entityType: string, entity_id: string): Promise<ActivityLog[]> {
+    return this.getActivities({ entityType, entity_id })
+  }
+
+  async getActivitiesByUser(userId: string, limit: number = 20): Promise<ActivityLog[]> {
+    return this.getActivities({ userId, limit })
+  }
+}
+
 // 导出类型和服务实例
 export type {
   Profile,
@@ -658,6 +746,7 @@ export type {
   Skill,
   SocialLink,
   SystemSetting,
+  ActivityLog,
 } from '@/utils/supabase'
 export const profileService = new ProfileService()
 export const projectService = new ProjectService()
@@ -666,3 +755,4 @@ export const tagService = new TagService()
 export const skillService = new SkillService()
 export const socialLinkService = new SocialLinkService()
 export const systemSettingsService = new SystemSettingsService()
+export const activityLogService = new ActivityLogService()

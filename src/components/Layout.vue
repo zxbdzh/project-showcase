@@ -21,6 +21,7 @@
         </div>
 
         <div class="layout__nav-actions">
+          <quick-links />
           <theme-toggle />
           <el-button v-if="!isAuthenticated" type="primary" @click="showLoginModal = true">
             登录
@@ -50,10 +51,8 @@
       </router-view>
     </main>
 
-    <!-- 页脚 -->
-    <footer class="layout__footer">
-      <p>&copy; 2024 Geek Portfolio. Built with Vue 3 & Supabase.</p>
-    </footer>
+    <!-- 动态页脚 -->
+    <Footer />
 
     <!-- 登录模态框 -->
     <el-dialog v-model="showLoginModal" title="用户登录" width="400px" :show-close="false" center>
@@ -78,7 +77,9 @@ import { useTheme } from '@/composables/useTheme'
 import { useSystemSettings } from '@/composables/useData'
 import MatrixRain from '@/components/MatrixRain.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import QuickLinks from '@/components/QuickLinks.vue'
 import GlitchText from '@/components/GlitchText.vue'
+import Footer from '@/components/Footer.vue'
 import LoginForm from '@/components/Auth/LoginForm.vue'
 import ChangePasswordDialog from '@/components/Auth/ChangePasswordDialog.vue'
 
@@ -113,7 +114,9 @@ const brandTextClass = computed(() => ({
 
 // 处理Logo加载错误
 const handleLogoError = (event: Event) => {
-  console.warn('Logo failed to load:', event)
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('Logo failed to load:', event)
+  }
   // 可以在这里设置一个默认logo或者回退到文字显示
 }
 
@@ -184,21 +187,27 @@ const updateFavicon = () => {
       $favicon.type = 'image/x-icon'
       $favicon.href = favicon
       document.head.appendChild($favicon)
-      console.log('Layout new favicon created:', favicon)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Layout new favicon created:', favicon)
+      }
     }
 
     // 同时处理shortcut icon
     let $shortcutIcon = document.querySelector('link[rel="shortcut icon"]') as HTMLLinkElement
     if ($shortcutIcon !== null) {
       $shortcutIcon.href = favicon
-      console.log('Layout shortcut icon updated:', favicon)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Layout shortcut icon updated:', favicon)
+      }
     } else {
       $shortcutIcon = document.createElement('link')
       $shortcutIcon.rel = 'shortcut icon'
       $shortcutIcon.type = 'image/x-icon'
       $shortcutIcon.href = favicon
       document.head.appendChild($shortcutIcon)
-      console.log('Layout new shortcut icon created:', favicon)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Layout new shortcut icon created:', favicon)
+      }
     }
 
     // 额外的强制刷新技术
@@ -206,10 +215,14 @@ const updateFavicon = () => {
       // 使用Image对象预加载强制浏览器重新下载
       const img = new Image()
       img.onload = () => {
-        console.log('Layout favicon preloaded successfully')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Layout favicon preloaded successfully')
+        }
       }
       img.onerror = () => {
-        console.log('Layout favicon preload failed')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Layout favicon preload failed')
+        }
       }
       img.src = favicon
 
@@ -272,7 +285,9 @@ const applyPageSettings = () => {
     meta.content = author
   }
 
-  console.log('Layout page settings applied')
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Layout page settings applied')
+  }
 }
 
 // 初始化系统设置

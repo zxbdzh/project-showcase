@@ -177,7 +177,9 @@ const fetchProject = async () => {
       ElMessage.warning('项目不存在或已被删除')
     }
   } catch (error: unknown) {
-    console.error('获取项目详情失败:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('获取项目详情失败:', error)
+    }
     ElMessage.error('获取项目详情失败')
   } finally {
     loading.value = false

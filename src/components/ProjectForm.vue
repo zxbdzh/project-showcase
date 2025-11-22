@@ -1,12 +1,6 @@
 <template>
   <div class="project-form">
-    <el-form
-      ref="formRef"
-      :model="formData"
-      :rules="formRules"
-      label-width="120px"
-      label-position="top"
-    >
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" label-position="top">
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="项目标题" prop="title">
@@ -18,12 +12,7 @@
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="项目描述" prop="description">
-            <el-input
-              v-model="formData.description"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入项目描述"
-            />
+            <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入项目描述" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -45,22 +34,12 @@
         </el-col>
         <el-col :span="6">
           <el-form-item label="排序" prop="sort_order">
-            <el-input-number
-              v-model="formData.sort_order"
-              :min="0"
-              :max="999"
-              placeholder="排序值"
-            />
+            <el-input-number v-model="formData.sort_order" :min="0" :max="999" placeholder="排序值" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="20">
-        <el-col :span="8">
-          <el-form-item label="项目图标" prop="icon">
-            <icon-selector v-model="formData.icon" placeholder="选择项目图标" />
-          </el-form-item>
-        </el-col>
         <el-col :span="8">
           <el-form-item label="演示链接" prop="demo_url">
             <el-input v-model="formData.demo_url" placeholder="https://example.com" />
@@ -68,10 +47,7 @@
         </el-col>
         <el-col :span="8">
           <el-form-item label="GitHub链接" prop="github_url">
-            <el-input
-              v-model="formData.github_url"
-              placeholder="https://github.com/username/repo"
-            />
+            <el-input v-model="formData.github_url" placeholder="https://github.com/username/repo" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -79,19 +55,9 @@
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="封面图片" prop="cover_image">
-            <file-upload
-              v-model="formData.cover_image"
-              :multiple="false"
-              :limit="1"
-              accept=".png,.jpg,.jpeg"
-              :drag="false"
-              :show-file-list="true"
-              bucket="project-showcase"
-              folder="covers"
-              @success="handleCoverUploadSuccess"
-              @error="handleCoverUploadError"
-              @remove="handleCoverRemove"
-            />
+            <file-upload v-model="formData.cover_image" :multiple="false" :limit="1" accept=".png,.jpg,.jpeg"
+              :drag="false" :show-file-list="true" bucket="project-showcase" folder="covers"
+              @success="handleCoverUploadSuccess" @error="handleCoverUploadError" @remove="handleCoverRemove" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -99,45 +65,24 @@
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="项目内容" prop="content">
-            <el-input
-              v-model="formData.content"
-              type="textarea"
-              :rows="8"
-              placeholder="请输入详细的项目介绍，支持Markdown格式"
-            />
+            <el-input v-model="formData.content" type="textarea" :rows="8" placeholder="请输入详细的项目介绍，支持Markdown格式" />
           </el-form-item>
         </el-col>
       </el-row>
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="项目分类" prop="categories">
-            <el-select
-              v-model="formData.categories"
-              multiple
-              placeholder="请选择项目分类"
-              style="width: 100%"
-            >
-              <el-option
-                v-for="category in categories"
-                :key="category.id"
-                :label="category.name"
-                :value="category.id"
-              />
+          <el-form-item label="项目分类" prop="category">
+            <el-select v-model="formData.category" placeholder="请选择项目分类" style="width: 100%">
+              <el-option v-for="category in categories" :key="category.id" :label="category.name"
+                :value="category.id" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="项目标签" prop="tags">
-            <el-select
-              v-model="formData.tags"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              placeholder="请选择或输入项目标签"
-              style="width: 100%"
-            >
+            <el-select v-model="formData.tags" multiple filterable allow-create default-first-option
+              placeholder="请选择或输入项目标签" style="width: 100%">
               <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
             </el-select>
           </el-form-item>
@@ -161,15 +106,34 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import FileUpload from '@/components/FileUpload.vue'
-import IconSelector from '@/components/IconSelector.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useCategories, useTags } from '@/composables/useData'
+
+interface ProjectData {
+  id: string
+  title: string
+  description?: string
+  content?: string
+  demo_url?: string
+  github_url?: string
+  cover_image?: string
+  featured: boolean
+  status: 'draft' | 'published' | 'archived'
+  sort_order: number
+  categories?: { id: string; name: string }[]
+  tags?: { id: string; name: string }[]
+}
 
 interface Props {
-  project?: any
+  project?: ProjectData
 }
 
 interface Emits {
-  (e: 'submit', data: any): void
+  (e: 'submit', data: {
+    project: Record<string, unknown>
+    category: string
+    tags: string[]
+  }): void
   (e: 'cancel'): void
 }
 
@@ -188,12 +152,11 @@ const formData = reactive({
   demo_url: '',
   github_url: '',
   cover_image: '',
-  icon: '',
   featured: false,
-  status: 'draft',
+  status: 'draft' as 'draft' | 'published' | 'archived',
   sort_order: 0,
-  categories: [],
-  tags: [],
+  category: '',
+  tags: [] as string[],
 })
 
 // 表单验证规则
@@ -225,33 +188,18 @@ const resetForm = () => {
     demo_url: '',
     github_url: '',
     cover_image: '',
-    icon: '',
     featured: false,
-    status: 'draft',
+    status: 'draft' as 'draft' | 'published' | 'archived',
     sort_order: 0,
-    categories: [],
-    tags: [],
+    category: '',
+    tags: [] as string[],
   })
   formRef.value?.clearValidate()
 }
 
-// 模拟数据（实际应该从API获取）
-const categories = ref([
-  { id: 1, name: 'Web开发' },
-  { id: 2, name: '移动应用' },
-  { id: 3, name: '后端开发' },
-  { id: 4, name: '人工智能' },
-  { id: 5, name: '数据科学' },
-])
-
-const tags = ref([
-  { id: 1, name: 'Vue.js' },
-  { id: 2, name: 'React' },
-  { id: 3, name: 'Node.js' },
-  { id: 4, name: 'Python' },
-  { id: 5, name: 'Docker' },
-  { id: 6, name: 'MongoDB' },
-])
+// 从API获取真实数据
+const { categories, loadCategories } = useCategories()
+const { tags, loadTags } = useTags()
 
 // 监听props变化，初始化表单数据
 watch(
@@ -265,11 +213,10 @@ watch(
         demo_url: newProject.demo_url || '',
         github_url: newProject.github_url || '',
         cover_image: newProject.cover_image || '',
-        icon: newProject.icon || '',
         featured: newProject.featured || false,
-        status: newProject.status || 'active',
+        status: newProject.status || 'draft',
         sort_order: newProject.sort_order || 0,
-        categories: newProject.categories?.map((c: { id: string }) => c.id) || [],
+        category: newProject.categories?.[0]?.id || '',
         tags: newProject.tags?.map((t: { id: string }) => t.id) || [],
       })
     } else {
@@ -287,13 +234,13 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitting.value = true
 
-    // 准备提交数据 - 排除categories和tags，因为它们是关联表
-    const { categories, tags, ...projectData } = formData
+    // 准备提交数据
+    const { category, tags, ...projectData } = formData
 
     const submitData = {
       ...projectData,
       // 如果是编辑模式，包含ID
-      ...(isEdit.value && { id: props.project.id }),
+      ...(isEdit.value && { id: props.project?.id }),
       // 创建项目时需要user_id
       ...(!isEdit.value && user.value && { user_id: user.value.id }),
     }
@@ -301,7 +248,7 @@ const handleSubmit = async () => {
     // 发送项目数据和关联数据
     emit('submit', {
       project: submitData,
-      categories,
+      category,
       tags,
     })
   } catch {
@@ -312,20 +259,17 @@ const handleSubmit = async () => {
 }
 
 // 处理封面图片上传成功
-const handleCoverUploadSuccess = (response: unknown, file: any) => {
-  console.log('Cover upload success:', response, file)
+const handleCoverUploadSuccess = () => {
   // v-model会自动更新formData.cover_image
 }
 
 // 处理封面图片上传失败
-const handleCoverUploadError = (error: Error, file: any) => {
-  console.error('Cover upload error:', error, file)
+const handleCoverUploadError = () => {
   ElMessage.error('封面图片上传失败')
 }
 
 // 处理封面图片删除
-const handleCoverRemove = (file: any) => {
-  console.log('Cover removed:', file)
+const handleCoverRemove = () => {
   // v-model会自动更新formData.cover_image为空字符串
 }
 
@@ -335,8 +279,16 @@ const handleCancel = () => {
 }
 
 // 组件挂载时初始化
-onMounted(() => {
-  // 这里可以加载分类和标签数据
+onMounted(async () => {
+  // 加载分类和标签数据
+  try {
+    await Promise.all([
+      loadCategories(),
+      loadTags(),
+    ])
+  } catch (error) {
+    console.error('Failed to load categories and tags:', error)
+  }
 })
 </script>
 

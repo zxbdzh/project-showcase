@@ -161,7 +161,9 @@ const handleSubmit = async () => {
       ElMessage.error(result.error || '修改密码失败')
     }
   } catch (err) {
-    console.error('Form validation error:', err)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Form validation error:', err)
+    }
   }
 }
 

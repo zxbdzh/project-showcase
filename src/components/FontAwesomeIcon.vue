@@ -1,20 +1,10 @@
 <template>
-  <font-awesome-icon
-    :icon="iconDefinition"
-    :size="normalizedSize"
-    :color="iconColor"
-    :rotation="rotate"
-    :flip="flip"
-    :spin="spin"
-    :pulse="pulse"
-    :border="border"
-    :pull="pull"
-    :class="iconClass"
-  />
+  <font-awesome-icon :icon="iconDefinition" :size="normalizedSize" :rotation="rotate" :flip="flip" :spin="spin"
+    :pulse="pulse" :border="border" :pull="pull" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import type { IconDefinition, IconName, SizeProp } from '@fortawesome/fontawesome-svg-core'
 import { fas } from '@fortawesome/free-solid-svg-icons'
@@ -46,33 +36,24 @@ const props = withDefaults(defineProps<Props>(), {
   pull: undefined,
 })
 
-// 获取图标定义
+// 图标定义（不变）
 const iconDefinition = computed((): IconDefinition => {
   const iconLibrary = props.type === 'fas' ? fas : props.type === 'far' ? far : fab
   const iconName = props.icon.replace(/^(fa|fas|far|fab)-?/, '') as IconName
 
   const icon = iconLibrary[iconName]
-
   if (!icon) {
-    // 如果找不到图标，尝试在其他库中查找
-    if (props.type !== 'fab' && fab[iconName]) {
-      return fab[iconName] as IconDefinition
-    }
-    if (props.type !== 'fas' && fas[iconName]) {
-      return fas[iconName] as IconDefinition
-    }
-    if (props.type !== 'far' && far && far[iconName]) {
-      return far[iconName] as IconDefinition
-    }
+    if (props.type !== 'fab' && fab[iconName]) return fab[iconName] as IconDefinition
+    if (props.type !== 'fas' && fas[iconName]) return fas[iconName] as IconDefinition
+    if (props.type !== 'far' && far[iconName]) return far[iconName] as IconDefinition
 
-    // 如果都找不到，返回一个默认图标
     console.warn(`Icon "${props.icon}" not found in any Font Awesome library`)
-    return fas['question'] as IconDefinition // 使用问号图标作为默认
+    return fas['question'] as IconDefinition
   }
   return icon
 })
 
-// 标准化尺寸
+// 标准化尺寸（补充完整类型定义中的尺寸）
 const normalizedSize = computed((): SizeProp | undefined => {
   if (!props.size) return undefined
 
@@ -80,14 +61,14 @@ const normalizedSize = computed((): SizeProp | undefined => {
     if (props.size <= 12) return '2xs'
     if (props.size <= 16) return 'xs'
     if (props.size <= 20) return 'sm'
-    if (props.size <= 24) return undefined // default
+    if (props.size <= 24) return undefined
     if (props.size <= 32) return 'lg'
     if (props.size <= 40) return 'xl'
     if (props.size <= 48) return '2xl'
-    return '2xl' // 使用2xl作为最大尺寸，因为3xl可能在Font Awesome 7.x中不支持
+    if (props.size <= 64) return '3x'
+    return '4x'
   }
 
-  // 字符串尺寸直接返回，移除可能不支持的尺寸
   const sizeMap: Record<string, SizeProp> = {
     '2xs': '2xs',
     xs: 'xs',
@@ -95,45 +76,52 @@ const normalizedSize = computed((): SizeProp | undefined => {
     lg: 'lg',
     xl: 'xl',
     '2xl': '2xl',
+    '3xl': '3xl',
+    '4xl': '4xl',
+    '5xl': '5xl',
+    '1x': '1x',
+    '2x': '2x',
   }
-
   return sizeMap[props.size] || undefined
 })
 
-// 图标颜色处理
+// 颜色处理（不变）
+const isDark = computed(() => document.documentElement.classList.contains('dark'))
 const iconColor = computed(() => {
-  // 如果有明确指定颜色，使用指定颜色
-  if (props.color) {
-    return props.color
-  }
-
-  // 否则根据当前主题返回合适的颜色
-  const isDark = document.documentElement.classList.contains('dark')
-  return isDark ? '#e5eaf3' : '#606266'
+  if (props.color) return props.color
+  return isDark.value ? '#e5eaf3' : '#606266'
 })
 
-// 图标样式类
-const iconClass = computed(() => {
-  return ['fa-icon', props.type].filter(Boolean).join(' ')
+// 监听深色模式变化（确保动态更新）
+watch(isDark, () => {
+  iconColor.value = iconColor.value // 触发样式更新
+})
+onMounted(() => {
+  iconColor.value = iconColor.value // 挂载后初始化
 })
 </script>
 
 <style scoped>
-.fa-icon {
-  transition: color 0.3s ease;
+/* 外层容器：承载颜色变量，控制过渡效果 */
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: --icon-color 0.3s ease;
+  /* 过渡效果 */
 }
 
-/* 确保图标在深色模式下有正确的颜色 */
-html.dark .fa-icon {
-  color: #e5eaf3 !important;
-}
-
-html:not(.dark) .fa-icon {
-  color: #606266 !important;
-}
-
-/* 如果有明确指定颜色，优先使用 */
-.fa-icon[style*='color'] {
-  color: inherit !important;
+/* 关键：穿透到 FontAwesome 内部的 SVG 元素，直接设色 */
+::v-deep .icon-wrapper .svg-inline--fa svg,
+::v-deep .icon-wrapper .svg-inline--fa path {
+  /* 使用 CSS 变量传递颜色，优先级最高 */
+  color: var(--icon-color) !important;
+  fill: var(--icon-color) !important;
+  /* 填充色 = 颜色变量 */
+  stroke: var(--icon-color) !important;
+  /* 描边色 = 颜色变量（兼容部分图标） */
+  /* 清除可能的默认样式干扰 */
+  fill-opacity: 1 !important;
+  stroke-opacity: 1 !important;
 }
 </style>

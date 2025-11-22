@@ -170,6 +170,30 @@
               </el-col>
             </el-row>
           </el-card>
+
+          <!-- 快捷跳转设置 -->
+          <el-card class="settings-section">
+            <template #header>
+              <div class="section-header">
+                <el-icon><Link /></el-icon>
+                <span>快捷跳转</span>
+              </div>
+            </template>
+
+            <quick-links-settings />
+          </el-card>
+
+          <!-- 页脚设置 -->
+          <el-card class="settings-section">
+            <template #header>
+              <div class="section-header">
+                <el-icon><Setting /></el-icon>
+                <span>页脚设置</span>
+              </div>
+            </template>
+
+            <footer-settings />
+          </el-card>
         </el-form>
       </div>
     </section>
@@ -180,11 +204,13 @@
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { UploadUserFile } from 'element-plus'
-import { ArrowLeft, Check, Setting, Picture, Search } from '@element-plus/icons-vue'
+import { ArrowLeft, Check, Setting, Picture, Search, Link } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import GlitchText from '@/components/GlitchText.vue'
 import FileUpload from '@/components/FileUpload.vue'
 import IconSelector from '@/components/IconSelector.vue'
+import QuickLinksSettings from '@/components/QuickLinksSettings.vue'
+import FooterSettings from '@/components/FooterSettings.vue'
 import { useSystemSettings } from '@/composables/useData'
 
 const router = useRouter()
@@ -235,7 +261,9 @@ const loadSettings = async () => {
     // 使用Object.assign避免触发不必要的响应式更新
     Object.assign(settings.value, newSettings)
   } catch (error) {
-    console.error('Failed to load settings:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to load settings:', error)
+    }
     ElMessage.error('加载设置失败')
   }
 }
@@ -289,7 +317,9 @@ const updateFavicon = () => {
     if ($favicon !== null) {
       // 如果存在现有的favicon，直接更新href
       $favicon.href = settings.value.site_favicon
-      console.log('Existing favicon updated:', settings.value.site_favicon)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Existing favicon updated:', settings.value.site_favicon)
+      }
     } else {
       // 如果不存在，创建新的favicon元素
       $favicon = document.createElement('link')
@@ -297,21 +327,27 @@ const updateFavicon = () => {
       $favicon.type = 'image/x-icon'
       $favicon.href = settings.value.site_favicon
       document.head.appendChild($favicon)
-      console.log('New favicon created:', settings.value.site_favicon)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('New favicon created:', settings.value.site_favicon)
+      }
     }
 
     // 同时处理shortcut icon
     let $shortcutIcon = document.querySelector('link[rel="shortcut icon"]') as HTMLLinkElement
     if ($shortcutIcon !== null) {
       $shortcutIcon.href = settings.value.site_favicon
-      console.log('Existing shortcut icon updated:', settings.value.site_favicon)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Existing shortcut icon updated:', settings.value.site_favicon)
+      }
     } else {
       $shortcutIcon = document.createElement('link')
       $shortcutIcon.rel = 'shortcut icon'
       $shortcutIcon.type = 'image/x-icon'
       $shortcutIcon.href = settings.value.site_favicon
       document.head.appendChild($shortcutIcon)
-      console.log('New shortcut icon created:', settings.value.site_favicon)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('New shortcut icon created:', settings.value.site_favicon)
+      }
     }
 
     // 额外的强制刷新技术
@@ -319,10 +355,14 @@ const updateFavicon = () => {
       // 方法1: 使用Image对象预加载强制浏览器重新下载
       const img = new Image()
       img.onload = () => {
-        console.log('Favicon preloaded successfully')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Favicon preloaded successfully')
+        }
       }
       img.onerror = () => {
-        console.log('Favicon preload failed')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Favicon preload failed')
+        }
       }
       img.src = settings.value.site_favicon
 
@@ -349,20 +389,26 @@ const updateFavicon = () => {
       })
     }
 
-    console.log('Favicon update completed using blog garden method:', settings.value.site_favicon)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Favicon update completed using blog garden method:', settings.value.site_favicon)
+    }
   } else {
     // 如果favicon为空，恢复默认的favicon
     let $favicon = document.querySelector('link[rel="icon"]') as HTMLLinkElement
     if ($favicon !== null) {
       $favicon.href = '/favicon.ico'
-      console.log('Favicon reset to default')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Favicon reset to default')
+      }
     } else {
       $favicon = document.createElement('link')
       $favicon.rel = 'icon'
       $favicon.type = 'image/x-icon'
       $favicon.href = '/favicon.ico'
       document.head.appendChild($favicon)
-      console.log('Default favicon created')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Default favicon created')
+      }
     }
 
     // 同时处理shortcut icon
@@ -407,7 +453,9 @@ const saveSettings = async () => {
 
     ElMessage.success('设置保存成功')
   } catch (error) {
-    console.error('Failed to save settings:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to save settings:', error)
+    }
     ElMessage.error('保存设置失败')
   } finally {
     saving.value = false
@@ -416,25 +464,33 @@ const saveSettings = async () => {
 
 // 处理Logo上传成功
 const handleLogoUploadSuccess = (response: unknown, file: UploadUserFile) => {
-  console.log('Logo upload success:', response, file)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Logo upload success:', response, file)
+  }
   // v-model会自动更新settings.site_logo
 }
 
 // 处理Logo上传失败
 const handleLogoUploadError = (error: Error, file: UploadUserFile) => {
-  console.error('Logo upload error:', error, file)
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Logo upload error:', error, file)
+  }
   ElMessage.error('Logo上传失败')
 }
 
 // 处理Logo删除
 const handleLogoRemove = (file: UploadUserFile) => {
-  console.log('Logo removed:', file)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Logo removed:', file)
+  }
   // v-model会自动更新settings.site_logo为空字符串
 }
 
 // 处理Favicon上传成功
 const handleFaviconUploadSuccess = (response: unknown, file: UploadUserFile) => {
-  console.log('Favicon upload success:', response, file)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Favicon upload success:', response, file)
+  }
   // v-model会自动更新settings.site_favicon
   // 立即应用favicon到页面
   updateFavicon()
@@ -442,13 +498,17 @@ const handleFaviconUploadSuccess = (response: unknown, file: UploadUserFile) => 
 
 // 处理Favicon上传失败
 const handleFaviconUploadError = (error: Error, file: UploadUserFile) => {
-  console.error('Favicon upload error:', error, file)
+  if (process.env.NODE_ENV === 'development') {
+    console.error('Favicon upload error:', error, file)
+  }
   ElMessage.error('Favicon上传失败')
 }
 
 // 处理Favicon删除
 const handleFaviconRemove = (file: UploadUserFile) => {
-  console.log('Favicon removed:', file)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Favicon removed:', file)
+  }
   // v-model会自动更新settings.site_favicon为空字符串
   // 立即更新favicon
   updateFavicon()

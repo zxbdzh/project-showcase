@@ -255,6 +255,7 @@ export interface Database {
           platform: string
           url: string
           icon: string | null
+          icon_url: string | null
           is_active: boolean | null
           sort_order: number | null
           user_id: string | null
@@ -316,6 +317,38 @@ export interface Database {
           updated_at?: string
         }
       }
+      activity_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          action_type: string
+          entity_type: string
+          entity_id: string | null
+          description: string | null
+          metadata: unknown | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          action_type: string
+          entity_type: string
+          entity_id?: string | null
+          description?: string | null
+          metadata?: unknown | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          action_type?: string
+          entity_type?: string
+          entity_id?: string | null
+          description?: string | null
+          metadata?: unknown | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -340,6 +373,7 @@ export type Tag = Database['public']['Tables']['tags']['Row']
 export type Skill = Database['public']['Tables']['skills']['Row']
 export type SocialLink = Database['public']['Tables']['social_links']['Row']
 export type SystemSetting = Database['public']['Tables']['system_settings']['Row']
+export type ActivityLog = Database['public']['Tables']['activity_logs']['Row']
 
 export type ProjectInsert = Database['public']['Tables']['projects']['Insert']
 export type ProjectUpdate = Database['public']['Tables']['projects']['Update']

@@ -346,7 +346,9 @@ const beforeUpload = async (file: UploadUserFile) => {
       emit('error', new Error(result.error || '上传失败'), file)
     }
   } catch (error) {
-    console.error('Upload error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Upload error:', error)
+    }
 
     // 创建失败记录
     const uploadFile: ExtendedUploadFile = {
@@ -376,7 +378,7 @@ const onProgress = (event: { percent: number }, file: UploadUserFile) => {
 // 上传成功
 const onSuccess = (response: unknown, file: UploadUserFile) => {
   // 由于我们在beforeUpload中处理了上传逻辑，这里主要是为了兼容Element Plus
-  console.log('Upload success:', response, file)
+  // console.log('Upload success:', response, file)
 }
 
 // 上传失败

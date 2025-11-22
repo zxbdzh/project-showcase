@@ -77,7 +77,6 @@ import { Message, Lock } from '@element-plus/icons-vue'
 import { useAuth } from '@/composables/useAuth'
 import { useTheme } from '@/composables/useTheme'
 import GlitchText from '@/components/GlitchText.vue'
-import ChangePasswordDialog from '@/components/Auth/ChangePasswordDialog.vue'
 
 interface Emits {
   (e: 'switch-mode', mode: 'register' | 'login'): void
@@ -90,7 +89,6 @@ const { signIn, loading, error, clearError } = useAuth()
 const { isDark } = useTheme()
 
 const formRef = ref<FormInstance>()
-const showChangePasswordDialog = ref(false)
 const form = reactive({
   email: '',
   password: '',
@@ -134,7 +132,9 @@ const handleSubmit = async () => {
       ElMessage.error(result.error || '登录失败')
     }
   } catch (err) {
-    console.error('Form validation error:', err)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Form validation error:', err)
+    }
   }
 }
 
@@ -155,7 +155,9 @@ const handleResetPassword = async () => {
       ElMessage.error(result.error || '发送重置邮件失败')
     }
   } catch (err) {
-    console.error('Reset password error:', err)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Reset password error:', err)
+    }
   }
 }
 

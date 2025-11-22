@@ -195,6 +195,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, View, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useProjects } from '@/composables/useData'
+import { projectService } from '@/services/database'
 import GlitchText from '@/components/GlitchText.vue'
 import ProjectForm from '@/components/ProjectForm.vue'
 
@@ -210,7 +211,7 @@ interface ProjectItem {
 
 interface ProjectFormData {
   project: Record<string, unknown>
-  categories?: string[]
+  category?: string
   tags?: string[]
 }
 
@@ -330,7 +331,7 @@ const viewProject = (project: ProjectItem) => {
 }
 
 const editProject = (project: ProjectItem) => {
-  editingProject.value = { ...project }
+  editingProject.value = project
   showCreateDialog.value = true
 }
 
@@ -383,16 +384,32 @@ const handleDialogClose = () => {
 
 const handleProjectSubmit = async (data: ProjectFormData) => {
   try {
-    const { project } = data
+    const { project, category, tags } = data
+
+    // 准备项目数据，包含分类
+    const projectData = {
+      ...project,
+      category_id: category || null,
+    }
 
     if (editingProject.value) {
-      // 更新项目基本信息 - 不包含category_id，因为projects表没有这个字段
-      await updateProject(editingProject.value.id, project)
+      // 更新项目基本信息
+      await updateProject(editingProject.value.id, projectData)
+
+      // 更新项目标签关联
+      if (tags) {
+        await projectService.updateProjectTags(editingProject.value.id, tags)
+      }
 
       ElMessage.success('项目更新成功')
     } else {
       // 创建项目
-      await createProject(project)
+      const newProject = await createProject(projectData)
+
+      // 更新项目标签关联
+      if (tags && newProject.id) {
+        await projectService.updateProjectTags(newProject.id, tags)
+      }
 
       ElMessage.success('项目创建成功')
     }

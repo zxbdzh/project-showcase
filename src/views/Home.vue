@@ -12,13 +12,8 @@
           <p class="home__hero-subtitle">{{ homeSubtitle }}</p>
 
           <div class="home__hero-skills">
-            <el-tag
-              v-for="skill in featuredSkills"
-              :key="skill"
-              :type="isDark ? 'success' : 'primary'"
-              effect="dark"
-              class="home__skill-tag"
-            >
+            <el-tag v-for="skill in featuredSkills" :key="skill" :type="isDark ? 'success' : 'primary'" effect="dark"
+              class="home__skill-tag">
               {{ skill }}
             </el-tag>
           </div>
@@ -46,13 +41,7 @@
 
         <!-- 错误状态 -->
         <div v-else-if="loadingError" class="home__error">
-          <el-alert
-            title="加载失败"
-            :description="loadingError"
-            type="error"
-            show-icon
-            :closable="false"
-          />
+          <el-alert title="加载失败" :description="loadingError" type="error" show-icon :closable="false" />
           <el-button @click="loadData" type="primary" style="margin-top: 1rem">
             重新加载
           </el-button>
@@ -60,18 +49,10 @@
 
         <!-- 正常内容 -->
         <div v-else class="home__projects-grid">
-          <div
-            v-for="project in featuredProjects"
-            :key="project.id"
-            class="home__project-card"
-            @click="openProject(project)"
-          >
+          <div v-for="project in featuredProjects" :key="project.id" class="home__project-card"
+            @click="openProject(project)">
             <div class="home__project-image">
-              <img
-                :src="project.cover_image || '/placeholder-project.svg'"
-                :alt="project.title"
-                loading="lazy"
-              />
+              <img :src="project.cover_image || '/placeholder-project.svg'" :alt="project.title" loading="lazy" />
               <div class="home__project-overlay">
                 <el-button type="primary" size="small"> 查看详情 </el-button>
               </div>
@@ -82,12 +63,7 @@
               <p class="home__project-description">{{ project.description }}</p>
 
               <div class="home__project-tags">
-                <el-tag
-                  v-for="tag in getProjectTags(project)"
-                  :key="tag.id"
-                  size="small"
-                  effect="plain"
-                >
+                <el-tag v-for="tag in getProjectTags(project)" :key="tag.id" size="small" effect="plain">
                   {{ tag.name }}
                 </el-tag>
               </div>
@@ -118,18 +94,17 @@
         <div v-else class="home__skills-grid">
           <div v-for="skill in skillsWithIcons" :key="skill.id" class="home__skill-card">
             <div class="home__skill-icon">
-              <el-icon :size="32">
-                <component :is="skill.icon" />
-              </el-icon>
+              <!-- SVG图标显示 -->
+              <div v-if="skill.icon_url && skill.icon_url.startsWith('http')">
+                <img :src="skill.icon_url" />
+              </div>
+              <font-awesome-icon v-else :icon="getIconPath(skill.icon_url)"
+                :style="{ color: isDark ? '#e5eaf3' : '#606266' }" />
             </div>
             <h4 class="home__skill-name">{{ skill.name }}</h4>
             <div class="home__skill-level">
-              <cool-progress-bar
-                :percentage="skill.level"
-                :color="isDark ? '#00ff41' : '#0066cc'"
-                :height="8"
-                :animated="true"
-              />
+              <cool-progress-bar :percentage="skill.level" :color="isDark ? '#00ff41' : '#0066cc'" :height="8"
+                :animated="true" />
             </div>
           </div>
         </div>
@@ -151,16 +126,14 @@
 
         <!-- 正常内容 -->
         <div v-else class="home__contact-grid">
-          <a
-            v-for="link in socialLinksWithIcons"
-            :key="link.id"
-            :href="link.url"
-            target="_blank"
-            class="home__contact-item"
-          >
-            <el-icon :size="24">
-              <component :is="link.icon" />
-            </el-icon>
+          <a v-for="link in socialLinksWithIcons" :key="link.id" :href="link.url" target="_blank"
+            class="home__contact-item">
+            <!-- SVG图标显示 -->
+            <div v-if="link.icon_url && link.icon_url.startsWith('http')">
+              <img :src="link.icon_url" />
+            </div>
+            <font-awesome-icon v-else :icon="getIconObject(link.icon)"
+              :style="{ color: isDark ? '#e5eaf3' : '#606266' }" />
             <span>{{ link.name }}</span>
           </a>
         </div>
@@ -190,9 +163,9 @@ import { useTheme } from '@/composables/useTheme'
 import { useProjects, useSkills, useSocialLinks, useSystemSettings } from '@/composables/useData'
 import GlitchText from '@/components/GlitchText.vue'
 import CoolProgressBar from '@/components/CoolProgressBar.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import type { Project } from '@/utils/supabase'
+import { getIconPath } from '@/utils/fontawesomeIcons'
 
 const router = useRouter()
 const { isDark } = useTheme()
@@ -213,15 +186,15 @@ const loadData = async () => {
   loadingError.value = null
 
   try {
-    console.log('Home.vue - 开始加载数据...')
-    const results = await Promise.all([
+    await Promise.all([
       loadProjects({ status: 'published', featured: true }),
       loadSkills(),
       loadSocialLinks(),
     ])
-    console.log('Home.vue - 数据加载完成:', results)
   } catch (error) {
-    console.error('Home.vue - Failed to load data:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Home.vue - Failed to load data:', error)
+    }
     loadingError.value = '加载数据失败，请稍后重试'
   } finally {
     isLoading.value = false
@@ -286,7 +259,6 @@ const skillsWithIcons = computed(() => {
   if (skills.value && skills.value.length > 0) {
     return skills.value.map((skill) => ({
       ...skill,
-      icon: getIconComponent(skill.name),
       level: convertSkillLevelToNumber(skill.level || '1'),
     }))
   }
@@ -340,40 +312,68 @@ const socialLinksWithIcons = computed(() => {
       id: '1',
       name: 'GitHub',
       url: 'https://github.com',
-      icon: getIconComponent('GitHub'),
+      icon: 'github',
     },
     {
       id: '2',
       name: 'Email',
       url: 'mailto:contact@example.com',
-      icon: getIconComponent('Email'),
+      icon: 'envelope',
     },
     {
       id: '3',
       name: 'LinkedIn',
       url: 'https://linkedin.com',
-      icon: getIconComponent('LinkedIn'),
+      icon: 'linkedin-in',
     },
     {
       id: '4',
       name: 'Twitter',
       url: 'https://twitter.com',
-      icon: getIconComponent('Twitter'),
+      icon: 'twitter',
     },
   ]
 
   // 如果有数据库中的社交链接，使用它们
   if (socialLinks.value && socialLinks.value.length > 0) {
+
     return socialLinks.value.map((link) => ({
       ...link,
       name: link.platform,
-      icon: getIconComponent(link.platform),
+      icon: link.icon || 'link' // 提供默认图标名称
     }))
   }
 
   // 否则使用默认的社交链接
   return defaultLinks
 })
+
+// 获取图标对象（与 SocialLinks.vue 中的函数保持一致）
+const getIconObject = (iconName: string) => {
+  if (!iconName || iconName === 'link') {
+    return ['fas', 'link']
+  }
+
+  // 品牌图标列表
+  const brandIcons = [
+    'github',
+    'twitter',
+    'facebook',
+    'linkedin-in',
+    'instagram',
+    'youtube',
+    'weixin',
+    'qq',
+    'weibo',
+  ]
+
+  if (brandIcons.includes(iconName)) {
+    return ['fab', iconName]
+  }
+
+  // 默认为solid图标
+  return ['fas', iconName]
+}
 
 // 滚动到项目区域
 const scrollToProjects = () => {
@@ -397,8 +397,8 @@ const viewAllProjects = () => {
 }
 
 // 获取项目标签
-const getProjectTags = (project: any) => {
-  return (project as any).tags || []
+const getProjectTags = (project: Project) => {
+  return (project as Project & { tags?: Array<{ id: string; name: string }> }).tags || []
 }
 </script>
 

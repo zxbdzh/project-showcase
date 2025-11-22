@@ -67,6 +67,21 @@ export function getIconPath(iconName: string, preferredStyle?: string): string {
   // 优先使用指定风格，否则按优先级选择
   let selectedStyle = preferredStyle
 
+  // 逻辑：判断 fas 开头 → 截取后文本 → 驼峰加空格 → 全转小写
+  if (iconName.startsWith('fa')) {
+    iconName = iconName
+      // 1. 优先移除开头的 fas 或 fa 前缀（fas 优先，避免 fast-forward 拆错）
+      .replace(/^fas?/, '')
+      // 2. 处理连字符：将 - 转为空格（针对 fast-forward 这类带连字符的场景）
+      .replace(/-/g, ' ')
+      // 3. 处理驼峰：小写字母后接大写字母时加空格（兼容原有驼峰命名，如 UserInfo）
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      // 4. 统一转为小写
+      .toLowerCase()
+      // 5. （可选）去除首尾空格：避免前缀移除后可能残留的空字符（如 "fa-" 转为 ""）
+      .trim()
+  }
+
   if (!selectedStyle || !icon.styles.includes(selectedStyle)) {
     // 风格优先级：solid > regular > brands
     if (icon.styles.includes('fas')) {

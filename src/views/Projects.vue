@@ -152,7 +152,9 @@ const loadingError = ref<string | null>(null)
 const categoriesWithAll = computed(() => {
   // 确保categories.value是数组
   if (!Array.isArray(categories.value)) {
-    console.warn('categories.value is not an array:', categories.value)
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('categories.value is not an array:', categories.value)
+    }
     return [{ id: 'all', name: '全部' }]
   }
   return [{ id: 'all', name: '全部' }, ...categories.value]
@@ -239,7 +241,9 @@ const loadData = async () => {
   try {
     await Promise.all([loadProjects({ status: 'published' }), loadCategories()])
   } catch (error) {
-    console.error('Failed to load data:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Failed to load data:', error)
+    }
     loadingError.value = '加载数据失败，请稍后重试'
   } finally {
     isLoading.value = false
