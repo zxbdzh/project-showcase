@@ -8,14 +8,23 @@
             <div v-if="modelValue && modelValue.startsWith('http')" class="svg-display">
               <img :src="modelValue" />
             </div>
-            <font-awesome-icon v-else-if="modelValue" :icon="getIconPath(modelValue)" :style="iconDisplayStyle" />
+            <font-awesome-icon
+              v-else-if="modelValue"
+              :icon="getIconPath(modelValue)"
+              :style="iconDisplayStyle"
+            />
             <span v-else>选择图标</span>
           </div>
         </template>
         <div class="icon-picker">
           <!-- 搜索框 -->
           <div class="search-box">
-            <el-input v-model="searchQuery" placeholder="搜索图标..." clearable @input="handleSearch">
+            <el-input
+              v-model="searchQuery"
+              placeholder="搜索图标..."
+              clearable
+              @input="handleSearch"
+            >
               <template #prefix>
                 <font-awesome-icon icon="fa-solid fa-search" :style="searchIconStyle" />
               </template>
@@ -41,9 +50,21 @@
             <div class="svg-upload-section">
               <div class="section-subtitle">或上传SVG图标：</div>
               <div class="svg-upload-area">
-                <file-upload v-model="svgUploadResult" :multiple="false" accept=".svg" :max-size="1" :drag="false"
-                  :limit="1" :show-file-list="true" :auto-upload="true" bucket="project-showcase" folder="custom-icons"
-                  @success="handleSvgUploadSuccess" @error="handleSvgUploadError" @remove="handleSvgRemove" />
+                <file-upload
+                  v-model="svgUploadResult"
+                  :multiple="false"
+                  accept=".svg"
+                  :max-size="1"
+                  :drag="false"
+                  :limit="1"
+                  :show-file-list="true"
+                  :auto-upload="true"
+                  bucket="project-showcase"
+                  folder="custom-icons"
+                  @success="handleSvgUploadSuccess"
+                  @error="handleSvgUploadError"
+                  @remove="handleSvgRemove"
+                />
               </div>
 
               <!-- 上传进度显示 -->
@@ -56,19 +77,30 @@
             <div v-if="customIcons.length > 0" class="custom-icons-list">
               <div class="section-title">已添加的自定义图标：</div>
               <div class="icon-grid">
-                <div v-for="icon in paginatedCustomIcons" :key="`custom-${icon.id || icon.name}`"
-                  class="icon-item custom-icon-item" :class="{ selected: modelValue === (icon.url || icon.name) }"
-                  @click="selectIcon(icon.url || icon.name)" :title="icon.name || icon">
+                <div
+                  v-for="icon in paginatedCustomIcons"
+                  :key="`custom-${icon.id || icon.name}`"
+                  class="icon-item custom-icon-item"
+                  :class="{ selected: modelValue === (icon.url || icon.name) }"
+                  @click="selectIcon(icon.url || icon.name)"
+                  :title="icon.name || icon"
+                >
                   <!-- SVG图标显示 -->
                   <div v-if="icon.type === 'svg'" class="svg-icon-container">
-                    <object :data="icon.url" type="image/svg+xml" />
+                    <img :src="icon.url" />
                   </div>
 
                   <!-- FontAwesome图标显示 -->
                   <font-awesome-icon v-else :icon="icon.name" :style="getIconItemStyle(icon)" />
 
-                  <el-button size="small" type="danger" text @click.stop="removeCustomIcon(icon)" class="remove-btn"
-                    style="color: white">
+                  <el-button
+                    size="small"
+                    type="danger"
+                    text
+                    @click.stop="removeCustomIcon(icon)"
+                    class="remove-btn"
+                    style="color: white"
+                  >
                     ×
                   </el-button>
                 </div>
@@ -78,17 +110,28 @@
 
           <!-- 图标网格 -->
           <div v-else class="icon-grid">
-            <div v-for="icon in paginatedIcons" :key="icon" class="icon-item" :class="{ selected: modelValue === icon }"
-              @click="selectIcon(icon)" :title="icon">
+            <div
+              v-for="icon in paginatedIcons"
+              :key="icon"
+              class="icon-item"
+              :class="{ selected: modelValue === icon }"
+              @click="selectIcon(icon)"
+              :title="icon"
+            >
               <font-awesome-icon :icon="getIconPath(icon)" :style="getIconItemStyle(icon)" />
             </div>
           </div>
 
           <!-- 分页 -->
           <div class="pagination">
-            <el-pagination v-model:current-page="currentPage" :page-size="pageSize"
+            <el-pagination
+              v-model:current-page="currentPage"
+              :page-size="pageSize"
               :total="activeCategory === 'custom' ? customIcons.length : filteredIcons.length"
-              layout="prev, pager, next" small @current-change="handlePageChange" />
+              layout="prev, pager, next"
+              small
+              @current-change="handlePageChange"
+            />
           </div>
         </div>
       </el-popover>
@@ -106,14 +149,7 @@ import {
 } from '../utils/fontawesomeIcons'
 import FileUpload from './FileUpload.vue'
 import MinIOService from '@/utils/minio'
-
-// 自定义图标接口
-interface CustomIcon {
-  id?: string
-  type: 'svg' | 'fa'
-  name: string
-  url?: string
-}
+import { useCustomIcons, type CustomIcon as CustomIconType } from '@/composables/useCustomIcons'
 
 // 文件上传响应接口
 interface UploadResponse {
@@ -135,6 +171,14 @@ interface UploadRawFile {
   lastModified: number
 }
 
+// 兼容性接口
+interface CustomIcon {
+  id?: string
+  type: 'svg' | 'fa'
+  name: string
+  url?: string
+}
+
 const props = defineProps<{
   modelValue: string
   label?: string
@@ -151,7 +195,14 @@ const activeCategory = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(48)
 const customIconName = ref('')
-const customIcons = ref<CustomIcon[]>([])
+
+// 使用自定义图标composable
+const {
+  customIcons,
+  loadCustomIcons,
+  addCustomIcon: addCustomIconToDb,
+  removeCustomIcon: removeCustomIconFromDb,
+} = useCustomIcons()
 
 // SVG上传相关
 const svgUploadResult = ref<string>('')
@@ -159,26 +210,6 @@ const svgUploading = ref(false)
 const svgUploadProgress = ref(0)
 const svgUploadStatus = ref<'success' | 'exception' | 'warning' | ''>('')
 const svgUploadText = ref('')
-
-// 从localStorage加载自定义图标
-const loadCustomIcons = () => {
-  const saved = localStorage.getItem('custom-icons')
-  if (saved) {
-    try {
-      customIcons.value = JSON.parse(saved)
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('加载自定义图标失败:', error)
-      }
-      customIcons.value = []
-    }
-  }
-}
-
-// 保存自定义图标到localStorage
-const saveCustomIcons = () => {
-  localStorage.setItem('custom-icons', JSON.stringify(customIcons.value))
-}
 
 // 验证FontAwesome图标是否存在
 const validateFontAwesomeIcon = (iconName: string): boolean => {
@@ -198,7 +229,7 @@ const validateFontAwesomeIcon = (iconName: string): boolean => {
 }
 
 // 添加自定义图标
-const addCustomIcon = () => {
+const addCustomIcon = async () => {
   const icon = customIconName.value.trim()
   if (!icon) return
 
@@ -212,8 +243,8 @@ const addCustomIcon = () => {
   }
 
   // 检查是否已存在
-  const exists = customIcons.value.some(customIcon =>
-    customIcon.type === 'fa' && customIcon.name === icon
+  const exists = customIcons.value.some(
+    (customIcon) => customIcon.type === 'fa' && customIcon.name === icon,
   )
 
   if (!exists) {
@@ -223,13 +254,17 @@ const addCustomIcon = () => {
       return
     }
 
-    customIcons.value.push({
-      type: 'fa',
-      name: icon,
-    })
-    saveCustomIcons()
-    customIconName.value = ''
-    ElMessage.success('图标添加成功')
+    try {
+      await addCustomIconToDb({
+        type: 'fa',
+        name: icon,
+        icon_name: icon,
+      })
+      customIconName.value = ''
+      ElMessage.success('图标添加成功')
+    } catch (error) {
+      ElMessage.error('添加图标失败')
+    }
   } else {
     ElMessage.warning('该图标已存在')
   }
@@ -240,17 +275,12 @@ const handleSvgUploadSuccess = async (response: unknown, file: UploadUserFile) =
   try {
     const uploadResponse = response as UploadResponse
     if (uploadResponse && uploadResponse.url) {
-
       // 添加到自定义图标列表
-      const newIcon: CustomIcon = {
-        id: `svg-${Date.now()}`,
+      await addCustomIconToDb({
         type: 'svg',
         name: file.name,
-        url: uploadResponse.url
-      }
-
-      customIcons.value.push(newIcon)
-      saveCustomIcons()
+        url: uploadResponse.url,
+      })
 
       ElMessage.success('SVG图标上传成功')
       svgUploadResult.value = ''
@@ -283,7 +313,6 @@ const handleSvgRemove = () => {
   ElMessage.info('文件已移除')
 }
 
-
 // 移除自定义图标
 const removeCustomIcon = async (icon: CustomIcon) => {
   try {
@@ -295,15 +324,9 @@ const removeCustomIcon = async (icon: CustomIcon) => {
       }
     }
 
-    // 从列表中移除
-    const index = customIcons.value.findIndex(item =>
-      (icon.id && item.id === icon.id) ||
-      (item.name === icon.name && item.type === icon.type)
-    )
-
-    if (index > -1) {
-      customIcons.value.splice(index, 1)
-      saveCustomIcons()
+    // 从数据库删除
+    if (icon.id) {
+      await removeCustomIconFromDb(icon.id)
     }
 
     ElMessage.success('图标删除成功')
@@ -321,7 +344,6 @@ const paginatedCustomIcons = computed(() => {
   const end = start + pageSize.value
   return customIcons.value.slice(start, end)
 })
-
 
 // 获取所有免费图标
 const allFreeIcons = ref<string[]>([])
@@ -413,7 +435,7 @@ const iconDisplayStyle = computed(() => {
   const isDark = document.documentElement.classList.contains('dark')
   return {
     color: isDark ? '#ffffff' : 'var(--el-color-text-regular)',
-    fill: isDark ? '#ffffff' : 'currentColor'
+    fill: isDark ? '#ffffff' : 'currentColor',
   }
 })
 
@@ -423,9 +445,9 @@ const getIconItemStyle = (icon: string | CustomIcon) => {
   const iconName = typeof icon === 'string' ? icon : icon.name || icon.url || ''
   const isSelected = props.modelValue === iconName
   return {
-    color: isSelected ? '#409eff' : (isDark ? '#ffffff' : 'var(--el-color-text-regular)'),
-    fill: isSelected ? '#409eff' : (isDark ? '#ffffff' : 'currentColor')
-  };
+    color: isSelected ? '#409eff' : isDark ? '#ffffff' : 'var(--el-color-text-regular)',
+    fill: isSelected ? '#409eff' : isDark ? '#ffffff' : 'currentColor',
+  }
 }
 
 // 搜索图标样式
@@ -433,7 +455,7 @@ const searchIconStyle = computed(() => {
   const isDark = document.documentElement.classList.contains('dark')
   return {
     color: isDark ? '#ffffff' : 'var(--el-color-text-regular)',
-    fill: isDark ? '#ffffff' : 'currentColor'
+    fill: isDark ? '#ffffff' : 'currentColor',
   }
 })
 
