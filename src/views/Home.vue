@@ -12,13 +12,8 @@
           <p class="home__hero-subtitle">{{ homeSubtitle }}</p>
 
           <div class="home__hero-skills">
-            <el-tag
-              v-for="skill in featuredSkills"
-              :key="skill"
-              :type="isDark ? 'success' : 'primary'"
-              effect="dark"
-              class="home__skill-tag"
-            >
+            <el-tag v-for="skill in featuredSkills" :key="skill" :type="isDark ? 'success' : 'primary'" effect="dark"
+              class="home__skill-tag">
               {{ skill }}
             </el-tag>
           </div>
@@ -46,13 +41,7 @@
 
         <!-- 错误状态 -->
         <div v-else-if="loadingError" class="home__error">
-          <el-alert
-            title="加载失败"
-            :description="loadingError"
-            type="error"
-            show-icon
-            :closable="false"
-          />
+          <el-alert title="加载失败" :description="loadingError" type="error" show-icon :closable="false" />
           <el-button @click="loadData" type="primary" style="margin-top: 1rem">
             重新加载
           </el-button>
@@ -60,18 +49,11 @@
 
         <!-- 正常内容 -->
         <div v-else class="home__projects-grid">
-          <div
-            v-for="project in featuredProjects"
-            :key="project.id"
-            class="home__project-card"
-            @click="openProject(project)"
-          >
+          <div v-for="project in featuredProjects" :key="project.id" class="home__project-card"
+            @click="openProject(project)">
             <div class="home__project-image">
-              <img
-                :src="project.cover_image || '/placeholder-project.svg'"
-                :alt="project.title"
-                loading="lazy"
-              />
+              <img :src="project.cover_image || '/placeholder-project.svg'" :alt="project.title" loading="lazy"
+                class="project-image" />
               <div class="home__project-overlay">
                 <el-button type="primary" size="small"> 查看详情 </el-button>
               </div>
@@ -82,12 +64,7 @@
               <p class="home__project-description">{{ project.description }}</p>
 
               <div class="home__project-tags">
-                <el-tag
-                  v-for="tag in getProjectTags(project)"
-                  :key="tag.id"
-                  size="small"
-                  effect="plain"
-                >
+                <el-tag v-for="tag in getProjectTags(project)" :key="tag.id" size="small" effect="plain">
                   {{ tag.name }}
                 </el-tag>
               </div>
@@ -120,22 +97,15 @@
             <div class="home__skill-icon">
               <!-- SVG图标显示 -->
               <div v-if="skill.icon_url && skill.icon_url.startsWith('http')">
-                <img :src="skill.icon_url" />
+                <img :src="skill.icon_url" class="skill-icon" />
               </div>
-              <font-awesome-icon
-                v-else
-                :icon="getIconPath(skill.icon_url)"
-                :style="{ color: isDark ? '#e5eaf3' : '#606266' }"
-              />
+              <font-awesome-icon v-else :icon="getIconPath(skill.icon_url)"
+                :style="{ color: isDark ? '#e5eaf3' : '#606266' }" />
             </div>
             <h4 class="home__skill-name">{{ skill.name }}</h4>
             <div class="home__skill-level">
-              <cool-progress-bar
-                :percentage="skill.level"
-                :color="isDark ? '#00ff41' : '#0066cc'"
-                :height="8"
-                :animated="true"
-              />
+              <cool-progress-bar :percentage="skill.level" :color="isDark ? '#00ff41' : '#0066cc'" :height="8"
+                :animated="true" />
             </div>
           </div>
         </div>
@@ -157,22 +127,14 @@
 
         <!-- 正常内容 -->
         <div v-else class="home__contact-grid">
-          <a
-            v-for="link in socialLinksWithIcons"
-            :key="link.id"
-            :href="link.url"
-            target="_blank"
-            class="home__contact-item"
-          >
+          <a v-for="link in socialLinksWithIcons" :key="link.id" :href="link.url" target="_blank"
+            class="home__contact-item">
             <!-- SVG图标显示 -->
             <div v-if="link.icon_url && link.icon_url.startsWith('http')">
-              <img :src="link.icon_url" />
+              <img :src="link.icon_url" class="contact-icon" />
             </div>
-            <font-awesome-icon
-              v-else
-              :icon="getIconObject(link.icon)"
-              :style="{ color: isDark ? '#e5eaf3' : '#606266' }"
-            />
+            <font-awesome-icon v-else :icon="getIconObject(link.icon)"
+              :style="{ color: isDark ? '#e5eaf3' : '#606266' }" />
             <span>{{ link.name }}</span>
           </a>
         </div>
@@ -584,6 +546,17 @@ const getProjectTags = (project: Project) => {
   transition: transform 0.3s ease;
 }
 
+/* 项目图片主题适配 */
+.project-image[src$=".svg"] {
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s ease;
+}
+
+html.light .project-image[src$=".svg"],
+html:not(.dark) .project-image[src$=".svg"] {
+  filter: brightness(0) invert(0.3);
+}
+
 .home__project-card:hover .home__project-image img {
   transform: scale(1.05);
 }
@@ -687,6 +660,17 @@ const getProjectTags = (project: Project) => {
   margin-bottom: 1rem;
 }
 
+/* 技能图标主题适配 */
+.skill-icon[src$=".svg"] {
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s ease;
+}
+
+html.light .skill-icon[src$=".svg"],
+html:not(.dark) .skill-icon[src$=".svg"] {
+  filter: brightness(0) invert(0.3);
+}
+
 .home__skill-name {
   font-size: 1.2rem;
   margin-bottom: 1rem;
@@ -759,6 +743,17 @@ const getProjectTags = (project: Project) => {
   box-shadow: 0 8px 16px var(--shadow-color);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
+}
+
+/* 联系图标主题适配 */
+.contact-icon[src$=".svg"] {
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s ease;
+}
+
+html.light .contact-icon[src$=".svg"],
+html:not(.dark) .contact-icon[src$=".svg"] {
+  filter: brightness(0) invert(0.3);
 }
 
 .home__footer {

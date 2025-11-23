@@ -72,6 +72,7 @@
                 :alt="project.title"
                 loading="lazy"
                 @error="handleImageError"
+                class="project-image"
               />
               <div class="projects__card-overlay">
                 <el-button type="primary" size="small"> 查看详情 </el-button>
@@ -361,6 +362,17 @@ onMounted(() => {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+}
+
+/* 项目图片主题适配 */
+.project-image[src$=".svg"] {
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s ease;
+}
+
+html.light .project-image[src$=".svg"],
+html:not(.dark) .project-image[src$=".svg"] {
+  filter: brightness(0) invert(0.3);
 }
 
 .projects__card:hover .projects__card-image img {
