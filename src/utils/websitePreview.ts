@@ -98,7 +98,9 @@ export class WebsitePreviewService {
   static getWebsiteTitle(url: string): string {
     try {
       const domain = this.getWebsiteDomain(url)
-      return domain.replace('www.', '').charAt(0).toUpperCase() + domain.replace('www.', '').slice(1)
+      return (
+        domain.replace('www.', '').charAt(0).toUpperCase() + domain.replace('www.', '').slice(1)
+      )
     } catch {
       return 'Website'
     }

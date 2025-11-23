@@ -19,7 +19,9 @@
           <div class="card-header">
             <h3>项目信息</h3>
             <el-button v-if="isAdmin" @click="editProject" type="primary" size="small">
-              <el-icon><edit /></el-icon>
+              <el-icon>
+                <edit />
+              </el-icon>
               编辑
             </el-button>
           </div>
@@ -97,9 +99,13 @@
           <div v-if="project.demo_url" class="demo-preview">
             <a :href="project.demo_url" target="_blank" class="link-item">
               <div class="link-content">
-                <el-icon><link /></el-icon>
+                <el-icon>
+                  <link />
+                </el-icon>
                 <span>在线演示</span>
-                <el-icon class="external-icon"><link /></el-icon>
+                <el-icon class="external-icon">
+                  <link />
+                </el-icon>
               </div>
             </a>
             <div class="preview-container">
@@ -113,26 +119,29 @@
                 @error="handleIframeError"
               />
               <div v-if="previewLoading" class="preview-loading">
-                <el-icon class="is-loading"><loading /></el-icon>
+                <el-icon class="is-loading">
+                  <loading />
+                </el-icon>
                 <span>加载预览中...</span>
               </div>
               <div class="preview-controls">
-                <el-button
-                  type="primary"
-                  size="small"
-                  @click="openDemoSite"
-                  class="open-demo-btn"
-                >
-                  <el-icon><link /></el-icon>
+                <el-button type="primary" size="small" @click="openDemoSite" class="open-demo-btn">
+                  <el-icon>
+                    <link />
+                  </el-icon>
                   在新窗口打开
                 </el-button>
               </div>
             </div>
           </div>
           <a v-if="project.github_url" :href="project.github_url" target="_blank" class="link-item">
-            <el-icon><link /></el-icon>
+            <el-icon>
+              <link />
+            </el-icon>
             <span>GitHub 仓库</span>
-            <el-icon class="external-icon"><link /></el-icon>
+            <el-icon class="external-icon">
+              <link />
+            </el-icon>
           </a>
         </div>
       </el-card>
@@ -233,8 +242,14 @@ const handleIframeLoad = () => {
       const iframe = document.querySelector('.demo-preview-iframe') as HTMLIFrameElement
       if (iframe && iframe.contentDocument) {
         // 检查是否有登录页面或401错误的特征
-        const content = iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent || ''
-        if (content.includes('401') || content.includes('Unauthorized') || content.includes('登录') || content.includes('login')) {
+        const content =
+          iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent || ''
+        if (
+          content.includes('401') ||
+          content.includes('Unauthorized') ||
+          content.includes('登录') ||
+          content.includes('login')
+        ) {
           ElMessage.warning('演示网站需要登录，请在新窗口中打开进行登录操作')
         }
       }
@@ -410,7 +425,6 @@ onUnmounted(() => {
 }
 
 .info-item span {
-  color: var(--text-primary) !important;
   font-size: 16px;
   font-weight: 400;
 }
@@ -516,6 +530,7 @@ onUnmounted(() => {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

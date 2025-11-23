@@ -255,7 +255,9 @@ export class ProjectService extends DatabaseService {
     })
   }
 
-  async getProject(id: string): Promise<(Project & { categories: Category[]; tags: Tag[] }) | null> {
+  async getProject(
+    id: string,
+  ): Promise<(Project & { categories: Category[]; tags: Tag[] }) | null> {
     try {
       // 先获取项目基本信息
       const { data: projectData, error: projectError } = await supabase
