@@ -138,7 +138,7 @@ export function useProjects() {
         'project',
         newProject.id,
         `创建了项目: ${newProject.title}`,
-        { title: newProject.title }
+        { title: newProject.title },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -181,17 +181,19 @@ export function useProjects() {
         id,
         `更新了项目: ${data.title || oldProject?.title || ''}`,
         {
-          oldData: oldProject ? {
-            title: oldProject.title,
-            status: oldProject.status,
-            featured: oldProject.featured
-          } : null,
+          oldData: oldProject
+            ? {
+                title: oldProject.title,
+                status: oldProject.status,
+                featured: oldProject.featured,
+              }
+            : null,
           newData: {
             title: data.title,
             status: data.status,
-            featured: data.featured
-          }
-        }
+            featured: data.featured,
+          },
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -234,13 +236,15 @@ export function useProjects() {
         id,
         `删除了项目: ${projectToDelete?.title || ''}`,
         {
-          deletedData: projectToDelete ? {
-            title: projectToDelete.title,
-            status: projectToDelete.status,
-            featured: projectToDelete.featured,
-            cover_image: projectToDelete.cover_image
-          } : null
-        }
+          deletedData: projectToDelete
+            ? {
+                title: projectToDelete.title,
+                status: projectToDelete.status,
+                featured: projectToDelete.featured,
+                cover_image: projectToDelete.cover_image,
+              }
+            : null,
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -263,7 +267,8 @@ export function useProjects() {
       // 使用缓存装饰器
       const cacheKey = `project:${id}`
       const cachedProject = cache.withCache(cacheKey, () => projectService.getProject(id), {
-        key: cacheKey, dataType: 'projects',
+        key: cacheKey,
+        dataType: 'projects',
       })()
 
       return await cachedProject
@@ -307,7 +312,8 @@ export function useCategories() {
       // 使用缓存装饰器
       const cacheKey = 'categories'
       const cachedCategories = cache.withCache(cacheKey, () => categoryService.getCategories(), {
-        key: cacheKey, dataType: 'categories',
+        key: cacheKey,
+        dataType: 'categories',
       })()
 
       const data = await cachedCategories
@@ -345,7 +351,7 @@ export function useCategories() {
         'category',
         newCategory.id,
         `创建了分类: ${newCategory.name}`,
-        { name: newCategory.name }
+        { name: newCategory.name },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -387,15 +393,17 @@ export function useCategories() {
         id,
         `更新了分类: ${data.name || oldCategory?.name || ''}`,
         {
-          oldData: oldCategory ? {
-            name: oldCategory.name,
-            description: oldCategory.description
-          } : null,
+          oldData: oldCategory
+            ? {
+                name: oldCategory.name,
+                description: oldCategory.description,
+              }
+            : null,
           newData: {
             name: data.name,
-            description: data.description
-          }
-        }
+            description: data.description,
+          },
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -440,11 +448,13 @@ export function useCategories() {
         id,
         `删除了分类: ${categoryToDelete?.name || ''}`,
         {
-          deletedData: categoryToDelete ? {
-            name: categoryToDelete.name,
-            description: categoryToDelete.description
-          } : null
-        }
+          deletedData: categoryToDelete
+            ? {
+                name: categoryToDelete.name,
+                description: categoryToDelete.description,
+              }
+            : null,
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -491,7 +501,8 @@ export function useTags() {
       // 使用缓存装饰器
       const cacheKey = 'tags'
       const cachedTags = cache.withCache(cacheKey, () => tagService.getTags(), {
-        key: cacheKey, dataType: 'tags',
+        key: cacheKey,
+        dataType: 'tags',
       })()
 
       const data = await cachedTags
@@ -529,7 +540,7 @@ export function useTags() {
         'tag',
         newTag.id,
         `创建了标签: ${newTag.name}`,
-        { name: newTag.name, color: newTag.color }
+        { name: newTag.name, color: newTag.color },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -571,15 +582,17 @@ export function useTags() {
         id,
         `更新了标签: ${data.name || oldTag?.name || ''}`,
         {
-          oldData: oldTag ? {
-            name: oldTag.name,
-            color: oldTag.color
-          } : null,
+          oldData: oldTag
+            ? {
+                name: oldTag.name,
+                color: oldTag.color,
+              }
+            : null,
           newData: {
             name: data.name,
-            color: data.color
-          }
-        }
+            color: data.color,
+          },
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -624,11 +637,13 @@ export function useTags() {
         id,
         `删除了标签: ${tagToDelete?.name || ''}`,
         {
-          deletedData: tagToDelete ? {
-            name: tagToDelete.name,
-            color: tagToDelete.color
-          } : null
-        }
+          deletedData: tagToDelete
+            ? {
+                name: tagToDelete.name,
+                color: tagToDelete.color,
+              }
+            : null,
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -667,7 +682,7 @@ export function useSkills() {
     addTask({
       id: taskId,
       name: '加载技能数据',
-      priority:5,
+      priority: 5,
     })
     updateTask(taskId, { status: 'loading' })
 
@@ -675,7 +690,8 @@ export function useSkills() {
       // 使用缓存装饰器
       const cacheKey = 'skills'
       const cachedSkills = cache.withCache(cacheKey, () => skillService.getSkills(), {
-        key: cacheKey, dataType: 'skills',
+        key: cacheKey,
+        dataType: 'skills',
       })()
 
       const data = await cachedSkills
@@ -713,7 +729,7 @@ export function useSkills() {
         'skill',
         newSkill.id,
         `创建了技能: ${newSkill.name}`,
-        { name: newSkill.name, level: newSkill.level, category: newSkill.category }
+        { name: newSkill.name, level: newSkill.level, category: newSkill.category },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -755,17 +771,19 @@ export function useSkills() {
         id,
         `更新了技能: ${data.name || oldSkill?.name || ''}`,
         {
-          oldData: oldSkill ? {
-            name: oldSkill.name,
-            level: oldSkill.level,
-            category: oldSkill.category
-          } : null,
+          oldData: oldSkill
+            ? {
+                name: oldSkill.name,
+                level: oldSkill.level,
+                category: oldSkill.category,
+              }
+            : null,
           newData: {
             name: data.name,
             level: data.level,
-            category: data.category
-          }
-        }
+            category: data.category,
+          },
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -810,12 +828,14 @@ export function useSkills() {
         id,
         `删除了技能: ${skillToDelete?.name || ''}`,
         {
-          deletedData: skillToDelete ? {
-            name: skillToDelete.name,
-            level: skillToDelete.level,
-            category: skillToDelete.category
-          } : null
-        }
+          deletedData: skillToDelete
+            ? {
+                name: skillToDelete.name,
+                level: skillToDelete.level,
+                category: skillToDelete.category,
+              }
+            : null,
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -902,7 +922,7 @@ export function useSocialLinks() {
         'social_link',
         newLink.id,
         `创建了社交链接: ${newLink.platform}`,
-        { platform: newLink.platform, url: newLink.url, icon: newLink.icon }
+        { platform: newLink.platform, url: newLink.url, icon: newLink.icon },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -944,17 +964,19 @@ export function useSocialLinks() {
         id,
         `更新了社交链接: ${data.platform || oldLink?.platform || ''}`,
         {
-          oldData: oldLink ? {
-            platform: oldLink.platform,
-            url: oldLink.url,
-            icon: oldLink.icon
-          } : null,
+          oldData: oldLink
+            ? {
+                platform: oldLink.platform,
+                url: oldLink.url,
+                icon: oldLink.icon,
+              }
+            : null,
           newData: {
             platform: data.platform,
             url: data.url,
-            icon: data.icon
-          }
-        }
+            icon: data.icon,
+          },
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -999,12 +1021,14 @@ export function useSocialLinks() {
         id,
         `删除了社交链接: ${linkToDelete?.platform || ''}`,
         {
-          deletedData: linkToDelete ? {
-            platform: linkToDelete.platform,
-            url: linkToDelete.url,
-            icon: linkToDelete.icon
-          } : null
-        }
+          deletedData: linkToDelete
+            ? {
+                platform: linkToDelete.platform,
+                url: linkToDelete.url,
+                icon: linkToDelete.icon,
+              }
+            : null,
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -1051,7 +1075,8 @@ export function useProfile() {
       // 使用缓存装饰器
       const cacheKey = `profile:${userId}`
       const cachedProfile = cache.withCache(cacheKey, () => profileService.getProfile(userId), {
-        key: cacheKey, dataType: 'profile',
+        key: cacheKey,
+        dataType: 'profile',
       })()
 
       const data = await cachedProfile
@@ -1195,7 +1220,8 @@ export function useSystemSettings() {
       // 使用缓存装饰器
       const cacheKey = 'system-settings'
       const cachedSettings = cache.withCache(cacheKey, () => systemSettingsService.getSettings(), {
-        key: cacheKey, dataType: 'system_settings',
+        key: cacheKey,
+        dataType: 'system_settings',
       })()
 
       const data = await cachedSettings
@@ -1219,7 +1245,8 @@ export function useSystemSettings() {
       // 使用缓存装饰器
       const cacheKey = `system-setting:${key}`
       const cachedSetting = cache.withCache(cacheKey, () => systemSettingsService.getSetting(key), {
-        key: cacheKey, dataType: 'system_settings',
+        key: cacheKey,
+        dataType: 'system_settings',
       })()
 
       return await cachedSetting
@@ -1253,17 +1280,19 @@ export function useSystemSettings() {
         updatedSetting.id,
         `更新了系统设置: ${key}`,
         {
-          oldData: oldSetting ? {
-            key: oldSetting.key,
-            value: oldSetting.value,
-            description: oldSetting.description
-          } : null,
+          oldData: oldSetting
+            ? {
+                key: oldSetting.key,
+                value: oldSetting.value,
+                description: oldSetting.description,
+              }
+            : null,
           newData: {
             key: key,
             value: value,
-            description: description
-          }
-        }
+            description: description,
+          },
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -1304,9 +1333,7 @@ export function useSystemSettings() {
 
     try {
       // 先获取旧设置数据用于比较
-      const oldSettings = systemSettings.value.filter((s) =>
-        Object.keys(settings).includes(s.key)
-      )
+      const oldSettings = systemSettings.value.filter((s) => Object.keys(settings).includes(s.key))
 
       const results = await systemSettingsService.batchUpdateSettings(settings)
 
@@ -1318,8 +1345,8 @@ export function useSystemSettings() {
         `批量更新了系统设置: ${Object.keys(settings).join(', ')}`,
         {
           oldData: oldSettings,
-          newData: results
-        }
+          newData: results,
+        },
       )
 
       // 更新版本号，自动清除相关缓存
@@ -1372,12 +1399,14 @@ export function useSystemSettings() {
         settingToDelete?.id || '',
         `删除了系统设置: ${key}`,
         {
-          deletedData: settingToDelete ? {
-            key: settingToDelete.key,
-            value: settingToDelete.value,
-            description: settingToDelete.description
-          } : null
-        }
+          deletedData: settingToDelete
+            ? {
+                key: settingToDelete.key,
+                value: settingToDelete.value,
+                description: settingToDelete.description,
+              }
+            : null,
+        },
       )
 
       // 更新版本号，自动清除相关缓存

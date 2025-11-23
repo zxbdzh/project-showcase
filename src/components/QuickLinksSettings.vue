@@ -29,11 +29,7 @@
           </div>
 
           <div v-else class="links-grid">
-            <div
-              v-for="(link, index) in quickLinks"
-              :key="link.order"
-              class="link-card"
-            >
+            <div v-for="(link, index) in quickLinks" :key="link.order" class="link-card">
               <div class="link-card__header">
                 <div class="link-card__title">{{ link.title }}</div>
                 <div class="link-card__actions">
@@ -203,9 +199,7 @@ const formRules = {
     { required: true, message: '请输入链接地址', trigger: 'blur' },
     { type: 'url', message: '请输入有效的URL地址', trigger: 'blur' },
   ],
-  icon: [
-    { required: true, message: '请选择图标', trigger: 'blur' },
-  ],
+  icon: [{ required: true, message: '请选择图标', trigger: 'blur' }],
   order: [
     { required: true, message: '请输入排序', trigger: 'blur' },
     { type: 'number', min: 1, max: 99, message: '排序范围为1-99', trigger: 'blur' },
@@ -277,7 +271,7 @@ const addQuickLink = () => {
     url: '',
     icon: '',
     type: 'external',
-    order: Math.max(...quickLinks.value.map(l => l.order), 0) + 1,
+    order: Math.max(...quickLinks.value.map((l) => l.order), 0) + 1,
     enabled: true,
   }
   showEditDialog.value = true
@@ -301,7 +295,7 @@ const deleteLink = async (index: number) => {
         confirmButtonText: '删除',
         cancelButtonText: '取消',
         type: 'warning',
-      }
+      },
     )
 
     quickLinks.value.splice(index, 1)
@@ -316,7 +310,7 @@ const deleteLink = async (index: number) => {
 const addExample = (example: QuickLink) => {
   const newLink = {
     ...example,
-    order: Math.max(...quickLinks.value.map(l => l.order), 0) + 1,
+    order: Math.max(...quickLinks.value.map((l) => l.order), 0) + 1,
   }
   quickLinks.value.push(newLink)
   saveSettings()
@@ -364,8 +358,14 @@ const resetForm = () => {
 const saveSettings = async () => {
   try {
     const settingsData = {
-      header_quick_links_enabled: { value: settings.value.enabled.toString(), description: '启用快捷跳转' },
-      header_quick_links: { value: JSON.stringify(quickLinks.value), description: '快捷跳转链接配置' },
+      header_quick_links_enabled: {
+        value: settings.value.enabled.toString(),
+        description: '启用快捷跳转',
+      },
+      header_quick_links: {
+        value: JSON.stringify(quickLinks.value),
+        description: '快捷跳转链接配置',
+      },
     }
 
     await batchUpdateSystemSettings(settingsData)

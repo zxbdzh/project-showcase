@@ -68,14 +68,24 @@
       <div class="admin__actions-content">
         <h2 class="admin__section-title">快捷操作</h2>
         <div class="admin__actions-grid">
-          <el-button type="primary" size="large" class="admin__action-btn" @click="navigateToProjects">
+          <el-button
+            type="primary"
+            size="large"
+            class="admin__action-btn"
+            @click="navigateToProjects"
+          >
             <el-icon>
               <Document />
             </el-icon>
             项目管理
           </el-button>
 
-          <el-button type="success" size="large" class="admin__action-btn" @click="navigateToCategories">
+          <el-button
+            type="success"
+            size="large"
+            class="admin__action-btn"
+            @click="navigateToCategories"
+          >
             <el-icon>
               <Folder />
             </el-icon>
@@ -96,14 +106,24 @@
             技能管理
           </el-button>
 
-          <el-button type="danger" size="large" class="admin__action-btn" @click="navigateToSocialLinks">
+          <el-button
+            type="danger"
+            size="large"
+            class="admin__action-btn"
+            @click="navigateToSocialLinks"
+          >
             <el-icon>
               <Link />
             </el-icon>
             社交链接
           </el-button>
 
-          <el-button type="primary" size="large" class="admin__action-btn" @click="navigateToSiteSettings">
+          <el-button
+            type="primary"
+            size="large"
+            class="admin__action-btn"
+            @click="navigateToSiteSettings"
+          >
             <el-icon>
               <Setting />
             </el-icon>

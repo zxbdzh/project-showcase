@@ -330,9 +330,9 @@ const removeCustomIcon = async (icon: CustomIcon) => {
     }
 
     ElMessage.success('图标删除成功')
-  } catch (error) {
+  } catch (err) {
     if (process.env.NODE_ENV === 'development') {
-      console.error('删除图标失败:', error)
+      console.error('删除图标失败:', err)
     }
     ElMessage.error('删除图标失败')
   }

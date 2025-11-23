@@ -40,14 +40,16 @@ class PageLoadingManager {
     }
 
     const totalTasks = this.state.tasks.length
-    const completedTasks = this.state.tasks.filter(task => task.status === 'completed').length
-    const tasksWithProgress = this.state.tasks.filter(task => task.progress !== undefined)
+    const completedTasks = this.state.tasks.filter((task) => task.status === 'completed').length
+    const tasksWithProgress = this.state.tasks.filter((task) => task.progress !== undefined)
 
     let progressSum = completedTasks * 100
 
     if (tasksWithProgress.length > 0) {
-      const avgProgress = tasksWithProgress.reduce((sum, task) => sum + (task.progress || 0), 0) / tasksWithProgress.length
-      progressSum += avgProgress * (totalTasks - completedTasks) / totalTasks
+      const avgProgress =
+        tasksWithProgress.reduce((sum, task) => sum + (task.progress || 0), 0) /
+        tasksWithProgress.length
+      progressSum += (avgProgress * (totalTasks - completedTasks)) / totalTasks
     }
 
     this.state.progress = Math.round(progressSum / totalTasks)
@@ -56,7 +58,7 @@ class PageLoadingManager {
   // 更新当前任务
   private updateCurrentTask() {
     const activeTasks = this.state.tasks
-      .filter(task => task.status === 'loading')
+      .filter((task) => task.status === 'loading')
       .sort((a, b) => b.priority - a.priority)
 
     this.state.currentTask = activeTasks[0]?.name || null
@@ -70,7 +72,7 @@ class PageLoadingManager {
     }
 
     // 检查是否已存在相同任务
-    const existingIndex = this.state.tasks.findIndex(t => t.id === task.id)
+    const existingIndex = this.state.tasks.findIndex((t) => t.id === task.id)
     if (existingIndex >= 0) {
       this.state.tasks[existingIndex] = newTask
     } else {
@@ -91,7 +93,7 @@ class PageLoadingManager {
 
   // 更新任务状态
   updateTask(id: string, updates: Partial<Pick<LoadingTask, 'status' | 'progress'>>): void {
-    const task = this.state.tasks.find(t => t.id === id)
+    const task = this.state.tasks.find((t) => t.id === id)
     if (!task) return
 
     Object.assign(task, updates)
@@ -100,7 +102,9 @@ class PageLoadingManager {
     this.calculateProgress()
 
     // 检查是否所有任务都完成
-    const allCompleted = this.state.tasks.every(t => t.status === 'completed' || t.status === 'error')
+    const allCompleted = this.state.tasks.every(
+      (t) => t.status === 'completed' || t.status === 'error',
+    )
     if (allCompleted && this.state.tasks.length > 0) {
       setTimeout(() => {
         this.completeLoading()
@@ -138,7 +142,7 @@ class PageLoadingManager {
 
   // 强制完成（用于紧急情况）
   forceComplete(): void {
-    this.state.tasks.forEach(task => {
+    this.state.tasks.forEach((task) => {
       if (task.status !== 'completed') {
         task.status = 'completed'
         task.progress = 100

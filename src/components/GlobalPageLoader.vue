@@ -38,9 +38,7 @@
                 <div class="progress-glow"></div>
               </div>
             </div>
-            <div class="progress-text">
-              {{ state.progress }}%
-            </div>
+            <div class="progress-text">{{ state.progress }}%</div>
           </div>
 
           <!-- 当前任务 -->
@@ -48,19 +46,22 @@
             <div v-if="state.currentTask" class="task-line">
               <span class="prompt">></span>
               <span class="task-text">{{ state.currentTask }}</span>
-              <span class="loading-dots">
-                <span>.</span><span>.</span><span>.</span>
-              </span>
+              <span class="loading-dots"> <span>.</span><span>.</span><span>.</span> </span>
             </div>
           </div>
 
           <!-- 任务列表 -->
           <div class="task-list">
-            <div v-for="task in sortedTasks" :key="task.id" class="task-item" :class="{
-              'task--loading': task.status === 'loading',
-              'task--completed': task.status === 'completed',
-              'task--error': task.status === 'error'
-            }">
+            <div
+              v-for="task in sortedTasks"
+              :key="task.id"
+              class="task-item"
+              :class="{
+                'task--loading': task.status === 'loading',
+                'task--completed': task.status === 'completed',
+                'task--error': task.status === 'error',
+              }"
+            >
               <span class="task-icon">
                 <LoadingIcon v-if="task.status === 'loading'" />
                 <CheckIcon v-else-if="task.status === 'completed'" />
@@ -116,7 +117,7 @@ const sortedTasks = computed(() => {
       loading: 0,
       pending: 1,
       completed: 2,
-      error: 3
+      error: 3,
     }
 
     if (statusOrder[a.status] !== statusOrder[b.status]) {
@@ -136,9 +137,7 @@ const matrixColor = computed(() => {
 })
 
 const glitchColor = computed(() => {
-  return document.documentElement.getAttribute('data-theme') === 'light'
-    ? '#00aa00'
-    : '#00ff41'
+  return document.documentElement.getAttribute('data-theme') === 'light' ? '#00aa00' : '#00ff41'
 })
 
 // 格式化时间
@@ -149,50 +148,80 @@ const formatTime = (ms: number): string => {
 }
 
 // 图标组件（使用简单的SVG）
-const LoadingIcon = () => h('svg', {
-  class: 'icon icon-loading',
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor'
-}, [
-  h('circle', { cx: '12', cy: '12', r: '10', strokeWidth: '2' }),
-  h('path', {
-    d: 'M12 2v4l2 2m-2-2v4l-2-2m2-2v4l2 2',
-    strokeWidth: '2',
-    strokeLinecap: 'round',
-    class: 'loading-path'
-  })
-])
+const LoadingIcon = () =>
+  h(
+    'svg',
+    {
+      class: 'icon icon-loading',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+    },
+    [
+      h('circle', { cx: '12', cy: '12', r: '10', strokeWidth: '2' }),
+      h('path', {
+        d: 'M12 2v4l2 2m-2-2v4l-2-2m2-2v4l2 2',
+        strokeWidth: '2',
+        strokeLinecap: 'round',
+        class: 'loading-path',
+      }),
+    ],
+  )
 
-const CheckIcon = () => h('svg', {
-  class: 'icon icon-check',
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor'
-}, [
-  h('polyline', { points: '20 6 9 17 4 12', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' })
-])
+const CheckIcon = () =>
+  h(
+    'svg',
+    {
+      class: 'icon icon-check',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+    },
+    [
+      h('polyline', {
+        points: '20 6 9 17 4 12',
+        strokeWidth: '2',
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      }),
+    ],
+  )
 
-const ErrorIcon = () => h('svg', {
-  class: 'icon icon-error',
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor'
-}, [
-  h('circle', { cx: '12', cy: '12', r: '10', strokeWidth: '2' }),
-  h('line', { x1: '15', y1: '9', x2: '9', y2: '15', strokeWidth: '2', strokeLinecap: 'round' }),
-  h('line', { x1: '9', y1: '9', x2: '15', y2: '15', strokeWidth: '2', strokeLinecap: 'round' })
-])
+const ErrorIcon = () =>
+  h(
+    'svg',
+    {
+      class: 'icon icon-error',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+    },
+    [
+      h('circle', { cx: '12', cy: '12', r: '10', strokeWidth: '2' }),
+      h('line', { x1: '15', y1: '9', x2: '9', y2: '15', strokeWidth: '2', strokeLinecap: 'round' }),
+      h('line', { x1: '9', y1: '9', x2: '15', y2: '15', strokeWidth: '2', strokeLinecap: 'round' }),
+    ],
+  )
 
-const ClockIcon = () => h('svg', {
-  class: 'icon icon-clock',
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor'
-}, [
-  h('circle', { cx: '12', cy: '12', r: '10', strokeWidth: '2' }),
-  h('polyline', { points: '12 6 12 12 16 14', strokeWidth: '2', strokeLinecap: 'round', strokeLinejoin: 'round' })
-])
+const ClockIcon = () =>
+  h(
+    'svg',
+    {
+      class: 'icon icon-clock',
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+    },
+    [
+      h('circle', { cx: '12', cy: '12', r: '10', strokeWidth: '2' }),
+      h('polyline', {
+        points: '12 6 12 12 16 14',
+        strokeWidth: '2',
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      }),
+    ],
+  )
 </script>
 
 <style scoped>
@@ -217,7 +246,8 @@ const ClockIcon = () => h('svg', {
   background: rgba(0, 0, 0, 0.9);
   border: 2px solid #00ff41;
   border-radius: 8px;
-  box-shadow: 0 0 50px rgba(0, 255, 65, 0.3),
+  box-shadow:
+    0 0 50px rgba(0, 255, 65, 0.3),
     inset 0 0 20px rgba(0, 255, 65, 0.1);
   backdrop-filter: blur(10px);
   z-index: 10;
@@ -509,7 +539,6 @@ const ClockIcon = () => h('svg', {
 }
 
 @keyframes loading-dot {
-
   0%,
   80%,
   100% {
@@ -522,7 +551,6 @@ const ClockIcon = () => h('svg', {
 }
 
 @keyframes status-pulse {
-
   0%,
   100% {
     opacity: 1;

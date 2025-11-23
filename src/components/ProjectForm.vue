@@ -1,6 +1,12 @@
 <template>
   <div class="project-form">
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" label-position="top">
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      label-width="120px"
+      label-position="top"
+    >
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="项目标题" prop="title">
@@ -12,7 +18,12 @@
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="项目描述" prop="description">
-            <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入项目描述" />
+            <el-input
+              v-model="formData.description"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入项目描述"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -34,7 +45,12 @@
         </el-col>
         <el-col :span="6">
           <el-form-item label="排序" prop="sort_order">
-            <el-input-number v-model="formData.sort_order" :min="0" :max="999" placeholder="排序值" />
+            <el-input-number
+              v-model="formData.sort_order"
+              :min="0"
+              :max="999"
+              placeholder="排序值"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -47,7 +63,10 @@
         </el-col>
         <el-col :span="8">
           <el-form-item label="GitHub链接" prop="github_url">
-            <el-input v-model="formData.github_url" placeholder="https://github.com/username/repo" />
+            <el-input
+              v-model="formData.github_url"
+              placeholder="https://github.com/username/repo"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -55,9 +74,19 @@
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="封面图片" prop="cover_image">
-            <file-upload v-model="formData.cover_image" :multiple="false" :limit="1" accept=".png,.jpg,.jpeg"
-              :drag="false" :show-file-list="true" bucket="project-showcase" folder="covers"
-              @success="handleCoverUploadSuccess" @error="handleCoverUploadError" @remove="handleCoverRemove" />
+            <file-upload
+              v-model="formData.cover_image"
+              :multiple="false"
+              :limit="1"
+              accept=".png,.jpg,.jpeg"
+              :drag="false"
+              :show-file-list="true"
+              bucket="project-showcase"
+              folder="covers"
+              @success="handleCoverUploadSuccess"
+              @error="handleCoverUploadError"
+              @remove="handleCoverRemove"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -65,7 +94,12 @@
       <el-row :gutter="20">
         <el-col :span="24">
           <el-form-item label="项目内容" prop="content">
-            <el-input v-model="formData.content" type="textarea" :rows="8" placeholder="请输入详细的项目介绍，支持Markdown格式" />
+            <el-input
+              v-model="formData.content"
+              type="textarea"
+              :rows="8"
+              placeholder="请输入详细的项目介绍，支持Markdown格式"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -74,15 +108,26 @@
         <el-col :span="12">
           <el-form-item label="项目分类" prop="category">
             <el-select v-model="formData.category" placeholder="请选择项目分类" style="width: 100%">
-              <el-option v-for="category in categories" :key="category.id" :label="category.name"
-                :value="category.id" />
+              <el-option
+                v-for="category in categories"
+                :key="category.id"
+                :label="category.name"
+                :value="category.id"
+              />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="项目标签" prop="tags">
-            <el-select v-model="formData.tags" multiple filterable allow-create default-first-option
-              placeholder="请选择或输入项目标签" style="width: 100%">
+            <el-select
+              v-model="formData.tags"
+              multiple
+              filterable
+              allow-create
+              default-first-option
+              placeholder="请选择或输入项目标签"
+              style="width: 100%"
+            >
               <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
             </el-select>
           </el-form-item>
@@ -129,11 +174,14 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'submit', data: {
-    project: Record<string, unknown>
-    category: string
-    tags: string[]
-  }): void
+  (
+    e: 'submit',
+    data: {
+      project: Record<string, unknown>
+      category: string
+      tags: string[]
+    },
+  ): void
   (e: 'cancel'): void
 }
 
@@ -282,10 +330,7 @@ const handleCancel = () => {
 onMounted(async () => {
   // 加载分类和标签数据
   try {
-    await Promise.all([
-      loadCategories(),
-      loadTags(),
-    ])
+    await Promise.all([loadCategories(), loadTags()])
   } catch (error) {
     console.error('Failed to load categories and tags:', error)
   }

@@ -1,6 +1,14 @@
 <template>
-  <font-awesome-icon :icon="iconDefinition" :size="normalizedSize" :rotation="rotate" :flip="flip" :spin="spin"
-    :pulse="pulse" :border="border" :pull="pull" />
+  <font-awesome-icon
+    :icon="iconDefinition"
+    :size="normalizedSize"
+    :rotation="rotate"
+    :flip="flip"
+    :spin="spin"
+    :pulse="pulse"
+    :border="border"
+    :pull="pull"
+  />
 </template>
 
 <script setup lang="ts">

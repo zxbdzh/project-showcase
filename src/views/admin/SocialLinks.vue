@@ -28,7 +28,13 @@
     <section class="admin-social-links__filters">
       <div class="admin-social-links__filters-content">
         <div class="admin-social-links__search">
-          <el-input v-model="searchQuery" placeholder="搜索链接名称或URL..." size="large" clearable @input="handleSearch">
+          <el-input
+            v-model="searchQuery"
+            placeholder="搜索链接名称或URL..."
+            size="large"
+            clearable
+            @input="handleSearch"
+          >
             <template #prefix>
               <el-icon>
                 <Search />
@@ -52,7 +58,11 @@
                     <div v-if="link.icon_url && link.icon_url.startsWith('http')">
                       <img :src="link.icon_url" />
                     </div>
-                    <font-awesome-icon v-else :icon="getIconObject(link.icon || 'link')" :size="24" />
+                    <font-awesome-icon
+                      v-else
+                      :icon="getIconObject(link.icon || 'link')"
+                      :size="24"
+                    />
                   </div>
                   <div class="social-link-card__actions">
                     <el-dropdown @command="handleLinkAction">
@@ -93,8 +103,13 @@
                   </div>
 
                   <div class="social-link-card__footer">
-                    <el-input-number v-model="link.sort_order" :min="0" :max="999" size="small"
-                      @change="handleSortOrderChange(link)" />
+                    <el-input-number
+                      v-model="link.sort_order"
+                      :min="0"
+                      :max="999"
+                      size="small"
+                      @change="handleSortOrderChange(link)"
+                    />
                   </div>
                 </div>
               </div>
@@ -112,8 +127,12 @@
     </section>
 
     <!-- 创建/编辑对话框 -->
-    <el-dialog v-model="showCreateDialog" :title="editingLink ? '编辑社交链接' : '新建社交链接'" width="500px"
-      :before-close="handleDialogClose">
+    <el-dialog
+      v-model="showCreateDialog"
+      :title="editingLink ? '编辑社交链接' : '新建社交链接'"
+      width="500px"
+      :before-close="handleDialogClose"
+    >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="链接名称" prop="platform">
           <el-input v-model="formData.platform" placeholder="请输入链接名称" />
@@ -203,55 +222,69 @@ const formRules: FormRules = {
       validator: (rule, value, callback) => {
         // 浏览器原生支持的协议清单（按常用度排序，可按需增删）
         const supportedProtocols = [
-          'https?:', 'ftp:', 'ftps:', 'mailto:', 'tel:', 'sms:',
-          'telnet:', 'news:', 'nntp:', 'file:', 'data:'
-        ];
+          'https?:',
+          'ftp:',
+          'ftps:',
+          'mailto:',
+          'tel:',
+          'sms:',
+          'telnet:',
+          'news:',
+          'nntp:',
+          'file:',
+          'data:',
+        ]
         // 正则：匹配协议开头 + 后续合法字符
         // 协议部分：用 | 分隔所有支持的协议，末尾加 :// 或 :（如mailto:无需//）
         // 内容部分：匹配协议后允许的合法字符（覆盖大部分场景）
-        const reg = new RegExp(`^(${supportedProtocols.join('|')})(\\/\\/)?[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=]+$`, 'i');
+        const reg = new RegExp(
+          `^(${supportedProtocols.join('|')})(\\/\\/)?[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=]+$`,
+          'i',
+        )
 
         // 基础格式校验
         if (!reg.test(value)) {
-          callback(new Error('请输入浏览器支持的有效协议链接（如https://、mailto:、tel:等）'));
-          return;
+          callback(new Error('请输入浏览器支持的有效协议链接（如https://、mailto:、tel:等）'))
+          return
         }
 
         // （可选）对特定协议做额外格式强化（避免无效内容，如mailto:abc）
-        const protocol = value.split(':')[0].toLowerCase();
+        const protocol = value.split(':')[0].toLowerCase()
         switch (protocol) {
           case 'mailto':
             // 校验邮件格式（必须含@和域名后缀）
-            const emailReg = /^mailto:[\w\-._]+@[\w\-._]+\.[a-zA-Z]{2,}$/i;
+            const emailReg = /^mailto:[\w\-._]+@[\w\-._]+\.[a-zA-Z]{2,}$/i
             if (!emailReg.test(value)) {
-              callback(new Error('请输入有效的邮件链接（如mailto:user@example.com）'));
-              return;
+              callback(new Error('请输入有效的邮件链接（如mailto:user@example.com）'))
+              return
             }
-            break;
+            break
           case 'tel':
             // 校验电话格式（仅含数字、+、-、空格）
-            const telReg = /^tel:[+\d\-\s]+$/i;
+            const telReg = /^tel:[+\d\-\s]+$/i
             if (!telReg.test(value)) {
-              callback(new Error('请输入有效的电话链接（如tel:13800138000或tel:+86-13800138000）'));
-              return;
+              callback(new Error('请输入有效的电话链接（如tel:13800138000或tel:+86-13800138000）'))
+              return
             }
-            break;
+            break
           case 'sms':
             // 校验短信格式（号码部分合法，正文可选）
-            const smsReg = /^sms:[+\d\-\s]+(\?body=.+)?$/i;
+            const smsReg = /^sms:[+\d\-\s]+(\?body=.+)?$/i
             if (!smsReg.test(value)) {
-              callback(new Error('请输入有效的短信链接（如sms:13800138000或sms:13800138000?body=您好）'));
-              return;
+              callback(
+                new Error('请输入有效的短信链接（如sms:13800138000或sms:13800138000?body=您好）'),
+              )
+              return
             }
-            break;
+            break
           // 其他协议如需强化（如file:本地路径），可在此添加case
         }
 
         // 所有校验通过
-        callback();
+        callback()
       },
-      trigger: 'blur'
-    }
+      trigger: 'blur',
+    },
   ],
   icon_url: [{ required: true, message: '请选择链接图标', trigger: 'change' }],
 }

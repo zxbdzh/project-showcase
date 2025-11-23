@@ -20,14 +20,10 @@
       <!-- 详细样式 -->
       <div v-else-if="settings.style === 'detailed'" class="footer__detailed">
         <div class="footer__columns">
-          <div
-            v-for="column in footerColumns"
-            :key="column.index"
-            class="footer__column"
-          >
+          <div v-for="column in footerColumns" :key="column.index" class="footer__column">
             <h4 v-if="column.title" class="footer__column-title">{{ column.title }}</h4>
             <ul v-if="column.links && column.links.length > 0" class="footer__column-links">
-              <li v-for="link in (column.links || [])" :key="link.order" class="footer__column-link">
+              <li v-for="link in column.links || []" :key="link.order" class="footer__column-link">
                 <a
                   :href="link.url"
                   :target="link.type === 'external' ? '_blank' : '_self'"
@@ -83,7 +79,10 @@ const { socialLinks } = useSocialLinks()
 // 页脚设置
 const settings = computed(() => ({
   enabled: getSettingValue('footer_enabled', 'true') === 'true',
-  copyright: getSettingValue('footer_copyright', '&copy; 2024 Geek Portfolio. Built with Vue 3 & Supabase.'),
+  copyright: getSettingValue(
+    'footer_copyright',
+    '&copy; 2024 Geek Portfolio. Built with Vue 3 & Supabase.',
+  ),
   style: getSettingValue('footer_style', 'simple'),
   textColor: getSettingValue('footer_text_color', '#666666'),
   bgColor: getSettingValue('footer_bg_color', 'transparent'),
@@ -92,7 +91,7 @@ const settings = computed(() => ({
   socialEnabled: getSettingValue('footer_social_enabled', 'true') === 'true',
   socialStyle: getSettingValue('footer_social_style', 'horizontal'),
   columns: parseInt(getSettingValue('footer_columns', '3')),
-  mobileCollapsed: getSettingValue('footer_mobile_collapsed', 'false') === 'true'
+  mobileCollapsed: getSettingValue('footer_mobile_collapsed', 'false') === 'true',
 }))
 
 // 页脚链接
@@ -115,13 +114,16 @@ const footerColumns = computed(() => {
   const columns: Array<{ index: number; title?: string; links?: FooterLink[] }> = []
 
   // 按类型分组链接
-  const groupedLinks = links.value.reduce((groups, link) => {
-    if (!groups[link.type]) {
-      groups[link.type] = []
-    }
-    groups[link.type].push(link)
-    return groups
-  }, {} as Record<string, FooterLink[]>)
+  const groupedLinks = links.value.reduce(
+    (groups, link) => {
+      if (!groups[link.type]) {
+        groups[link.type] = []
+      }
+      groups[link.type].push(link)
+      return groups
+    },
+    {} as Record<string, FooterLink[]>,
+  )
 
   // 创建列
   const linkTypes = Object.keys(groupedLinks).sort()
@@ -135,7 +137,7 @@ const footerColumns = computed(() => {
     const columnLinks: FooterLink[] = []
     const columnTitles: string[] = []
 
-    columnTypes.forEach(type => {
+    columnTypes.forEach((type) => {
       columnLinks.push(...groupedLinks[type])
       if (type === 'internal') columnTitles.push('页面导航')
       else if (type === 'external') columnTitles.push('友情链接')
@@ -146,7 +148,7 @@ const footerColumns = computed(() => {
     columns.push({
       index: i,
       title: columnTitles.join(' / ') || undefined,
-      links: columnLinks.sort((a, b) => a.order - b.order)
+      links: columnLinks.sort((a, b) => a.order - b.order),
     })
   }
 
@@ -158,13 +160,13 @@ const footerClasses = computed(() => ({
   'footer--simple': settings.value.style === 'simple',
   'footer--detailed': settings.value.style === 'detailed',
   'footer--minimal': settings.value.style === 'minimal',
-  'footer--mobile-collapsed': settings.value.mobileCollapsed
+  'footer--mobile-collapsed': settings.value.mobileCollapsed,
 }))
 
 const footerStyles = computed(() => ({
   color: settings.value.textColor,
   backgroundColor: settings.value.bgColor,
-  borderTop: settings.value.borderTop
+  borderTop: settings.value.borderTop,
 }))
 </script>
 

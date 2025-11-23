@@ -51,9 +51,7 @@ const quickLinks = computed<QuickLink[]>(() => {
 
 // 按order排序的快捷链接
 const sortedQuickLinks = computed(() => {
-  return quickLinks.value
-    .filter(link => link.enabled)
-    .sort((a, b) => a.order - b.order)
+  return quickLinks.value.filter((link) => link.enabled).sort((a, b) => a.order - b.order)
 })
 
 // 处理链接点击

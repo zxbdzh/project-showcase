@@ -84,21 +84,12 @@
         </el-form-item>
 
         <div v-if="settings.linksEnabled" class="links-list">
-          <div
-            v-for="(link, index) in footerLinks"
-            :key="index"
-            class="link-item"
-          >
+          <div v-for="(link, index) in footerLinks" :key="index" class="link-item">
             <el-card class="link-card">
               <template #header>
                 <div class="link-header">
                   <span>链接 {{ index + 1 }}</span>
-                  <el-button
-                    type="danger"
-                    size="small"
-                    text
-                    @click="removeLink(index)"
-                  >
+                  <el-button type="danger" size="small" text @click="removeLink(index)">
                     <el-icon><Delete /></el-icon>
                   </el-button>
                 </div>
@@ -251,13 +242,16 @@ const predefineColors = [
   '#374151',
   '#1f2937',
   '#111827',
-  'transparent'
+  'transparent',
 ]
 
 // 页脚设置
 const settings = ref({
   enabled: getSettingValue('footer_enabled', 'true') === 'true',
-  copyright: getSettingValue('footer_copyright', '&copy; 2024 Geek Portfolio. Built with Vue 3 & Supabase.'),
+  copyright: getSettingValue(
+    'footer_copyright',
+    '&copy; 2024 Geek Portfolio. Built with Vue 3 & Supabase.',
+  ),
   style: getSettingValue('footer_style', 'simple'),
   textColor: getSettingValue('footer_text_color', '#666666'),
   bgColor: getSettingValue('footer_bg_color', 'transparent'),
@@ -266,7 +260,7 @@ const settings = ref({
   socialEnabled: getSettingValue('footer_social_enabled', 'true') === 'true',
   socialStyle: getSettingValue('footer_social_style', 'horizontal'),
   columns: parseInt(getSettingValue('footer_columns', '3')),
-  mobileCollapsed: getSettingValue('footer_mobile_collapsed', 'false') === 'true'
+  mobileCollapsed: getSettingValue('footer_mobile_collapsed', 'false') === 'true',
 })
 
 // 页脚链接
@@ -285,7 +279,7 @@ const addLink = () => {
     title: '',
     url: '',
     type: 'internal',
-    order: footerLinks.value.length + 1
+    order: footerLinks.value.length + 1,
   }
   footerLinks.value.push(newLink)
   saveLinks()
@@ -333,11 +327,20 @@ const saveSettings = async () => {
       footer_text_color: { value: settings.value.textColor, description: '页脚文字颜色' },
       footer_bg_color: { value: settings.value.bgColor, description: '页脚背景颜色' },
       footer_border_top: { value: settings.value.borderTop, description: '页脚上边框' },
-      footer_links_enabled: { value: settings.value.linksEnabled.toString(), description: '是否显示页脚链接' },
-      footer_social_enabled: { value: settings.value.socialEnabled.toString(), description: '是否显示社交链接' },
+      footer_links_enabled: {
+        value: settings.value.linksEnabled.toString(),
+        description: '是否显示页脚链接',
+      },
+      footer_social_enabled: {
+        value: settings.value.socialEnabled.toString(),
+        description: '是否显示社交链接',
+      },
       footer_social_style: { value: settings.value.socialStyle, description: '社交链接样式' },
       footer_columns: { value: settings.value.columns.toString(), description: '页脚列数' },
-      footer_mobile_collapsed: { value: settings.value.mobileCollapsed.toString(), description: '移动端是否折叠' }
+      footer_mobile_collapsed: {
+        value: settings.value.mobileCollapsed.toString(),
+        description: '移动端是否折叠',
+      },
     }
 
     // 批量更新设置
@@ -360,7 +363,7 @@ watch(
   () => {
     saveSettings()
   },
-  { deep: true }
+  { deep: true },
 )
 
 // 监听链接变化，自动保存
@@ -369,7 +372,7 @@ watch(
   () => {
     saveLinks()
   },
-  { deep: true }
+  { deep: true },
 )
 </script>
 

@@ -64,7 +64,7 @@
           </div>
           <div class="info-item">
             <label>项目状态:</label>
-            <el-tag :type="getStatusType(project.status || '')" size="small">
+            <el-tag :type="getStatusType(project.status || '')" size="small" class="status-tag">
               {{ getStatusText(project.status || '') }}
             </el-tag>
           </div>
@@ -94,11 +94,41 @@
         </template>
 
         <div class="link-list">
-          <a v-if="project.demo_url" :href="project.demo_url" target="_blank" class="link-item">
-            <el-icon><link /></el-icon>
-            <span>在线演示</span>
-            <el-icon class="external-icon"><link /></el-icon>
-          </a>
+          <div v-if="project.demo_url" class="demo-preview">
+            <a :href="project.demo_url" target="_blank" class="link-item">
+              <div class="link-content">
+                <el-icon><link /></el-icon>
+                <span>在线演示</span>
+                <el-icon class="external-icon"><link /></el-icon>
+              </div>
+            </a>
+            <div class="preview-container">
+              <iframe
+                :src="project.demo_url"
+                :title="project.title + ' 预览'"
+                class="demo-preview-iframe"
+                frameborder="0"
+                loading="lazy"
+                @load="handleIframeLoad"
+                @error="handleIframeError"
+              />
+              <div v-if="previewLoading" class="preview-loading">
+                <el-icon class="is-loading"><loading /></el-icon>
+                <span>加载预览中...</span>
+              </div>
+              <div class="preview-controls">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="openDemoSite"
+                  class="open-demo-btn"
+                >
+                  <el-icon><link /></el-icon>
+                  在新窗口打开
+                </el-button>
+              </div>
+            </div>
+          </div>
           <a v-if="project.github_url" :href="project.github_url" target="_blank" class="link-item">
             <el-icon><link /></el-icon>
             <span>GitHub 仓库</span>
@@ -122,9 +152,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { ArrowLeft, Edit } from '@element-plus/icons-vue'
 import MarkdownIt from 'markdown-it'
 import { useAuth } from '@/composables/useAuth'
@@ -155,6 +185,7 @@ const loading = ref(true)
 const project = ref<Project | null>(null)
 const imagePreviewVisible = ref(false)
 const previewImageUrl = ref('')
+const previewLoading = ref(false)
 
 // 计算属性：解析后的 markdown 内容
 const renderedContent = computed(() => {
@@ -173,6 +204,11 @@ const fetchProject = async () => {
 
     if (projectData) {
       project.value = projectData
+
+      // 如果有演示链接，设置预览
+      if (projectData.demo_url) {
+        previewLoading.value = true
+      }
     } else {
       ElMessage.warning('项目不存在或已被删除')
     }
@@ -186,20 +222,75 @@ const fetchProject = async () => {
   }
 }
 
-// 状态相关方法
+// 处理iframe加载完成
+const handleIframeLoad = () => {
+  previewLoading.value = false
+  console.log('预览加载成功')
+
+  // 尝试检测iframe内容是否包含登录相关内容
+  setTimeout(() => {
+    try {
+      const iframe = document.querySelector('.demo-preview-iframe') as HTMLIFrameElement
+      if (iframe && iframe.contentDocument) {
+        // 检查是否有登录页面或401错误的特征
+        const content = iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent || ''
+        if (content.includes('401') || content.includes('Unauthorized') || content.includes('登录') || content.includes('login')) {
+          ElMessage.warning('演示网站需要登录，请在新窗口中打开进行登录操作')
+        }
+      }
+    } catch {
+      // 跨域访问限制，无法检测iframe内容
+      console.log('无法检测iframe内容，可能是跨域限制')
+    }
+  }, 2000) // 延迟2秒检测，给页面加载时间
+}
+
+// 处理iframe加载错误
+const handleIframeError = () => {
+  previewLoading.value = false
+  console.error('预览加载失败')
+}
+
+// 处理iframe消息
+const handleIframeMessage = (event: MessageEvent) => {
+  // 检查消息来源是否为演示网站
+  if (project.value?.demo_url && event.origin === new URL(project.value.demo_url).origin) {
+    // 检查是否为401错误
+    if (event.data && event.data.type === 'auth-error' && event.data.status === 401) {
+      ElMessage.warning('演示网站需要登录，请在新窗口中打开进行登录操作')
+    }
+  }
+}
+
+// 监听控制台错误
+const handleConsoleError = (event: ErrorEvent) => {
+  // 检查是否为401错误
+  if (event.message && event.message.includes('401')) {
+    ElMessage.warning('演示网站需要登录，请在新窗口中打开进行登录操作')
+  }
+}
+
+// 打开演示网站
+const openDemoSite = () => {
+  if (project.value?.demo_url) {
+    window.open(project.value.demo_url, '_blank')
+  }
+}
+
+// 状态相关方法 - 修复状态映射
 const getStatusType = (status: string) => {
   const statusMap: Record<string, string> = {
-    active: 'success',
-    completed: 'info',
-    archived: 'warning',
+    draft: 'warning',
+    published: 'success',
+    archived: 'info',
   }
   return statusMap[status] || 'info'
 }
 
 const getStatusText = (status: string) => {
   const statusMap: Record<string, string> = {
-    active: '进行中',
-    completed: '已完成',
+    draft: '草稿',
+    published: '已发布',
     archived: '已归档',
   }
   return statusMap[status] || '未知'
@@ -210,21 +301,18 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString('zh-CN')
 }
 
-const formatFileSize = (size: number) => {
-  if (size === 0) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB']
-  const index = Math.floor(Math.log(size) / Math.log(1024))
-  const formattedSize = size / Math.pow(1024, index)
-  return `${formattedSize.toFixed(2)} ${units[index]}`
-}
-
 // 辅助方法
-const getProjectCategories = (project: any) => {
-  return (project as any).categories || []
+interface ProjectWithRelations extends Project {
+  categories?: Array<{ id: string; name: string; color: string }>
+  tags?: Array<{ id: string; name: string; color: string }>
 }
 
-const getProjectTags = (project: any) => {
-  return (project as any).tags || []
+const getProjectCategories = (project: ProjectWithRelations) => {
+  return project.categories || []
+}
+
+const getProjectTags = (project: ProjectWithRelations) => {
+  return project.tags || []
 }
 
 // 操作方法
@@ -235,6 +323,16 @@ const editProject = () => {
 // 组件挂载时获取数据
 onMounted(() => {
   fetchProject()
+  // 添加消息监听器
+  window.addEventListener('message', handleIframeMessage)
+  // 添加控制台错误监听器
+  window.addEventListener('error', handleConsoleError)
+})
+
+// 组件卸载时清理
+onUnmounted(() => {
+  window.removeEventListener('message', handleIframeMessage)
+  window.removeEventListener('error', handleConsoleError)
 })
 </script>
 
@@ -312,8 +410,9 @@ onMounted(() => {
 }
 
 .info-item span {
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   font-size: 16px;
+  font-weight: 400;
 }
 
 .tech-tags {
@@ -324,6 +423,102 @@ onMounted(() => {
 
 .tech-tag {
   margin: 0;
+  border: 1px solid var(--border-secondary) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  font-weight: 500;
+}
+
+.tech-tag:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.status-tag {
+  font-weight: 500 !important;
+}
+
+.demo-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.link-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.preview-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+}
+
+.demo-preview-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 8px;
+  background: white;
+}
+
+.preview-controls {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+.open-demo-btn {
+  background: var(--accent-primary);
+  border: none;
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.open-demo-btn:hover {
+  background: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.preview-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-loading .el-icon {
+  font-size: 24px;
+  animation: rotating 2s linear infinite;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .image-grid {
@@ -647,6 +842,25 @@ onMounted(() => {
 
   .project-title {
     font-size: 24px;
+  }
+
+  .demo-preview {
+    gap: 8px;
+  }
+
+  .preview-container {
+    height: 300px;
+  }
+
+  .preview-controls {
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .link-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
   .image-grid {

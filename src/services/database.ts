@@ -205,10 +205,7 @@ export class ProjectService extends DatabaseService {
 
       // 获取标签详情
       const tagIds = projectTagsData?.map((pt) => pt.tag_id) || []
-      const { data: tagsData } = await supabase
-        .from('tags')
-        .select('*')
-        .in('id', tagIds)
+      const { data: tagsData } = await supabase.from('tags').select('*').in('id', tagIds)
 
       // 组合数据
       return projectsData.map((project) => {
@@ -258,12 +255,54 @@ export class ProjectService extends DatabaseService {
     })
   }
 
-  async getProject(id: string): Promise<Project | null> {
+  async getProject(id: string): Promise<(Project & { categories: Category[]; tags: Tag[] }) | null> {
     try {
-      const { data, error } = await supabase.from('projects').select('*').eq('id', id).single()
+      // 先获取项目基本信息
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', id)
+        .single()
 
-      if (error) throw error
-      return data
+      if (projectError) throw projectError
+      if (!projectData) return null
+
+      // 获取项目分类（直接关联）
+      let categories: Category[] = []
+      if (projectData.category_id) {
+        const { data: categoriesData } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('id', projectData.category_id)
+          .single()
+
+        if (categoriesData && !categoriesData.error) {
+          categories = [categoriesData]
+        }
+      }
+
+      // 获取项目标签关联（通过中间表）
+      const { data: projectTagsData } = await supabase
+        .from('project_tags')
+        .select('tag_id')
+        .eq('project_id', id)
+
+      // 获取标签详情
+      const tagIds = projectTagsData?.map((pt) => pt.tag_id) || []
+      let tags: Tag[] = []
+      if (tagIds.length > 0) {
+        const { data: tagsData } = await supabase.from('tags').select('*').in('id', tagIds)
+        if (tagsData) {
+          tags = tagsData
+        }
+      }
+
+      // 返回包含关联数据的项目信息
+      return {
+        ...projectData,
+        categories,
+        tags,
+      }
     } catch (error) {
       this.handleError(error, 'get project')
       throw error
@@ -634,10 +673,7 @@ export class SystemSettingsService extends DatabaseService {
 
   async deleteSetting(key: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('system_settings')
-        .delete()
-        .eq('key', key)
+      const { error } = await supabase.from('system_settings').delete().eq('key', key)
 
       if (error) throw error
 

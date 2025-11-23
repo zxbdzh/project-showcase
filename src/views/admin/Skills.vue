@@ -28,7 +28,13 @@
     <section class="admin-skills__filters">
       <div class="admin-skills__filters-content">
         <div class="admin-skills__search">
-          <el-input v-model="searchQuery" placeholder="搜索技能名称..." size="large" clearable @input="handleSearch">
+          <el-input
+            v-model="searchQuery"
+            placeholder="搜索技能名称..."
+            size="large"
+            clearable
+            @input="handleSearch"
+          >
             <template #prefix>
               <el-icon>
                 <Search />
@@ -38,7 +44,12 @@
         </div>
 
         <div class="admin-skills__filter-controls">
-          <el-select v-model="categoryFilter" placeholder="技能分类" clearable @change="handleFilter">
+          <el-select
+            v-model="categoryFilter"
+            placeholder="技能分类"
+            clearable
+            @change="handleFilter"
+          >
             <el-option label="全部" value="" />
             <el-option label="前端开发" value="frontend" />
             <el-option label="后端开发" value="backend" />
@@ -111,10 +122,13 @@
                 <div class="skill-card__level">
                   <div class="level-label">技能水平</div>
                   <div class="level-bar">
-                    <div class="level-progress" :style="{
-                      width: `${getLevelPercentage(Number(skill.level) || 1)}%`,
-                      backgroundColor: '#409EFF',
-                    }"></div>
+                    <div
+                      class="level-progress"
+                      :style="{
+                        width: `${getLevelPercentage(Number(skill.level) || 1)}%`,
+                        backgroundColor: '#409EFF',
+                      }"
+                    ></div>
                   </div>
                   <div class="level-text">{{ getLevelText(Number(skill.level) || 1) }}</div>
                 </div>
@@ -131,9 +145,14 @@
                 </div>
 
                 <div class="skill-card__footer">
-                  <el-input-number :model-value="getSkillSortOrder(skill)"
-                    @update:model-value="(value: number) => setSkillSortOrder(skill, value)" :min="0" :max="999"
-                    size="small" @change="handleSortOrderChange(skill)" />
+                  <el-input-number
+                    :model-value="getSkillSortOrder(skill)"
+                    @update:model-value="(value: number) => setSkillSortOrder(skill, value)"
+                    :min="0"
+                    :max="999"
+                    size="small"
+                    @change="handleSortOrderChange(skill)"
+                  />
                 </div>
               </div>
             </el-card>
@@ -148,8 +167,12 @@
     </section>
 
     <!-- 创建/编辑对话框 -->
-    <el-dialog v-model="showCreateDialog" :title="editingSkill ? '编辑技能' : '新建技能'" width="600px"
-      :before-close="handleDialogClose">
+    <el-dialog
+      v-model="showCreateDialog"
+      :title="editingSkill ? '编辑技能' : '新建技能'"
+      width="600px"
+      :before-close="handleDialogClose"
+    >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -184,7 +207,12 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="经验年限" prop="years_experience">
-              <el-input-number v-model="formData.years_experience" :min="0" :max="50" placeholder="年" />
+              <el-input-number
+                v-model="formData.years_experience"
+                :min="0"
+                :max="50"
+                placeholder="年"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -373,7 +401,7 @@ const getSkillSortOrder = (skill: any) => {
 }
 
 const setSkillSortOrder = (skill: any, value: number) => {
-  ; (skill as any).sort_order = value
+  ;(skill as any).sort_order = value
 }
 
 const handleSkillAction = async ({ action, skill }: { action: string; skill: any }) => {
