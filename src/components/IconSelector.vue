@@ -6,7 +6,7 @@
           <div class="icon-display" @click="showIconPicker = true">
             <!-- SVG图标显示 -->
             <div v-if="modelValue && modelValue.startsWith('http')" class="svg-display">
-              <img :src="modelValue" />
+              <img :src="modelValue" class="svg-icon" />
             </div>
             <font-awesome-icon
               v-else-if="modelValue"
@@ -87,7 +87,7 @@
                 >
                   <!-- SVG图标显示 -->
                   <div v-if="icon.type === 'svg'" class="svg-icon-container">
-                    <img :src="icon.url" />
+                    <img :src="icon.url" class="svg-icon" />
                   </div>
 
                   <!-- FontAwesome图标显示 -->
@@ -504,6 +504,30 @@ const selectIcon = (icon: string) => {
   height: 100%;
   color: var(--el-color-text-regular);
   fill: currentColor;
+}
+
+/* SVG图标主题适配 */
+.svg-icon {
+  /* 默认显示为深色模式白色 */
+  filter: brightness(0) invert(1);
+  transition: filter 0.3s ease;
+}
+
+/* 浅色模式显示为黑色 */
+html.light .svg-icon,
+html:not(.dark) .svg-icon {
+  filter: brightness(0) invert(0);
+}
+
+/* 悬停状态显示为主题色 */
+.icon-display:hover .svg-icon,
+.icon-item:hover .svg-icon {
+  filter: brightness(0) invert(1) sepia(1) saturate(2) hue-rotate(200deg);
+}
+
+/* 选中状态显示为主题色 */
+.icon-item.selected .svg-icon {
+  filter: brightness(0) invert(1) sepia(1) saturate(2) hue-rotate(200deg);
 }
 
 .icon-picker {

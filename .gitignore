@@ -37,3 +37,4 @@ __screenshots__/
 
 
 .env.production
+.env.dev
