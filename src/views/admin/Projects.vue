@@ -13,6 +13,16 @@
           <el-icon><ArrowLeft /></el-icon>
           返回
         </el-button>
+        <div class="admin-projects__quick-actions">
+          <el-button @click="showQuickAddCategory = true">
+            <el-icon><FolderAdd /></el-icon>
+            新建分类
+          </el-button>
+          <el-button @click="showQuickAddTag = true">
+            <el-icon><PriceTag /></el-icon>
+            新建标签
+          </el-button>
+        </div>
         <el-button type="primary" size="large" @click="showCreateDialog = true">
           <el-icon><Plus /></el-icon>
           新建项目
@@ -186,18 +196,35 @@
         @cancel="handleDialogClose"
       />
     </el-dialog>
+
+    <!-- 快捷添加分类对话框 -->
+    <quick-add-category v-model="showQuickAddCategory" @success="handleCategoryCreated" />
+
+    <!-- 快捷添加标签对话框 -->
+    <quick-add-tag v-model="showQuickAddTag" @success="handleTagCreated" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search, View, Edit, Delete, ArrowLeft } from '@element-plus/icons-vue'
+import {
+  Plus,
+  Search,
+  View,
+  Edit,
+  Delete,
+  ArrowLeft,
+  FolderAdd,
+  PriceTag,
+} from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { useProjects } from '@/composables/useData'
 import { projectService } from '@/services/database'
 import GlitchText from '@/components/GlitchText.vue'
 import ProjectForm from '@/components/ProjectForm.vue'
+import QuickAddCategory from '@/components/QuickAddCategory.vue'
+import QuickAddTag from '@/components/QuickAddTag.vue'
 
 // 类型定义
 interface ProjectItem {
@@ -234,6 +261,8 @@ const pageSize = ref(20)
 const selectedProjects = ref<ProjectItem[]>([])
 const showCreateDialog = ref(false)
 const editingProject = ref<ProjectItem | null>(null)
+const showQuickAddCategory = ref(false)
+const showQuickAddTag = ref(false)
 
 // 计算属性
 const filteredProjects = computed(() => {
@@ -462,6 +491,18 @@ const batchSetFeatured = async (featured: boolean) => {
   }
 }
 
+// 处理分类创建成功
+const handleCategoryCreated = async () => {
+  // 重新加载分类数据，ProjectForm 组件会自动获取最新数据
+  ElMessage.success('分类创建成功，可以在项目中使用了')
+}
+
+// 处理标签创建成功
+const handleTagCreated = async () => {
+  // 重新加载标签数据，ProjectForm 组件会自动获取最新数据
+  ElMessage.success('标签创建成功，可以在项目中使用了')
+}
+
 // 生命周期
 onMounted(async () => {
   await loadProjects()
@@ -620,6 +661,12 @@ onMounted(async () => {
 .admin-projects__batch-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.admin-projects__quick-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 /* 响应式设计 */

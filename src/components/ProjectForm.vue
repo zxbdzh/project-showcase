@@ -107,29 +107,55 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="项目分类" prop="category">
-            <el-select v-model="formData.category" placeholder="请选择项目分类" style="width: 100%">
-              <el-option
-                v-for="category in categories"
-                :key="category.id"
-                :label="category.name"
-                :value="category.id"
-              />
-            </el-select>
+            <div class="select-with-add">
+              <el-select
+                v-model="formData.category"
+                placeholder="请选择项目分类"
+                style="width: 100%"
+              >
+                <el-option
+                  v-for="category in categories"
+                  :key="category.id"
+                  :label="category.name"
+                  :value="category.id"
+                />
+              </el-select>
+              <el-button
+                type="primary"
+                size="small"
+                @click="showQuickAddCategory = true"
+                :icon="Plus"
+              >
+                新建分类
+              </el-button>
+            </div>
           </el-form-item>
         </el-col>
         <el-col :span="12">
           <el-form-item label="项目标签" prop="tags">
-            <el-select
-              v-model="formData.tags"
-              multiple
-              filterable
-              allow-create
-              default-first-option
-              placeholder="请选择或输入项目标签"
-              style="width: 100%"
-            >
-              <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
-            </el-select>
+            <div class="select-with-add">
+              <el-select
+                v-model="formData.tags"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                placeholder="请选择或输入项目标签"
+                style="width: 100%"
+              >
+                <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
+              </el-select>
+              <el-button type="primary" size="small" @click="showQuickAddTag = true" :icon="Plus">
+                新建标签
+              </el-button>
+            </div>
+
+            <!-- AI 标签生成器 -->
+            <AITagGenerator
+              :existing-tags="tags"
+              :project-content="getProjectContent()"
+              @tags-generated="handleAIGeneratedTags"
+            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -143,14 +169,24 @@
         </el-col>
       </el-row>
     </el-form>
+
+    <!-- 快捷添加分类对话框 -->
+    <QuickAddCategory v-model="showQuickAddCategory" @success="handleCategoryCreated" />
+
+    <!-- 快捷添加标签对话框 -->
+    <QuickAddTag v-model="showQuickAddTag" @success="handleTagCreated" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import FileUpload from '@/components/FileUpload.vue'
+import QuickAddCategory from '@/components/QuickAddCategory.vue'
+import QuickAddTag from '@/components/QuickAddTag.vue'
+import AITagGenerator from '@/components/AITagGenerator.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useCategories, useTags } from '@/composables/useData'
 
@@ -190,6 +226,8 @@ const emit = defineEmits<Emits>()
 
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
+const showQuickAddCategory = ref(false)
+const showQuickAddTag = ref(false)
 const { user } = useAuth()
 
 // 表单数据
@@ -321,6 +359,44 @@ const handleCoverRemove = () => {
   // v-model会自动更新formData.cover_image为空字符串
 }
 
+// 处理分类创建成功
+const handleCategoryCreated = async () => {
+  // 重新加载分类数据
+  await loadCategories()
+  ElMessage.success('分类创建成功')
+}
+
+// 处理标签创建成功
+const handleTagCreated = async () => {
+  // 重新加载标签数据
+  await loadTags()
+  ElMessage.success('标签创建成功')
+}
+
+// 获取项目内容用于 AI 生成
+const getProjectContent = () => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    content: formData.content,
+  }
+}
+
+// 处理 AI 生成的标签
+const handleAIGeneratedTags = async (tagIds: string[]) => {
+  // 合并 AI 生成的标签到现有标签中，避免重复
+  const existingTagIds = formData.tags || []
+  const uniqueTagIds = [...new Set([...existingTagIds, ...tagIds])]
+  formData.tags = uniqueTagIds
+
+  // 重新加载标签数据以获取最新的标签列表
+  await loadTags()
+  const newCount = uniqueTagIds.length - existingTagIds.length
+  ElMessage.success(
+    `已应用 ${tagIds.length} 个 AI 生成的标签${newCount > 0 ? `，其中 ${newCount} 个为新标签` : ''}`,
+  )
+}
+
 // 处理取消
 const handleCancel = () => {
   emit('cancel')
@@ -340,6 +416,20 @@ onMounted(async () => {
 <style scoped>
 .project-form {
   padding: 1rem;
+}
+
+.select-with-add {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.select-with-add .el-select {
+  flex: 1;
+}
+
+.select-with-add .el-button {
+  flex-shrink: 0;
 }
 
 .form-actions {
