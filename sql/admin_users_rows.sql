@@ -1,0 +1,1 @@
+INSERT INTO "public"."admin_users" ("id", "email", "name", "role", "last_login", "is_active", "created_at", "updated_at") VALUES ('07cfb259-3904-4b70-a007-d47c70f50011', '1205039851@qq.com', 'Administrator', 'super_admin', null, 'true', '2025-11-18 02:19:51.657596+00', '2025-11-18 02:19:51.657596+00');

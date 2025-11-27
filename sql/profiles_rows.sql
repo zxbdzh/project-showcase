@@ -1,0 +1,1 @@
+INSERT INTO "public"."profiles" ("id", "username", "full_name", "bio", "avatar_url", "location", "website", "github_url", "linkedin_url", "twitter_url", "status", "created_at", "updated_at") VALUES ('413a7876-2101-4866-8de3-43400eb38fe8', '', '', '', null, null, null, null, null, null, 'active', '2025-11-18 07:23:55.489603+00', '2025-11-18 07:23:55.489603+00');
